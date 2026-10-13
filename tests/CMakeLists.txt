@@ -21,4 +21,5 @@ function(spritenator_add_test name)
 endfunction()
 
 add_subdirectory(core)
+add_subdirectory(io)
 add_subdirectory(gui)

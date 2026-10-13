@@ -22,6 +22,7 @@ target_link_libraries(spritenator_gui
     PUBLIC
         Qt6::Widgets
         Spritenator::Core
+        Spritenator::Io
         Spritenator::Version
 )
 

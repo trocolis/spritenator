@@ -5,6 +5,16 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.3.0] - 2026-10-13
+
+### Adicionado
+- Biblioteca `spritenator_io` para leitura e gravação de arquivos.
+- `ImageFile`: leitura de BMP/PNG indexados, em tons de cinza ou em cores reais (paleta exata até 256 cores; acima disso, redução com pontilhamento).
+- Gravação de PNG indexado e de BMP indexado com codificador próprio (4 bits para 16 cores, 8 bits para 256 cores), sempre com gravação atômica (`QSaveFile`).
+- `PaletteFile`: paletas Microsoft RIFF `.pal`, JASC-PAL `.pal` e Adobe `.act` (leitura e gravação), e leitura da paleta de imagens BMP/PNG.
+- `IoError`, a exceção com mensagem pronta para o usuário.
+- Testes de ida e volta para todos os formatos e testes de erro.
+
 ## [0.2.0] - 2026-10-13
 
 ### Adicionado
