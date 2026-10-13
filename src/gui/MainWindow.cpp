@@ -1187,7 +1187,7 @@ void MainWindow::showAbout()
 {
     const QString text = tr("<h3>%1 %2</h3>"
                             "<p>%3</p>"
-                            "<p>A cross-platform recreation of <i>Character Maker 1999</i> "
+                            "<p>Loosely inspired by <i>Character Maker 1999</i> "
                             "(Copyright &copy; 1998-2000 Yoji Ojima).</p>"
                             "<p>Built with Qt %4.</p>")
                              .arg(toQString(version::kApplicationName), toQString(version::kString),

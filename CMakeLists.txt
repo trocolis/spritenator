@@ -1,5 +1,5 @@
 # =============================================================================
-# Spritenator - recriação multiplataforma do "Character Maker 1999"
+# Spritenator - editor de sprites multiplataforma inspirado no "Character Maker 1999"
 #
 # Arquivo CMake raiz. Define a versão do projeto (fonte única de verdade para
 # o versionamento X.Y.Z), as opções de build e inclui os subdiretórios.
@@ -10,8 +10,8 @@ cmake_minimum_required(VERSION 3.21)
 # para o empacotamento (CPack). Sempre que uma etapa é concluída, este número
 # é incrementado seguindo o versionamento semântico (MAJOR.MINOR.PATCH).
 project(Spritenator
-    VERSION 1.6.0
-    DESCRIPTION "Editor de sprites com cores indexadas inspirado no Character Maker 1999"
+    VERSION 2.0.0
+    DESCRIPTION "Editor de sprites (cores indexadas e RGBA) inspirado no Character Maker 1999"
     LANGUAGES CXX)
 
 # -----------------------------------------------------------------------------

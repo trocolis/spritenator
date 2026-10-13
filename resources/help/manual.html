@@ -9,13 +9,14 @@
 <body>
 
 <h1><img src=":/icons/app_icon.png" width="32" height="32"> Spritenator {{VERSION}}</h1>
-<p>Spritenator is an indexed-color sprite editor, a cross-platform recreation of
+<p>Spritenator is a cross-platform sprite editor, loosely inspired by
 <i>Character Maker 1999</i> by Yoji Ojima. It was designed for RPG Maker character
-sets and chip sets, but it works for any 2, 16 or 256 color pixel art.</p>
+sets and chip sets, but it works for any pixel art: true color with transparency
+(RGBA) or indexed with 2, 16 or 256 colors.</p>
 
 <h2>Contents</h2>
 <ol>
-  <li><a href="#workflow">The basic workflow</a></li>
+  <li><a href="#workflow">Editing and zoom</a></li>
   <li><a href="#screen">The screen</a></li>
   <li><a href="#tools">Drawing tools and tones</a></li>
   <li><a href="#transforms">Transformations</a></li>
@@ -26,30 +27,45 @@ sets and chip sets, but it works for any 2, 16 or 256 color pixel art.</p>
   <li><a href="#shortcuts">Keyboard shortcuts</a></li>
 </ol>
 
-<h2 id="workflow">1. The basic workflow</h2>
-<p>The image (the <b>canvas</b>) is divided into <b>cells</b> the size of one character
-frame, 24&times;32 pixels by default (<i>View &gt; Character Size</i>). You edit
-one cell at a time in the magnified <b>drawing area</b>:</p>
+<h2 id="workflow">1. Editing and zoom</h2>
+<p>Each open image has its own <b>tab</b>, and you draw directly on the whole
+image. While the mouse is over the image, the pixels that the current tool would
+change are <b>highlighted</b>: one pixel for the thin pen, a "+" for the thick
+pen, the whole area for the fill tool. Pixels that the tone or the mask protect
+are not highlighted.</p>
 <ul>
-  <li><b>Right-click</b> a cell of the canvas to bring it into the drawing area.</li>
-  <li>Draw in the drawing area.</li>
-  <li><b>Left-click</b> a cell of the canvas to write the drawing area into it.</li>
+  <li><b>Mouse wheel</b>: zoom in and out (from 12.5% to 3200%), keeping the pixel
+      under the pointer in place.</li>
+  <li><b>Ctrl + wheel</b>: scroll the image up and down; <b>Ctrl + Shift +
+      wheel</b>: scroll it sideways. You can also drag the image with the
+      <b>middle button</b>.</li>
+  <li>The <b>zoom box</b> in the status bar shows the zoom in percent; type a
+      value or pick one from its list.</li>
+  <li><i>View</i> menu: <b>Zoom In</b>, <b>Zoom Out</b>, <b>Actual Size
+      (100%)</b> and <b>Fit to Window</b>. A newly opened image fits the window
+      until you change its zoom.</li>
 </ul>
-<p>With the canvas focused, the <b>arrow keys</b> move to the neighbouring cell and bring
-it into the drawing area. <b>Transfer All</b> (F3) brings the whole canvas into the
-drawing area. The drawing area is shared by all open images, so you can copy frames
-from one image to another.</p>
+<p><b>Grids</b> (<i>View &gt; Grids</i>):</p>
+<ul>
+  <li>the <b>main grid</b> is 1&times;1 by default, so it outlines every pixel.
+      You can make it larger (e.g. 2&times;2 or 8&times;8). It is hidden while its
+      lines would be too close together on screen;</li>
+  <li>the <b>sub grid</b> has the size of one character frame (the
+      &ldquo;character size&rdquo;, 24&times;32 by default) and also defines the
+      animation frames.</li>
+</ul>
+<p>Both grids can be shown or hidden in the <i>View</i> menu.</p>
 
 <h2 id="screen">2. The screen</h2>
 <ul>
-  <li><b>Integrator</b> (the tool panel) contains, from top to bottom, the
-      tools, the color controls and the palette, plus the actual-size preview, the drawing area and the
-      transformation buttons. <i>Window &gt; Reverse Canvas</i> swaps it to the
-      other side.</li>
-  <li><b>Canvas windows</b> show each open image. A double frame follows the mouse
-      and shows the cell that a click will read or write.</li>
-  <li>The <b>status bar</b> shows the position of the mouse in the canvas or
-      in the drawing area.</li>
+  <li>The <b>side panel</b> contains, from top to bottom, the tools and tones,
+      the transformation buttons, the color controls and the palette (or the
+      color wheel). <i>Window &gt; Reverse Canvas</i> swaps it to the other
+      side.</li>
+  <li>The <b>tabs</b> show each open image; drag a tab to reorder it and click
+      its &times; to close it.</li>
+  <li>The <b>status bar</b> shows the position of the mouse in the image and the
+      zoom of the active tab.</li>
 </ul>
 <p>Two swatches show the <b>primary</b> color (left button) and the
 <b>secondary</b> color (right button). Click a swatch to make it the
@@ -85,8 +101,8 @@ pattern receive the color, which simulates intermediate shades. Tone A is solid.
 The <img src=":/icons/tone_shift.png"> button shifts the origin of the pattern.</p>
 
 <h2 id="transforms">4. Transformations</h2>
-<p>The buttons below the drawing area act on the selection, or on the whole
-drawing area when there is no selection:</p>
+<p>The transformation buttons of the side panel act on the selection, or on the
+whole image when there is no selection:</p>
 <ul>
   <li>shift up, right, down or left by one pixel (what leaves one side enters on
       the other);</li>
@@ -103,8 +119,8 @@ drawing area when there is no selection:</p>
 
 <h2 id="palette">5. Palette, mask and transparency</h2>
 <ul>
-  <li><b>Transparent Color Effect</b> (F8): when writing the drawing area into
-      the canvas, pixels of the background color are skipped.</li>
+  <li><b>Transparent Color Effect</b> (F8): when pasting, pixels of the
+      background color are skipped, so they do not cover the image.</li>
   <li><b>Mask</b>: masked colors are protected, so pixels of those colors are
       never changed. In <b>Mask Mode</b> (F5):
       <ul>
@@ -129,12 +145,13 @@ drawing area when there is no selection:</p>
 <h2 id="animation">6. Animation preview</h2>
 <p>Open it with F2:</p>
 <ol>
-  <li>Right-click a cell of the canvas to bring it into the drawing area.</li>
+  <li>Click the image inside a cell of the <b>sub grid</b> (any tool will do; the
+      selection tool does not change pixels).</li>
   <li>Press <b>Add Cell</b> to add that cell as a frame, or press <b>Walk Cycle</b>
       to add the RPG Maker walking sequence (frames 1-2-3-2) of that cell's
       direction.</li>
 </ol>
-<p>The preview shows the current canvas, so your edits appear immediately.</p>
+<p>The preview shows the current image, so your edits appear immediately.</p>
 
 <h2 id="files">7. Files and backups</h2>
 <p><b>Color modes.</b> A new image can be <b>RGBA</b> (true color with
@@ -145,11 +162,11 @@ transparency, the default), or indexed with 256, 16 or 2 colors. RGBA images:</p
       (right button, transparent by default, so it erases);</li>
   <li>have no palette, so the palette commands and the mask are disabled;</li>
   <li>with <i>Transparent Color Effect</i>, skip fully transparent pixels when
-      the drawing area is written to the canvas;</li>
+      pasting;</li>
   <li>can only be saved as PNG, because BMP files cannot store transparency.</li>
 </ul>
-<p>The drawing area follows the mode of the active image and converts its
-contents when you switch between images of different modes.</p>
+<p>Copying from an image and pasting into an image of the other mode converts
+the pasted pixels.</p>
 <p>Indexed images are opened and saved as PNG or BMP files; files in true color
 open as RGBA. BMP files are written
 with 1, 4 or 8 bits per pixel, according to the number of colors. You can also drag files onto the window to open
@@ -160,7 +177,7 @@ version of a file is copied there each time the file is overwritten.</p>
 
 <h2 id="sizes">8. Common RPG Maker sizes</h2>
 <table border="1" cellspacing="0" cellpadding="4">
-<tr><th>Use</th><th>Canvas</th><th>Cell</th></tr>
+<tr><th>Use</th><th>Image</th><th>Sub grid (cell)</th></tr>
 <tr><td>Single character</td><td>72 &times; 128</td><td>24 &times; 32</td></tr>
 <tr><td>Full character sheet</td><td>288 &times; 256</td><td>24 &times; 32</td></tr>
 <tr><td>Chip set</td><td>480 &times; 256</td><td>16 &times; 16</td></tr>

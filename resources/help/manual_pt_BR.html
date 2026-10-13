@@ -10,14 +10,14 @@
 <body>
 
 <h1><img src=":/icons/app_icon.png" width="32" height="32"> Spritenator {{VERSION}}</h1>
-<p>O Spritenator é um editor de sprites com cores indexadas, uma recriação
-multiplataforma do <i>Character Maker 1999</i>, de Yoji Ojima. Foi pensado para
-charsets e chipsets do RPG Maker, mas serve para qualquer pixel art de 2, 16 ou 256
-cores.</p>
+<p>O Spritenator é um editor de sprites multiplataforma, levemente inspirado no
+<i>Character Maker 1999</i>, de Yoji Ojima. Foi pensado para charsets e chipsets
+do RPG Maker, mas serve para qualquer pixel art: cores reais com transparência
+(RGBA) ou indexadas com 2, 16 ou 256 cores.</p>
 
 <h2>Conteúdo</h2>
 <ol>
-  <li><a href="#workflow">O fluxo de trabalho básico</a></li>
+  <li><a href="#workflow">Edição e zoom</a></li>
   <li><a href="#screen">A tela</a></li>
   <li><a href="#tools">Ferramentas de desenho e tons</a></li>
   <li><a href="#transforms">Transformações</a></li>
@@ -28,30 +28,44 @@ cores.</p>
   <li><a href="#shortcuts">Atalhos de teclado</a></li>
 </ol>
 
-<h2 id="workflow">1. O fluxo de trabalho básico</h2>
-<p>A imagem (o <b>canvas</b>) é dividida em <b>células</b> do tamanho de um quadro
-de personagem, 24&times;32 pixels por padrão (<i>Exibir &gt; Tamanho do
-personagem</i>). Você edita uma célula por vez, ampliada, na <b>área de
-desenho</b>:</p>
+<h2 id="workflow">1. Edição e zoom</h2>
+<p>Cada imagem aberta tem a sua <b>aba</b>, e você desenha diretamente sobre a
+imagem inteira. Com o mouse sobre a imagem, os pixels que a ferramenta atual
+alteraria ficam <b>destacados</b>: um pixel no lápis fino, um "+" no lápis grosso,
+a área inteira no balde. Pixels protegidos pelo tom ou pela máscara não são
+destacados.</p>
 <ul>
-  <li><b>Botão direito</b> numa célula do canvas: traz a célula para a área de desenho.</li>
-  <li>Desenhe na área de desenho.</li>
-  <li><b>Botão esquerdo</b> numa célula do canvas: grava nela o conteúdo da área de desenho.</li>
+  <li><b>Roda do mouse</b>: aumenta e diminui o zoom (de 12,5% a 3200%), mantendo
+      no lugar o pixel sob o ponteiro.</li>
+  <li><b>Ctrl + roda</b>: rola a imagem para cima e para baixo; <b>Ctrl + Shift +
+      roda</b>: rola para os lados. Também dá para arrastar a imagem com o
+      <b>botão do meio</b>.</li>
+  <li>A <b>caixa de zoom</b> na barra de status mostra o zoom em porcentagem;
+      digite um valor ou escolha um da lista.</li>
+  <li>Menu <i>Exibir</i>: <b>Aumentar zoom</b>, <b>Diminuir zoom</b>, <b>Tamanho
+      real (100%)</b> e <b>Ajustar à janela</b>. Uma imagem recém-aberta se ajusta
+      à janela até você mudar o zoom dela.</li>
 </ul>
-<p>Com o foco no canvas, as <b>setas do teclado</b> passam para a célula vizinha e
-a trazem para a área de desenho. <b>Transferir tudo</b> (F3) traz o canvas inteiro
-para a área de desenho. A área de desenho é compartilhada por todas as imagens
-abertas, então você pode copiar quadros de uma imagem para outra.</p>
+<p><b>Grades</b> (<i>Exibir &gt; Grades</i>):</p>
+<ul>
+  <li>a <b>grade principal</b> é 1&times;1 por padrão, ou seja, contorna cada
+      pixel. Ela pode ser maior (ex.: 2&times;2 ou 8&times;8) e fica oculta
+      enquanto as linhas ficariam próximas demais na tela;</li>
+  <li>a <b>sub-grade</b> tem o tamanho de um quadro de personagem (o
+      &ldquo;tamanho do personagem&rdquo;, 24&times;32 por padrão) e também
+      define os quadros da animação.</li>
+</ul>
+<p>As duas grades podem ser mostradas ou ocultadas no menu <i>Exibir</i>.</p>
 
 <h2 id="screen">2. A tela</h2>
 <ul>
-  <li>O <b>Integrator</b> (o painel de ferramentas) reúne, de cima para baixo, as
-      ferramentas, os controles de cor e a paleta, além da prévia em tamanho real, a área de desenho e os botões
-      de transformação. <i>Janela &gt; Inverter lados</i> o passa para o outro lado.</li>
-  <li>As <b>janelas de canvas</b> mostram cada imagem aberta. Uma moldura dupla
-      acompanha o mouse e indica a célula que um clique vai ler ou gravar.</li>
-  <li>A <b>barra de status</b> mostra a posição do mouse no canvas ou na área de
-      desenho.</li>
+  <li>O <b>painel lateral</b> reúne, de cima para baixo, as ferramentas e os tons,
+      os botões de transformação, os controles de cor e a paleta (ou o seletor
+      circular). <i>Janela &gt; Inverter lados</i> o passa para o outro lado.</li>
+  <li>As <b>abas</b> mostram cada imagem aberta; arraste uma aba para mudá-la de
+      posição e clique no &times; dela para fechá-la.</li>
+  <li>A <b>barra de status</b> mostra a posição do mouse na imagem e o zoom da
+      aba ativa.</li>
 </ul>
 <p>Dois mostradores exibem a cor <b>primária</b> (botão esquerdo) e a cor
 <b>secundária</b> (botão direito). Clique num mostrador para torná-lo o
@@ -86,8 +100,8 @@ recebem a cor, o que simula tons intermediários. O tom A é sólido. O botão
 <img src=":/icons/tone_shift.png"> desloca a origem do padrão.</p>
 
 <h2 id="transforms">4. Transformações</h2>
-<p>Os botões abaixo da área de desenho agem sobre a seleção ou, se não houver
-seleção, sobre a área de desenho inteira:</p>
+<p>Os botões de transformação do painel lateral agem sobre a seleção ou, se não
+houver seleção, sobre a imagem inteira:</p>
 <ul>
   <li>deslocar um pixel para cima, direita, baixo ou esquerda (o que sai por um
       lado entra pelo outro);</li>
@@ -105,8 +119,8 @@ seleção, sobre a área de desenho inteira:</p>
 
 <h2 id="palette">5. Paleta, máscara e transparência</h2>
 <ul>
-  <li><b>Efeito de cor transparente</b> (F8): ao gravar a área de desenho no
-      canvas, os pixels da cor de fundo são ignorados.</li>
+  <li><b>Efeito de cor transparente</b> (F8): ao colar, os pixels da cor de fundo
+      são ignorados e não cobrem a imagem.</li>
   <li><b>Máscara</b>: as cores mascaradas ficam protegidas, e pixels dessas cores
       nunca são alterados. No <b>modo máscara</b> (F5):
       <ul>
@@ -132,13 +146,13 @@ seleção, sobre a área de desenho inteira:</p>
 <h2 id="animation">6. Prévia de animação</h2>
 <p>Abra com F2:</p>
 <ol>
-  <li>Clique com o botão direito numa célula do canvas para trazê-la à área de
-      desenho.</li>
+  <li>Clique na imagem dentro de uma célula da <b>sub-grade</b> (qualquer
+      ferramenta serve; a de seleção não altera pixels).</li>
   <li>Pressione <b>Adicionar célula</b> para adicioná-la como quadro, ou <b>Ciclo
       de caminhada</b> para adicionar a sequência de caminhada do RPG Maker
       (quadros 1-2-3-2) da direção dessa célula.</li>
 </ol>
-<p>A prévia mostra o canvas atual, então as suas edições aparecem na hora.</p>
+<p>A prévia mostra a imagem atual, então as suas edições aparecem na hora.</p>
 
 <h2 id="files">7. Arquivos e backups</h2>
 <p><b>Modos de cor.</b> Uma imagem nova pode ser <b>RGBA</b> (cores reais com
@@ -150,12 +164,12 @@ transparência, o padrão) ou indexada com 256, 16 ou 2 cores. Imagens RGBA:</p>
   <li>não têm paleta, então os comandos de paleta e a máscara ficam
       desabilitados;</li>
   <li>com o <i>Efeito de cor transparente</i>, ignoram os pixels totalmente
-      transparentes ao gravar a área de desenho no canvas;</li>
+      transparentes ao colar;</li>
   <li>só podem ser salvas em PNG, porque arquivos BMP não guardam
       transparência.</li>
 </ul>
-<p>A área de desenho acompanha o modo da imagem ativa e converte o conteúdo
-quando você alterna entre imagens de modos diferentes.</p>
+<p>Copiar de uma imagem e colar numa imagem do outro modo converte os pixels
+colados.</p>
 <p>Imagens indexadas são abertas e salvas como PNG ou BMP; arquivos em cores
 reais abrem como RGBA. Os BMPs são gravados
 com 1, 4 ou 8 bits por pixel, conforme o número de cores. Também é possível arrastar arquivos para a
@@ -167,7 +181,7 @@ sobrescrito.</p>
 
 <h2 id="sizes">8. Tamanhos comuns do RPG Maker</h2>
 <table border="1" cellspacing="0" cellpadding="4">
-<tr><th>Uso</th><th>Canvas</th><th>Célula</th></tr>
+<tr><th>Uso</th><th>Imagem</th><th>Sub-grade (célula)</th></tr>
 <tr><td>Um personagem</td><td>72 &times; 128</td><td>24 &times; 32</td></tr>
 <tr><td>Folha completa de personagens</td><td>288 &times; 256</td><td>24 &times; 32</td></tr>
 <tr><td>Chipset</td><td>480 &times; 256</td><td>16 &times; 16</td></tr>

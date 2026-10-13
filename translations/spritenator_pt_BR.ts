@@ -800,8 +800,8 @@ Deseja salvar as alterações?</translation>
         <translation>Padrão do sistema</translation>
     </message>
     <message>
-        <source>&lt;h3&gt;%1 %2&lt;/h3&gt;&lt;p&gt;%3&lt;/p&gt;&lt;p&gt;A cross-platform recreation of &lt;i&gt;Character Maker 1999&lt;/i&gt; (Copyright &amp;copy; 1998-2000 Yoji Ojima).&lt;/p&gt;&lt;p&gt;Built with Qt %4.&lt;/p&gt;</source>
-        <translation>&lt;h3&gt;%1 %2&lt;/h3&gt;&lt;p&gt;%3&lt;/p&gt;&lt;p&gt;Uma recriação multiplataforma do &lt;i&gt;Character Maker 1999&lt;/i&gt; (Copyright &amp;copy; 1998-2000 Yoji Ojima).&lt;/p&gt;&lt;p&gt;Compilado com Qt %4.&lt;/p&gt;</translation>
+        <source>&lt;h3&gt;%1 %2&lt;/h3&gt;&lt;p&gt;%3&lt;/p&gt;&lt;p&gt;Loosely inspired by &lt;i&gt;Character Maker 1999&lt;/i&gt; (Copyright &amp;copy; 1998-2000 Yoji Ojima).&lt;/p&gt;&lt;p&gt;Built with Qt %4.&lt;/p&gt;</source>
+        <translation>&lt;h3&gt;%1 %2&lt;/h3&gt;&lt;p&gt;%3&lt;/p&gt;&lt;p&gt;Levemente inspirado no &lt;i&gt;Character Maker 1999&lt;/i&gt; (Copyright &amp;copy; 1998-2000 Yoji Ojima).&lt;/p&gt;&lt;p&gt;Compilado com Qt %4.&lt;/p&gt;</translation>
     </message>
     <message>
         <source>About %1</source>

@@ -5,6 +5,39 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [2.0.0] - 2026-10-13
+
+A partir desta versão o Spritenator passa de recriação a editor **levemente
+inspirado** no Character Maker 1999: o par "canvas + área de desenho" dá lugar a
+um único editor por imagem, que edita a imagem inteira diretamente.
+
+### Adicionado
+- **Editor único com zoom** (`CanvasEditor`), um por documento, em **abas** fecháveis e reordenáveis:
+  - edição direta da imagem inteira por todas as ferramentas;
+  - zoom de 12,5% a 3200% pela roda do mouse (ancorado no ponteiro), pela lupa (no ponto clicado) e pelo menu *Exibir*: Aumentar zoom (Ctrl++), Diminuir zoom (Ctrl+-), Tamanho real (Ctrl+1) e Ajustar à janela (Ctrl+0);
+  - indicador de zoom em % na barra de status, que também aceita um valor digitado;
+  - Ctrl+roda rola a imagem na vertical, Ctrl+Shift+roda na horizontal, e o botão do meio arrasta a vista;
+  - uma imagem recém-aberta se ajusta à janela (com fator inteiro ao ampliar) até o usuário mudar o zoom.
+- **Destaque sob o mouse**: os pixels que a ferramenta atual alteraria (lápis fino: 1 pixel; grosso: o "+"; balde: a região inteira, até 262144 pixels; figuras e seleção: o pixel inicial), filtrados pelo tom e pela máscara (`Tool::footprint`, `EditorSession::canPlot`).
+- Diálogo **Grades** (`GridDialog`, `core::GridLayout`):
+  - grade principal configurável, com padrão 1×1, oculta enquanto as linhas ficariam a menos de 4 px na tela;
+  - sub-grade com o "tamanho do personagem" (padrão 24×32).
+- Edição ao vivo e seleção no próprio `Document` (`beginEdit`/`editLive`/`commitEdit`, `selection`, `workArea`).
+- Testes do editor (zoom, âncora, roda, lupa, edição com o mouse, Esc, destaque, grades e título), das pegadas das ferramentas e da migração das preferências.
+
+### Alterado
+- O **efeito de cor transparente** (F8) passa a valer ao **colar**: ignora a cor de fundo (indexado) ou os pixels de alfa 0 (RGBA).
+- A janela de animação usa a célula da **sub-grade sob o último clique** na imagem ("Adicionar célula" e "Ciclo de caminhada").
+- O painel lateral virou uma coluna só: ferramentas e tons, transformações (duas linhas de seis botões), cores e paleta/seletor.
+- O desfazer é por documento; trocar de aba no meio de um traço cancela o traço.
+- As preferências de grade migram automaticamente do antigo "tamanho do personagem" (que vira a sub-grade). A proporção do painel lateral é reiniciada.
+- A barra de status mostra só a posição na imagem ("X: … Y: …").
+
+### Removido
+- A área de desenho (`DrawBuffer`, `DrawAreaView`), a prévia em tamanho real (`OrgAreaView`) e o fluxo de trazer/gravar células com os botões do mouse e as setas do teclado.
+- "Transferir tudo" (F3), as ações de zoom fixo (1x a 12x) e os comandos Cascata, Lado a lado e Ajustar do menu Janela.
+- O diálogo "Tamanho do personagem" e as opções de canvas em dobro, meia célula e cursor do mouse (`core::CharacterLayout`).
+
 ## [1.6.0] - 2026-10-13
 
 ### Adicionado

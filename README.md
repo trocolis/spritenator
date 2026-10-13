@@ -1,9 +1,10 @@
 # Spritenator
 
-Editor de sprites com cores indexadas, multiplataforma (Linux, Windows e
-macOS), escrito em **C++20** com **Qt 6**. É uma recriação do *Character Maker
-1999* (Yoji Ojima), um editor clássico de *charsets* e *chipsets* para o RPG
-Maker.
+Editor de sprites (cores indexadas ou RGBA), multiplataforma (Linux, Windows e
+macOS), escrito em **C++20** com **Qt 6**. É levemente inspirado no *Character
+Maker 1999* (Yoji Ojima), um editor clássico de *charsets* e *chipsets* para o
+RPG Maker: mantém as ferramentas, os tons, as transformações e a paleta do
+original, mas edita a imagem inteira diretamente, com zoom livre.
 
 > Histórico de versões: veja o [CHANGELOG](CHANGELOG.md).
 
@@ -11,10 +12,11 @@ Maker.
 
 - Imagens **RGBA** (32 bits, cores reais com transparência), salvas em PNG e exibidas sobre um fundo xadrez, com **seletor de cor circular** (anel de matizes + triângulo HSV) e barra de opacidade.
 - Imagens indexadas de **2, 16 ou 256 cores**, em PNG e BMP. Os BMPs são gravados em 1, 4 ou 8 bits, conforme o número de cores.
-- Fluxo do original: o canvas é dividido em **células de personagem**:
-  - o botão direito traz a célula para a **área de desenho** ampliada;
-  - o esquerdo grava a área de desenho de volta;
-  - as setas navegam entre os quadros.
+- **Edição direta** da imagem inteira, uma aba por documento:
+  - zoom de 12,5% a 3200% pela roda do mouse (ancorado no ponteiro), pela lupa, pelo menu *Exibir* ou digitando o valor em % na barra de status;
+  - Ctrl+roda rola a imagem (Ctrl+Shift+roda na horizontal) e o botão do meio arrasta a vista;
+  - **destaque** dos pixels que a ferramenta atual afetaria, sob o mouse (inclusive a região do balde), respeitando o tom e a máscara.
+- **Grades**: a principal tem padrão 1×1 (a grade de pixels), é configurável e some quando ficaria densa demais; a sub-grade tem o "tamanho do personagem" (ex.: 24×32) e define os quadros da animação.
 - **12 ferramentas**: seleção, lupa, balde, lápis fino/grosso, reta, retângulo, retângulo arredondado e elipse (contorno ou preenchidos).
 - **8 tons de retícula** (A–H), copiados pixel a pixel do original, com deslocamento de fase.
 - **12 transformações**: deslocar, espelhar, simetria, girar 90°, rotação livre e esticar.
@@ -24,8 +26,8 @@ Maker.
   - editor de paleta (troca de cores, remoção de cores não usadas, 15 bits);
   - carga de paletas (`.pal` RIFF/JASC, `.act`, imagens), com remapeamento por cor mais próxima ou pontilhamento Floyd–Steinberg.
 - **Janela de animação**, com prévia ao vivo e gerador do ciclo de caminhada 1-2-3-2.
-- Desfazer/refazer ilimitado e unificado (área de desenho e canvas), área de transferência e entrada de texto sem suavização.
-- Várias imagens abertas (MDI), arquivos recentes, arrastar e soltar, backup automático ao salvar e ajuda embutida (F1).
+- Desfazer/refazer ilimitado por documento, área de transferência (com o efeito de cor transparente ao colar) e entrada de texto sem suavização.
+- Várias imagens abertas em abas, arquivos recentes, arrastar e soltar, backup automático ao salvar e ajuda embutida (F1).
 
 ## Compilação
 
