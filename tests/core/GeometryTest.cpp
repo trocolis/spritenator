@@ -3,6 +3,7 @@
 // =============================================================================
 #include "core/Geometry.h"
 #include "core/CharacterLayout.h"
+#include "core/GridLayout.h"
 
 #include <QTest>
 
@@ -54,6 +55,15 @@ private slots:
         QCOMPARE(layout.stepSize(), (Size { 12, 16 }));
         QCOMPARE(layout.cellAt({ 13, 17 }), (Rect { 12, 16, 24, 32 }));
         QCOMPARE(layout.neighbour(Rect { 12, 16, 24, 32 }, 1, -1), (Rect { 24, 0, 24, 32 }));
+    }
+
+    /// Grades: padrão 1x1 (pixels) e sub-grade 24x32; células alinhadas.
+    void gridLayoutCells()
+    {
+        const GridLayout grid;
+        QCOMPARE(grid.mainGrid, (Size { 1, 1 }));
+        QCOMPARE(grid.subGridCellAt({ 30, 40 }), (Rect { 24, 32, 24, 32 }));
+        QCOMPARE(GridLayout::cellAt({ -1, 5 }, { 2, 2 }), (Rect { -2, 4, 2, 2 }));
     }
 };
 

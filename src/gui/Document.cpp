@@ -4,6 +4,7 @@
 #include "Document.h"
 
 #include "ImageRendering.h"
+#include "commands/ImageCommands.h"
 #include "io/ImageFile.h"
 
 #include <QFileInfo>
@@ -103,6 +104,92 @@ void Document::revert()
 }
 
 // -----------------------------------------------------------------------------
+// Edição ao vivo
+// -----------------------------------------------------------------------------
+void Document::beginEdit()
+{
+    m_snapshot = m_canvas;
+    m_dirty = { };
+    m_editing = true;
+}
+
+void Document::editLive(const LiveEdit& edit)
+{
+    if (!m_editing) {
+        beginEdit(); // tolerância: permite editar sem chamar beginEdit
+    }
+    const core::Rect area = edit(m_canvas).intersected(core::boundsOf(m_canvas));
+    if (area.isEmpty()) {
+        return;
+    }
+    m_dirty = m_dirty.united(area);
+    updateRenderedRegion(m_rendered, m_canvas, area);
+    emit canvasChanged(area);
+}
+
+void Document::restoreSnapshot()
+{
+    if (!m_editing || m_dirty.isEmpty()) {
+        return;
+    }
+    // Copia de volta apenas a área tocada até agora.
+    core::pasteImage(m_canvas, core::copyRegion(m_snapshot, m_dirty), m_dirty.topLeft());
+    updateRenderedRegion(m_rendered, m_canvas, m_dirty);
+    emit canvasChanged(m_dirty);
+}
+
+void Document::commitEdit(const UndoLabel& undoLabel)
+{
+    if (!m_editing) {
+        return;
+    }
+    m_editing = false;
+    if (m_dirty.isEmpty()) {
+        return;
+    }
+    core::AnyImage before = core::copyRegion(m_snapshot, m_dirty);
+    core::AnyImage after = core::copyRegion(m_canvas, m_dirty);
+    m_snapshot = core::emptyImage(colorMode()); // libera memória
+    if (before == after) {
+        return; // ex.: traço desenhado com a mesma cor que já estava lá
+    }
+    // A edição já está aplicada: o comando não deve reaplicá-la no push.
+    m_undoStack->push(new RegionCommand(
+        this, m_dirty.topLeft(), std::move(before), std::move(after), undoLabel, true));
+}
+
+void Document::cancelEdit()
+{
+    restoreSnapshot();
+    m_editing = false;
+    m_snapshot = core::emptyImage(colorMode());
+    m_dirty = { };
+}
+
+// -----------------------------------------------------------------------------
+// Seleção
+// -----------------------------------------------------------------------------
+void Document::setSelection(const std::optional<core::Rect>& selection)
+{
+    std::optional<core::Rect> clipped;
+    if (selection) {
+        const core::Rect area = selection->intersected(core::boundsOf(m_canvas));
+        if (!area.isEmpty()) {
+            clipped = area;
+        }
+    }
+    if (clipped != m_selection) {
+        m_selection = clipped;
+        emit selectionChanged();
+    }
+}
+
+core::Rect Document::workArea() const
+{
+    return m_selection.value_or(core::boundsOf(m_canvas));
+}
+
+// -----------------------------------------------------------------------------
 // Aplicação de alterações
 // -----------------------------------------------------------------------------
 void Document::applyCanvasRegion(core::Point origin, const core::AnyImage& pixels)
@@ -121,6 +208,7 @@ void Document::applyCanvas(const core::AnyImage& canvas)
     m_canvas = canvas;
     rebuildRendered();
     if (resized) {
+        setSelection(std::nullopt); // a seleção antiga pode não caber mais
         emit canvasResized(core::sizeOf(m_canvas));
     }
     if (modeChanged) {

@@ -12,6 +12,7 @@
 #pragma once
 
 #include "ImageTarget.h"
+#include "commands/UndoLabel.h"
 #include "core/AnyImage.h"
 #include "core/Image.h"
 #include "core/Palette.h"
@@ -19,6 +20,9 @@
 #include <QImage>
 #include <QObject>
 #include <QString>
+
+#include <functional>
+#include <optional>
 
 class QUndoStack;
 
@@ -76,6 +80,36 @@ public:
     /// Verdadeiro se houver alterações não gravadas.
     [[nodiscard]] bool isModified() const;
 
+    // --- Edição ao vivo (usada pelas ferramentas) ---
+    //
+    // Ferramentas como o lápis alteram o canvas a cada movimento do mouse
+    // (retorno imediato) e só ao soltar o botão registram UM passo de
+    // desfazer com o "antes" e o "depois" da área tocada:
+    //
+    //   beginEdit()  -> guarda uma cópia (snapshot) do canvas
+    //   editLive()   -> aplica alterações e acumula a área suja
+    //   commitEdit() -> cria o RegionCommand (já aplicado)
+
+    /// Função de edição ao vivo: altera a imagem e devolve o retângulo afetado.
+    using LiveEdit = std::function<core::Rect(core::AnyImage&)>;
+
+    void beginEdit();
+    [[nodiscard]] bool isEditing() const { return m_editing; }
+    void editLive(const LiveEdit& edit);
+    /// Volta o canvas ao estado do início da edição (ferramentas de figura
+    /// redesenham a figura inteira a cada movimento).
+    void restoreSnapshot();
+    /// Finaliza a edição; registra um passo de desfazer se algo mudou.
+    void commitEdit(const UndoLabel& undoLabel);
+    /// Desfaz a edição em andamento sem registrar nada.
+    void cancelEdit();
+
+    // --- Seleção retangular (coordenadas do canvas) ---
+    [[nodiscard]] const std::optional<core::Rect>& selection() const { return m_selection; }
+    void setSelection(const std::optional<core::Rect>& selection);
+    /// Região de trabalho das operações: a seleção, ou o canvas inteiro.
+    [[nodiscard]] core::Rect workArea() const;
+
     // --- Aplicação de alterações (usado pelos comandos de undo) ---
 
     /// Substitui uma região do canvas pelo conteúdo informado.
@@ -96,6 +130,8 @@ public:
     void applyImage(const core::AnyImage& image) override { applyCanvas(image); }
 
 signals:
+    /// A seleção mudou.
+    void selectionChanged();
     /// Uma região do canvas mudou (coordenadas do canvas).
     void canvasChanged(const core::Rect& area);
     /// O tamanho do canvas mudou (implica redesenho completo).
@@ -118,6 +154,13 @@ private:
     QImage m_rendered;
     QString m_filePath;
     QUndoStack* m_undoStack = nullptr;
+
+    // Edição ao vivo em andamento.
+    bool m_editing = false;
+    core::AnyImage m_snapshot;
+    core::Rect m_dirty;
+
+    std::optional<core::Rect> m_selection;
 
     /// Número sequencial para nomes "Untitled1", "Untitled2"...
     int m_untitledNumber = 0;

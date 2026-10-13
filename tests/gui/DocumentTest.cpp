@@ -99,6 +99,50 @@ private slots:
         QCOMPARE(reopened->canvas(), document->canvas());
     }
 
+    /// Edição ao vivo: alterações imediatas, UM passo de desfazer no commit;
+    /// restoreSnapshot volta ao início; cancelEdit descarta sem registrar.
+    void liveEditingCommitsSingleStep()
+    {
+        std::unique_ptr<Document> document(makeDocument());
+        const auto paint = [](core::Point point, core::ColorIndex color) {
+            return [point, color](core::AnyImage& image) {
+                std::get<core::IndexedImage>(image).setPixel(point, color);
+                return core::Rect { point.x, point.y, 1, 1 };
+            };
+        };
+        document->beginEdit();
+        document->editLive(paint({ 1, 1 }, 5));
+        document->editLive(paint({ 2, 1 }, 5));
+        QCOMPARE(int(document->indexedCanvas().pixel(2, 1)), 5); // já aplicado
+        document->commitEdit(gui::UndoLabel { gui::UndoOperation::Pen });
+        QCOMPARE(document->undoStack()->count(), 1);
+        document->undoStack()->undo();
+        QCOMPARE(int(document->indexedCanvas().pixel(1, 1)), 0);
+
+        document->beginEdit();
+        document->editLive(paint({ 0, 0 }, 7));
+        document->restoreSnapshot();
+        QCOMPARE(int(document->indexedCanvas().pixel(0, 0)), 0);
+        document->editLive(paint({ 3, 3 }, 7));
+        document->cancelEdit();
+        QCOMPARE(int(document->indexedCanvas().pixel(3, 3)), 0);
+        QCOMPARE(document->undoStack()->count(), 1); // nada novo registrado
+    }
+
+    /// Seleção recortada ao canvas; região de trabalho = seleção ou tudo.
+    void selectionAndWorkArea()
+    {
+        std::unique_ptr<Document> document(makeDocument()); // 8x4
+        QCOMPARE(document->workArea(), (core::Rect { 0, 0, 8, 4 }));
+        QSignalSpy changed(document.get(), &Document::selectionChanged);
+        document->setSelection(core::Rect { 6, 2, 10, 10 });
+        QCOMPARE(document->selection().value(), (core::Rect { 6, 2, 2, 2 }));
+        QCOMPARE(document->workArea(), (core::Rect { 6, 2, 2, 2 }));
+        document->setSelection(core::Rect { 20, 20, 1, 1 }); // fora: sem seleção
+        QVERIFY(!document->selection().has_value());
+        QCOMPARE(changed.count(), 2);
+    }
+
     void loadingMissingFileThrows()
     {
         QVERIFY_THROWS_EXCEPTION(

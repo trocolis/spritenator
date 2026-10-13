@@ -17,6 +17,7 @@ add_library(spritenator_core STATIC
     ColorConversion.h
     Dithering.h
     Geometry.h
+    GridLayout.h
     Image.h
     Palette.cpp
     Palette.h
