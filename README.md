@@ -75,7 +75,7 @@ tests/    testes automatizados (Qt Test + CTest), por camada
 translations/ traduções da interface (.ts do Qt Linguist)
 tools/    scripts auxiliares (ex.: extração de ícones)
 docs/     documentação técnica (ver ARCHITECTURE.md)
-original/ artefatos extraídos da aplicação original, usados como referência
+original/ aplicação original e artefatos extraídos dela (apenas locais, fora do git)
 ```
 
 A arquitetura, os padrões de projeto e o fluxo de dados estão descritos em

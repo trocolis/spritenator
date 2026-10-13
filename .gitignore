@@ -1,6 +1,9 @@
 # Binários proprietários da aplicação original (mantidos apenas localmente)
 original/CharacterMaker1999.exe
 original/CharacterMaker1999.HLP
+# Material extraído do original (forms, manual, recursos): protegido por
+# direitos autorais, usado apenas como referência local
+original/extracted/
 
 # Diretórios de build do CMake
 build/
