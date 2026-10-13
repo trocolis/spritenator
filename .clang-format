@@ -1,0 +1,14 @@
+# Estilo de formatação do código C++ do Spritenator.
+# Aplique com: clang-format -i src/**/*.cpp src/**/*.h tests/**/*.cpp
+BasedOnStyle: WebKit
+ColumnLimit: 100
+IndentWidth: 4
+AccessModifierOffset: -4
+PointerAlignment: Left
+NamespaceIndentation: None
+FixNamespaceComments: true
+AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortCaseLabelsOnASingleLine: true
+BreakConstructorInitializers: BeforeComma
+IncludeBlocks: Preserve
+SortIncludes: CaseSensitive

@@ -1,0 +1,31 @@
+// =============================================================================
+// Version.h — ARQUIVO GERADO PELO CMAKE A PARTIR DE src/Version.h.in.
+//
+// Não edite o arquivo gerado: altere a versão em project(VERSION ...) no
+// CMakeLists.txt raiz. Assim existe uma única fonte de verdade para a versão.
+// =============================================================================
+#pragma once
+
+#include <string_view>
+
+namespace spritenator::version {
+
+/// Componente MAJOR: muda quando há quebras de compatibilidade.
+inline constexpr int kMajor = @PROJECT_VERSION_MAJOR@;
+
+/// Componente MINOR: muda quando funcionalidades são adicionadas.
+inline constexpr int kMinor = @PROJECT_VERSION_MINOR@;
+
+/// Componente PATCH: muda em correções que não alteram funcionalidades.
+inline constexpr int kPatch = @PROJECT_VERSION_PATCH@;
+
+/// Versão completa no formato "X.Y.Z".
+inline constexpr std::string_view kString = "@PROJECT_VERSION@";
+
+/// Nome da aplicação exibido ao usuário.
+inline constexpr std::string_view kApplicationName = "@PROJECT_NAME@";
+
+/// Descrição curta do projeto.
+inline constexpr std::string_view kDescription = "@PROJECT_DESCRIPTION@";
+
+} // namespace spritenator::version
