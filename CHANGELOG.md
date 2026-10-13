@@ -5,6 +5,11 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [1.2.1] - 2026-10-13
+
+### Alterado
+- Nova ordem do painel lateral, de cima para baixo: ferramentas e tons, ajuste das cores (amostras e R, G, B) e paleta (grade e botões), com um espaço separando os três painéis. O manual foi atualizado nos dois idiomas.
+
 ## [1.2.0] - 2026-10-13
 
 ### Adicionado

@@ -69,10 +69,23 @@ QWidget* IntegratorPanel::createLeftColumn(ActionCatalog* actions)
     auto* layout = new QVBoxLayout(column);
     layout->setContentsMargins(4, 4, 4, 4);
 
+    // Ordem de cima para baixo: ferramentas, ajuste das cores e paleta.
+    // Um pequeno espaço separa visualmente os três painéis.
+    constexpr int kSectionSpacing = 8;
+
+    // --- 1. Ferramentas e tons ---
+    layout->addWidget(new ToolPanel(m_session, column));
+    layout->addSpacing(kSectionSpacing);
+
+    // --- 2. Ajuste das cores (amostras de desenho/fundo e controles R, G, B) ---
+    layout->addWidget(new ColorEditor(m_session, column));
+    layout->addSpacing(kSectionSpacing);
+
+    // --- 3. Paleta: grade de cores e seus botões (os mesmos do original,
+    //        ligados às ações do catálogo) ---
     m_paletteView = new PaletteView(m_session, column);
     layout->addWidget(m_paletteView);
 
-    // Botões de paleta (mesmos do painel do original, ligados às ações).
     auto* paletteButtons = new QGridLayout;
     paletteButtons->setSpacing(1);
     const ActionId buttonIds[] = {
@@ -92,9 +105,6 @@ QWidget* IntegratorPanel::createLeftColumn(ActionCatalog* actions)
     }
     paletteButtons->setColumnStretch(position, 1);
     layout->addLayout(paletteButtons);
-
-    layout->addWidget(new ColorEditor(m_session, column));
-    layout->addWidget(new ToolPanel(m_session, column));
     layout->addStretch(1);
 
     column->setMinimumWidth(m_paletteView->minimumSizeHint().width() + 8);

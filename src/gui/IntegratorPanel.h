@@ -2,7 +2,8 @@
 // IntegratorPanel.h
 //
 // Painel lateral de edição (TIntegrator no original). Reúne:
-//   - coluna esquerda: paleta, amostras/RGB, botões de paleta e ferramentas;
+//   - coluna esquerda, de cima para baixo: ferramentas e tons, ajuste das
+//     cores (amostras e R, G, B) e a paleta com seus botões;
 //   - coluna direita: prévia em tamanho real e a área de desenho ampliada.
 //
 // Apenas organiza widgets; o estado vive na EditorSession.
@@ -43,7 +44,7 @@ private:
     /// Reaplica as dicas no idioma atual.
     void retranslate();
 
-    /// Cria a coluna esquerda (paleta, cores, botões).
+    /// Cria a coluna esquerda (ferramentas, ajuste das cores e paleta).
     QWidget* createLeftColumn(ActionCatalog* actions);
     /// Cria a coluna direita (prévia + área de desenho + transformações).
     QWidget* createRightColumn();
