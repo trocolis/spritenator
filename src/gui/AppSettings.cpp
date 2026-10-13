@@ -18,6 +18,7 @@ constexpr auto kRecentFilesKey = "files/recent";
 constexpr auto kLastDirectoryKey = "files/lastDirectory";
 constexpr auto kBackupFolderKey = "files/backupFolder";
 constexpr auto kLayoutGroup = "characterLayout";
+constexpr auto kLanguageKey = "interface/language";
 constexpr auto kGeometryKey = "mainWindow/geometry";
 constexpr auto kStateKey = "mainWindow/state";
 
@@ -115,6 +116,19 @@ void AppSettings::setCharacterLayout(const core::CharacterLayout& layout)
     settings.setValue("halfCellSteps", layout.halfCellSteps);
     settings.setValue("keepMouseCursor", layout.keepMouseCursor);
     settings.endGroup();
+}
+
+// -----------------------------------------------------------------------------
+// Idioma
+// -----------------------------------------------------------------------------
+QString AppSettings::language() const
+{
+    return QSettings().value(key(kLanguageKey)).toString();
+}
+
+void AppSettings::setLanguage(const QString& languageCode)
+{
+    QSettings().setValue(key(kLanguageKey), languageCode);
 }
 
 // -----------------------------------------------------------------------------

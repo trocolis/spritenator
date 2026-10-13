@@ -27,3 +27,22 @@ add_subdirectory(core)
 add_subdirectory(io)
 add_subdirectory(gui)
 add_subdirectory(app)
+
+# -----------------------------------------------------------------------------
+# Traduções da interface (Qt Linguist).
+#
+#   - O alvo "update_translations" roda o lupdate sobre o código de todas as
+#     camadas e atualiza os arquivos .ts em translations/ (edite-os com o
+#     Qt Linguist ou um editor de texto).
+#   - A cada build o lrelease compila os .ts em .qm, embutidos na biblioteca
+#     da GUI sob o prefixo ":/i18n" (ver gui/Translations.cpp).
+#
+# Para um novo idioma, acrescente "translations/spritenator_<código>.ts".
+# -----------------------------------------------------------------------------
+qt_add_translations(
+    TARGETS spritenator_gui
+    SOURCE_TARGETS spritenator_core spritenator_io spritenator_gui
+    TS_FILES "${PROJECT_SOURCE_DIR}/translations/spritenator_pt_BR.ts"
+    RESOURCE_PREFIX "/i18n"
+    LUPDATE_OPTIONS -no-obsolete -locations none
+)

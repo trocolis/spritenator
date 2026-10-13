@@ -86,6 +86,8 @@ recente, seja um traço na área de desenho ou uma célula gravada no canvas.
 | Novo formato de paleta | `io/PaletteFile` (`parse`/`encode`). |
 | Novo comando de menu | `ActionId` + `ActionCatalog` + conexão na `MainWindow`. |
 | Trocar ícones | Substituir os PNGs em `resources/icons` (mesmos nomes). |
+| Novo idioma | `translations/spritenator_<idioma>.ts` em `TS_FILES` (`src/CMakeLists.txt`), `update_translations`, traduzir; opcionalmente `resources/help/manual_<idioma>.html`. |
+| Novo texto na interface | Sempre via `tr()` (ou `QCoreApplication::translate` com contexto literal fora de QObject); depois `update_translations`. |
 
 ## 5. Testes
 

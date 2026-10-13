@@ -1,0 +1,153 @@
+<!--
+  Manual do usuário do Spritenator em português do Brasil (exibido pela
+  HelpWindow, tecla F1, quando a interface está em português).
+  Os marcadores {{VERSION}} e {{SHORTCUTS}} são substituídos em tempo de
+  execução: a tabela de atalhos é gerada a partir das ações reais.
+  Mantenha este arquivo sincronizado com manual.html (original em inglês).
+-->
+<html>
+<head><meta charset="utf-8"><title>Ajuda do Spritenator</title></head>
+<body>
+
+<h1><img src=":/icons/app_icon.png" width="32" height="32"> Spritenator {{VERSION}}</h1>
+<p>O Spritenator é um editor de sprites com cores indexadas, uma recriação
+multiplataforma do <i>Character Maker 1999</i>, de Yoji Ojima. Foi pensado para
+charsets e chipsets do RPG Maker, mas serve para qualquer pixel art de 16 ou 256
+cores.</p>
+
+<h2>Conteúdo</h2>
+<ol>
+  <li><a href="#workflow">O fluxo de trabalho básico</a></li>
+  <li><a href="#screen">A tela</a></li>
+  <li><a href="#tools">Ferramentas de desenho e tons</a></li>
+  <li><a href="#transforms">Transformações</a></li>
+  <li><a href="#palette">Paleta, máscara e transparência</a></li>
+  <li><a href="#animation">Prévia de animação</a></li>
+  <li><a href="#files">Arquivos e backups</a></li>
+  <li><a href="#sizes">Tamanhos comuns do RPG Maker</a></li>
+  <li><a href="#shortcuts">Atalhos de teclado</a></li>
+</ol>
+
+<h2 id="workflow">1. O fluxo de trabalho básico</h2>
+<p>A imagem (o <b>canvas</b>) é dividida em <b>células</b> do tamanho de um quadro
+de personagem, 24&times;32 pixels por padrão (<i>Exibir &gt; Tamanho do
+personagem</i>). Você edita uma célula por vez, ampliada, na <b>área de
+desenho</b>:</p>
+<ul>
+  <li><b>Botão direito</b> numa célula do canvas: traz a célula para a área de desenho.</li>
+  <li>Desenhe na área de desenho.</li>
+  <li><b>Botão esquerdo</b> numa célula do canvas: grava nela o conteúdo da área de desenho.</li>
+</ul>
+<p>Com o foco no canvas, as <b>setas do teclado</b> passam para a célula vizinha e
+a trazem para a área de desenho. <b>Transferir tudo</b> (F3) traz o canvas inteiro
+para a área de desenho. A área de desenho é compartilhada por todas as imagens
+abertas, então você pode copiar quadros de uma imagem para outra.</p>
+
+<h2 id="screen">2. A tela</h2>
+<ul>
+  <li>O <b>Integrator</b> (o painel de ferramentas) reúne a paleta, os controles de
+      cor, as ferramentas, a prévia em tamanho real, a área de desenho e os botões
+      de transformação. <i>Janela &gt; Inverter lados</i> o passa para o outro lado.</li>
+  <li>As <b>janelas de canvas</b> mostram cada imagem aberta. Uma moldura dupla
+      acompanha o mouse e indica a célula que um clique vai ler ou gravar.</li>
+  <li>A <b>barra de status</b> mostra a posição do mouse no canvas ou na área de
+      desenho.</li>
+</ul>
+<p>Na paleta, o <b>botão esquerdo</b> escolhe a cor de desenho e o <b>botão
+direito</b>, a cor de fundo. Os controles R, G e B editam a cor de desenho;
+arrastar um controle gera um único passo de desfazer.</p>
+
+<h2 id="tools">3. Ferramentas de desenho e tons</h2>
+<table cellpadding="3">
+<tr><td><img src=":/icons/tool_select.png"></td><td>Seleciona um retângulo. Um clique simples remove a seleção.</td></tr>
+<tr><td><img src=":/icons/tool_zoom.png"></td><td>Lupa: o botão esquerdo amplia e o direito reduz.</td></tr>
+<tr><td><img src=":/icons/tool_fill.png"></td><td>Preenche a área vizinha da mesma cor.</td></tr>
+<tr><td><img src=":/icons/tool_pen_thin.png"> <img src=":/icons/tool_pen_thick.png"></td><td>Lápis fino (1 px) e grosso (3 px).</td></tr>
+<tr><td><img src=":/icons/tool_line.png"></td><td>Reta.</td></tr>
+<tr><td><img src=":/icons/tool_rect.png"> <img src=":/icons/tool_round_rect.png"> <img src=":/icons/tool_ellipse.png"></td><td>Contorno de retângulo, retângulo arredondado e elipse.</td></tr>
+<tr><td><img src=":/icons/tool_rect_filled.png"> <img src=":/icons/tool_round_rect_filled.png"> <img src=":/icons/tool_ellipse_filled.png"></td><td>As mesmas figuras, preenchidas.</td></tr>
+</table>
+<p>Todas as ferramentas desenham com a cor de desenho pelo botão esquerdo e com a
+cor de fundo pelo botão direito. Pressione <b>Esc</b> para cancelar a figura em
+andamento.</p>
+<p>Os <b>tons</b> (A a H) são padrões de retícula. Só os pixels cobertos pelo padrão
+recebem a cor, o que simula tons intermediários. O tom A é sólido. O botão
+<img src=":/icons/tone_shift.png"> desloca a origem do padrão.</p>
+
+<h2 id="transforms">4. Transformações</h2>
+<p>Os botões abaixo da área de desenho agem sobre a seleção ou, se não houver
+seleção, sobre a área de desenho inteira:</p>
+<ul>
+  <li>deslocar um pixel para cima, direita, baixo ou esquerda (o que sai por um
+      lado entra pelo outro);</li>
+  <li>espelhar verticalmente ou horizontalmente;</li>
+  <li><b>simetria</b>: copia a metade de cima ou a esquerda, espelhada, sobre a
+      outra metade;</li>
+  <li>girar 90 graus, girar em qualquer ângulo, e esticar ou encolher.</li>
+</ul>
+<p>Também no menu <i>Editar</i>:</p>
+<ul>
+  <li><b>Preparar sombra</b> transforma todo pixel diferente da cor de fundo na cor
+      de desenho.</li>
+  <li><b>Entrada de texto</b> desenha um texto sem suavização.</li>
+</ul>
+
+<h2 id="palette">5. Paleta, máscara e transparência</h2>
+<ul>
+  <li><b>Efeito de cor transparente</b> (F8): ao gravar a área de desenho no
+      canvas, os pixels da cor de fundo são ignorados.</li>
+  <li><b>Máscara</b>: as cores mascaradas ficam protegidas, e pixels dessas cores
+      nunca são alterados. No <b>modo máscara</b> (F5):
+      <ul>
+        <li>o clique esquerdo numa cor da paleta a marca ou desmarca;</li>
+        <li>o clique direito inverte a máscara;</li>
+        <li>o duplo clique direito a limpa.</li>
+      </ul>
+      A <b>máscara automática</b> (F9) protege todas as cores, exceto a cor de fundo.</li>
+  <li><b>Gradação</b> (Ctrl+D) interpola a paleta entre a cor de desenho e a cor
+      de fundo.</li>
+  <li><b>Editar paleta</b> permite:
+      <ul>
+        <li>trocar cores de lugar mantendo a aparência da imagem;</li>
+        <li>remover as cores não usadas;</li>
+        <li>reduzir as cores a 15 bits, como o RPG Maker 2000 faz internamente.</li>
+      </ul></li>
+  <li><b>Carregar paleta</b> lê arquivos <code>.pal</code> (RIFF ou JASC),
+      <code>.act</code> ou a paleta de uma imagem BMP/PNG. Ela pode manter os
+      índices dos pixels, trocar cada cor pela nova cor mais próxima ou
+      reproduzir as cores por pontilhamento.</li>
+</ul>
+
+<h2 id="animation">6. Prévia de animação</h2>
+<p>Abra com F2:</p>
+<ol>
+  <li>Clique com o botão direito numa célula do canvas para trazê-la à área de
+      desenho.</li>
+  <li>Pressione <b>Adicionar célula</b> para adicioná-la como quadro, ou <b>Ciclo
+      de caminhada</b> para adicionar a sequência de caminhada do RPG Maker
+      (quadros 1-2-3-2) da direção dessa célula.</li>
+</ol>
+<p>A prévia mostra o canvas atual, então as suas edições aparecem na hora.</p>
+
+<h2 id="files">7. Arquivos e backups</h2>
+<p>As imagens são abertas e salvas como PNG ou BMP indexados. Imagens de 16 cores
+são gravadas como BMP de 4 bits. Também é possível arrastar arquivos para a
+janela para abri-los.</p>
+<p>Com uma <b>pasta de backup</b> definida (<i>Arquivo &gt; Definir pasta de
+backup</i>), a versão anterior do arquivo é copiada para lá sempre que ele é
+sobrescrito.</p>
+<p>O idioma da interface pode ser escolhido em <i>Exibir &gt; Idioma</i>.</p>
+
+<h2 id="sizes">8. Tamanhos comuns do RPG Maker</h2>
+<table border="1" cellspacing="0" cellpadding="4">
+<tr><th>Uso</th><th>Canvas</th><th>Célula</th></tr>
+<tr><td>Um personagem</td><td>72 &times; 128</td><td>24 &times; 32</td></tr>
+<tr><td>Folha completa de personagens</td><td>288 &times; 256</td><td>24 &times; 32</td></tr>
+<tr><td>Chipset</td><td>480 &times; 256</td><td>16 &times; 16</td></tr>
+</table>
+
+<h2 id="shortcuts">9. Atalhos de teclado</h2>
+{{SHORTCUTS}}
+
+</body>
+</html>

@@ -122,6 +122,8 @@ private:
     void clearCanvas();
 
     // --- Exibir ---
+    /// Cria o submenu Exibir > Idioma (sistema, inglês e traduções embutidas).
+    void createLanguageMenu(QMenu* viewMenu);
     void showAnimationWindow();
     void editCharacterSize();
     /// Aplica a grade de personagens a todas as janelas de canvas abertas.

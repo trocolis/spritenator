@@ -48,6 +48,10 @@ public:
     [[nodiscard]] core::CharacterLayout characterLayout() const;
     void setCharacterLayout(const core::CharacterLayout& layout);
 
+    // --- Idioma da interface ("pt_BR", "en"...; vazio = idioma do sistema) ---
+    [[nodiscard]] QString language() const;
+    void setLanguage(const QString& languageCode);
+
     // --- Preferências de exibição ---
     [[nodiscard]] ViewSettings viewSettings() const;
     void setViewSettings(const ViewSettings& settings);

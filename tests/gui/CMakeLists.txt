@@ -25,3 +25,10 @@ spritenator_add_test(test_main_window
 spritenator_add_test(test_app_settings
     SOURCES AppSettingsTest.cpp
     LIBRARIES Spritenator::Gui)
+
+spritenator_add_test(test_translation
+    SOURCES TranslationTest.cpp
+    LIBRARIES Spritenator::Gui)
+# Pasta dos .ts, para o teste verificar a integridade das traduções.
+target_compile_definitions(test_translation PRIVATE
+    SPRITENATOR_TRANSLATIONS_DIR="${PROJECT_SOURCE_DIR}/translations")

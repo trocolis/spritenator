@@ -32,7 +32,8 @@ Requisitos:
 
 - CMake ≥ 3.21
 - Compilador com suporte a C++20 (GCC ≥ 11, Clang ≥ 14 ou MSVC 2022)
-- Qt ≥ 6.2 (módulos Core, Gui, Widgets e Test)
+- Qt ≥ 6.7 (módulos Core, Gui, Widgets, Test e LinguistTools; no Arch Linux, `qt6-base` e `qt6-tools`)
+- Opcional: as traduções do próprio Qt (`qt6-translations`), para os diálogos padrão em português
 
 ```sh
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
@@ -65,9 +66,10 @@ src/
   app/    ponto de entrada (main) e recursos do executável
 resources/
   icons/  ícones (PNG) embutidos no executável
-  help/   manual do usuário (HTML) embutido
+  help/   manual do usuário (HTML) embutido, em inglês e português
   linux/  atalho .desktop
 tests/    testes automatizados (Qt Test + CTest), por camada
+translations/ traduções da interface (.ts do Qt Linguist)
 tools/    scripts auxiliares (ex.: extração de ícones)
 docs/     documentação técnica (ver ARCHITECTURE.md)
 original/ artefatos extraídos da aplicação original, usados como referência
@@ -83,7 +85,19 @@ A arquitetura, os padrões de projeto e o fluxo de dados estão descritos em
 - Formatação definida em [`.clang-format`](.clang-format).
 - Versionamento semântico `X.Y.Z`. A versão é definida **apenas** em `project(VERSION ...)` no `CMakeLists.txt` raiz e gerada em `spritenator/Version.h`. Cada versão recebe uma tag git `vX.Y.Z`.
 - Mensagens de commit no padrão *Conventional Commits* (`feat:`, `fix:`, `docs:`, `chore:`...).
-- Textos da interface em inglês, passando por `tr()`, prontos para tradução.
+- Textos da interface escritos em inglês no código, sempre via `tr()`/`QCoreApplication::translate()`. As traduções ficam em `translations/` (veja abaixo).
+
+## Traduções
+
+A interface está disponível em **português do Brasil** e em inglês, o idioma
+original. Por padrão o programa segue o idioma do sistema; para mudar, use
+*Exibir > Idioma*, que vale a partir da próxima execução.
+
+- As traduções ficam em `translations/spritenator_<idioma>.ts` e podem ser editadas no Qt Linguist ou num editor de texto.
+- A cada build, o `lrelease` compila os `.ts` em `.qm`, que vão embutidos no executável.
+- Depois de alterar textos no código, rode `cmake --build build --target update_translations` para atualizar os `.ts`.
+- Para um novo idioma, acrescente o `.ts` em `TS_FILES` (`src/CMakeLists.txt`) e, se quiser, o manual `resources/help/manual_<idioma>.html`.
+- O teste `test_translation` verifica se as traduções estão completas e se preservam os marcadores (`%1`, `%n`), os aceleradores (`&`) e as quebras de linha. Ele também garante que nenhum menu traduzido tem letras de atalho repetidas.
 
 ## Ícones
 

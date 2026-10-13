@@ -9,6 +9,7 @@
 
 #include <QAction>
 #include <QFile>
+#include <QLocale>
 #include <QTextBrowser>
 #include <QVBoxLayout>
 
@@ -22,6 +23,21 @@ constexpr auto kManualResource = ":/help/manual.html";
 /// Marcadores substituídos no HTML do manual.
 constexpr auto kVersionMarker = "{{VERSION}}";
 constexpr auto kShortcutsMarker = "{{SHORTCUTS}}";
+
+/// Manual no idioma da interface: tenta "manual_pt_BR.html", depois
+/// "manual_pt.html" e, por fim, o manual original em inglês.
+QString manualResourcePath()
+{
+    const QString name = QLocale().name(); // localidade padrão (ver Translations)
+    const QString base = QString::fromLatin1(kManualResource).chopped(5); // sem ".html"
+    for (const QString& candidate : { name, name.section(QLatin1Char('_'), 0, 0) }) {
+        const QString path = base + QLatin1Char('_') + candidate + QStringLiteral(".html");
+        if (QFile::exists(path)) {
+            return path;
+        }
+    }
+    return QString::fromLatin1(kManualResource);
+}
 
 /// Texto da ação sem o "&" dos aceleradores de menu.
 QString plainText(const QAction* action)
@@ -49,7 +65,7 @@ HelpWindow::HelpWindow(const ActionCatalog* actions, QWidget* parent)
 
 QString HelpWindow::buildHtml(const ActionCatalog* actions)
 {
-    QFile file(QString::fromLatin1(kManualResource));
+    QFile file(manualResourcePath());
     QString html = file.open(QIODevice::ReadOnly) ? QString::fromUtf8(file.readAll())
                                                   : tr("<p>The manual could not be loaded.</p>");
 

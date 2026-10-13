@@ -35,6 +35,8 @@ add_library(spritenator_gui STATIC
     IntegratorPanel.h
     MainWindow.cpp
     MainWindow.h
+    Translations.cpp
+    Translations.h
     commands/ImageCommands.cpp
     commands/ImageCommands.h
     dialogs/BackupFolderDialog.cpp
@@ -102,9 +104,12 @@ qt_add_resources(spritenator_gui "spritenator_icons"
     FILES ${SPRITENATOR_ICON_FILES}
 )
 
-# Manual do usuário exibido pela HelpWindow (F1).
+# Manual do usuário exibido pela HelpWindow (F1): original em inglês e
+# traduções "manual_<idioma>.html", escolhidas conforme o idioma da interface.
 qt_add_resources(spritenator_gui "spritenator_help"
     PREFIX "/help"
     BASE "${PROJECT_SOURCE_DIR}/resources/help"
-    FILES "${PROJECT_SOURCE_DIR}/resources/help/manual.html"
+    FILES
+        "${PROJECT_SOURCE_DIR}/resources/help/manual.html"
+        "${PROJECT_SOURCE_DIR}/resources/help/manual_pt_BR.html"
 )

@@ -10,7 +10,7 @@ cmake_minimum_required(VERSION 3.21)
 # para o empacotamento (CPack). Sempre que uma etapa é concluída, este número
 # é incrementado seguindo o versionamento semântico (MAJOR.MINOR.PATCH).
 project(Spritenator
-    VERSION 1.0.0
+    VERSION 1.1.0
     DESCRIPTION "Editor de sprites com cores indexadas inspirado no Character Maker 1999"
     LANGUAGES CXX)
 
@@ -40,10 +40,11 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(CompilerWarnings)
 
 # -----------------------------------------------------------------------------
-# Dependências: apenas o Qt 6 (Core, Gui e Widgets). O módulo "core" do
-# projeto propositalmente NÃO depende do Qt.
+# Dependências: apenas o Qt 6 (Core, Gui, Widgets e as ferramentas de
+# tradução LinguistTools). O módulo "core" do projeto propositalmente NÃO
+# depende do Qt. A versão 6.7 é a mínima para a API qt_add_translations(TARGETS).
 # -----------------------------------------------------------------------------
-find_package(Qt6 6.2 REQUIRED COMPONENTS Core Gui Widgets)
+find_package(Qt6 6.7 REQUIRED COMPONENTS Core Gui Widgets LinguistTools)
 qt_standard_project_setup()
 
 add_subdirectory(src)

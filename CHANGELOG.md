@@ -5,6 +5,27 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [1.1.0] - 2026-10-13
+
+### Adicionado
+- Interface traduzida para **português do Brasil**: menus, dicas, diálogos, ferramentas, nomes das operações de desfazer e mensagens de erro (332 textos).
+- Manual de ajuda em português (`manual_pt_BR.html`), escolhido automaticamente conforme o idioma.
+- Traduções do próprio Qt carregadas para os diálogos padrão (botões, seletor de arquivos, nomes de teclas).
+- Exibir > Idioma: padrão do sistema, inglês ou português (vale na próxima execução).
+- Infraestrutura do Qt Linguist:
+  - `qt_add_translations` com o alvo `update_translations` (lupdate);
+  - os `.qm` são compilados e embutidos no executável.
+- `gui/Translations`: carregamento dos tradutores e da localidade padrão.
+- Teste `test_translation`:
+  - tradução aplicada em todas as camadas;
+  - `.ts` completo, com marcadores, aceleradores, quebras de linha e espaços preservados;
+  - aceleradores únicos em cada menu;
+  - manual em português.
+
+### Alterado
+- A versão mínima do Qt passou a ser 6.7 (API `qt_add_translations(TARGETS)`), e o módulo LinguistTools passou a ser necessário.
+- Os textos da camada `io` agora usam `QCoreApplication::translate` com contexto explícito, para que o lupdate os encontre.
+
 ## [1.0.0] - 2026-10-13
 
 Primeira versão estável. Reúne todas as funcionalidades do Character Maker 1999

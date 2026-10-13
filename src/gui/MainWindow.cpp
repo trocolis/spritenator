@@ -14,6 +14,7 @@
 #include "HelpWindow.h"
 #include "IconProvider.h"
 #include "IntegratorPanel.h"
+#include "Translations.h"
 #include "commands/ImageCommands.h"
 #include "core/PaletteOps.h"
 #include "core/Transform.h"
@@ -197,6 +198,8 @@ void MainWindow::createMenus()
     viewMenu->addActions(m_actions->zoomGroup()->actions());
     viewMenu->addSeparator();
     viewMenu->addAction(action(ActionId::ViewAnimation));
+    viewMenu->addSeparator();
+    createLanguageMenu(viewMenu);
 
     QMenu* canvasMenu = menuBar()->addMenu(tr("&Canvas"));
     canvasMenu->addAction(action(ActionId::CanvasResize));
@@ -940,6 +943,50 @@ void MainWindow::clearCanvas()
     if (cleared != document->canvas()) {
         document->undoStack()->push(
             new ReplaceImageCommand(document, document->canvas(), cleared, tr("Clear All")));
+    }
+}
+
+// -----------------------------------------------------------------------------
+// Exibir > Idioma
+// -----------------------------------------------------------------------------
+void MainWindow::createLanguageMenu(QMenu* viewMenu)
+{
+    QMenu* languageMenu = viewMenu->addMenu(tr("&Language"));
+    auto* group = new QActionGroup(languageMenu);
+    group->setExclusive(true);
+
+    // Código vazio = idioma do sistema; "en" = inglês original; demais =
+    // traduções embutidas, exibidas no próprio idioma ("português (Brasil)").
+    QList<QPair<QString, QString>> entries = {
+        { QString(), tr("System Default") },
+        { QStringLiteral("en"), QStringLiteral("English") },
+    };
+    for (const QString& code : Translations::availableLanguages()) {
+        const QLocale locale(code);
+        QString name = locale.nativeLanguageName();
+        if (locale.territory() != QLocale::AnyTerritory) {
+            name += QStringLiteral(" (%1)").arg(locale.nativeTerritoryName());
+        }
+        name[0] = name[0].toUpper();
+        entries.append({ code, name });
+    }
+
+    const QString current = m_settings.language();
+    for (const auto& [code, name] : entries) {
+        QAction* languageAction = languageMenu->addAction(name);
+        languageAction->setCheckable(true);
+        languageAction->setChecked(code == current);
+        group->addAction(languageAction);
+        connect(languageAction, &QAction::triggered, this, [this, code] {
+            if (code == m_settings.language()) {
+                return;
+            }
+            m_settings.setLanguage(code);
+            // Os textos são traduzidos ao criar os widgets: a troca vale na
+            // próxima execução (evita reconstruir toda a interface).
+            QMessageBox::information(this, tr("Language"),
+                tr("The new language will be used the next time Spritenator starts."));
+        });
     }
 }
 
