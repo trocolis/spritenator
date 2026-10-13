@@ -30,9 +30,9 @@ struct Fixture {
     /// Pinta um pixel diretamente (sem passar por ferramentas).
     void setPixel(core::Point point, int color)
     {
-        core::IndexedImage canvas = document->indexedCanvas();
-        canvas.setPixel(point, static_cast<core::ColorIndex>(color));
-        document->applyCanvas(canvas);
+        // Região de 1x1 pixel: não copia a imagem inteira.
+        document->applyCanvasRegion(
+            point, core::IndexedImage({ 1, 1 }, static_cast<core::ColorIndex>(color)));
     }
 
     [[nodiscard]] int pixel(int x, int y) const { return document->indexedCanvas().pixel(x, y); }

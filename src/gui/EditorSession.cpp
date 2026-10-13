@@ -54,9 +54,9 @@ void EditorSession::setActiveDocument(Document* document)
     if (document == m_activeDocument) {
         return;
     }
-    if (m_activeDocument) {
-        m_activeDocument->cancelEdit(); // não deixa um traço pela metade
-        disconnect(m_activeDocument, nullptr, this, nullptr);
+    if (Document* previous = activeDocument()) {
+        previous->cancelEdit(); // não deixa um traço pela metade
+        disconnect(previous, nullptr, this, nullptr);
     }
     m_activeDocument = document;
     if (document != nullptr) {
@@ -77,7 +77,10 @@ void EditorSession::setActiveDocument(Document* document)
 
 core::ColorMode EditorSession::colorMode() const
 {
-    return m_activeDocument ? m_activeDocument->colorMode() : core::ColorMode::Indexed;
+    // Lê o QPointer uma única vez: duas leituras (teste + "->") fazem o GCC
+    // acusar uma possível desreferência nula (-Wnull-dereference).
+    const Document* document = activeDocument();
+    return document != nullptr ? document->colorMode() : core::ColorMode::Indexed;
 }
 
 void EditorSession::syncColorMode()
@@ -90,7 +93,8 @@ void EditorSession::syncColorMode()
 
 const core::Palette& EditorSession::palette() const
 {
-    return m_activeDocument ? m_activeDocument->palette() : m_defaultPalette;
+    const Document* document = activeDocument(); // uma leitura (ver colorMode)
+    return document != nullptr ? document->palette() : m_defaultPalette;
 }
 
 void EditorSession::syncPalette()
