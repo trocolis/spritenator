@@ -11,7 +11,7 @@
 // =============================================================================
 #pragma once
 
-#include "core/IndexedImage.h"
+#include "core/Image.h"
 #include "core/Palette.h"
 
 #include <QString>

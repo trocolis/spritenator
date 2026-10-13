@@ -8,7 +8,7 @@
 // =============================================================================
 #pragma once
 
-#include "IndexedImage.h"
+#include "Image.h"
 #include "Palette.h"
 
 #include <array>

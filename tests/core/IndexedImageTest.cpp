@@ -1,7 +1,7 @@
 // =============================================================================
 // IndexedImageTest.cpp — testes de IndexedImage e WriteRules.
 // =============================================================================
-#include "core/IndexedImage.h"
+#include "core/Image.h"
 
 #include <QTest>
 

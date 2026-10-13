@@ -50,6 +50,40 @@ struct Rgb {
     }
 };
 
+/// Cor RGBA com 8 bits por canal: o pixel das imagens em cores reais.
+/// alpha = 0 é totalmente transparente; 255, totalmente opaco.
+struct Rgba {
+    std::uint8_t red = 0;
+    std::uint8_t green = 0;
+    std::uint8_t blue = 0;
+    std::uint8_t alpha = 0; ///< o valor padrão {} é "transparente"
+
+    friend constexpr bool operator==(const Rgba&, const Rgba&) = default;
+
+    /// Cor opaca a partir de um Rgb.
+    [[nodiscard]] static constexpr Rgba opaque(const Rgb& color)
+    {
+        return { color.red, color.green, color.blue, 255 };
+    }
+
+    /// Componentes de cor, sem o alfa.
+    [[nodiscard]] constexpr Rgb rgb() const { return { red, green, blue }; }
+
+    /// Empacota no formato 0xAARRGGBB (o mesmo do QRgb do Qt).
+    [[nodiscard]] constexpr std::uint32_t toArgb32() const
+    {
+        return (static_cast<std::uint32_t>(alpha) << 24U) | rgb().toPacked();
+    }
+
+    /// Cria a partir do formato 0xAARRGGBB.
+    [[nodiscard]] static constexpr Rgba fromArgb32(std::uint32_t argb)
+    {
+        const Rgb color = Rgb::fromPacked(argb);
+        return { color.red, color.green, color.blue,
+            static_cast<std::uint8_t>((argb >> 24U) & 0xFFU) };
+    }
+};
+
 /// Distância euclidiana ao quadrado entre duas cores, com pesos aproximando a
 /// sensibilidade do olho humano (verde > vermelho > azul). Usada para
 /// encontrar a cor mais próxima na paleta. O quadrado evita a raiz.

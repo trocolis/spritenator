@@ -29,9 +29,10 @@ Cada camada depende apenas das camadas abaixo dela.
 
 | Classe | Papel |
 |---|---|
-| `core::IndexedImage` | Matriz de índices de cor (1 byte por pixel). |
+| `core::Image<Pixel>` | Matriz 2D genérica de pixels. `IndexedImage = Image<ColorIndex>` (1 byte, índice da paleta) e `RgbaImage = Image<Rgba>` (4 bytes, cor real com alfa). Algoritmos e transformações são escritos uma vez só para os dois tipos. |
 | `core::Palette` | 16 ou 256 cores RGB. |
-| `core::WriteRules` | Regras de escrita: cor transparente na origem e máscara de cores protegidas no destino. |
+| `core::WriteRulesFor<Pixel>` | Regras de escrita. Indexada: cor transparente na origem e máscara de cores protegidas no destino. RGBA: ignora pixels de origem com alfa 0. |
+| `core::ColorConversion` | Conversões indexada → RGBA (exata) e RGBA → indexada (cor mais próxima ou Floyd–Steinberg; quase transparente → índice 0). |
 | `core::CharacterLayout` | Grade de células de personagem (tamanho, sub-grade, meia célula). |
 | `gui::Document` | Canvas + paleta + caminho + `QUndoStack` próprio. |
 | `gui::DrawBuffer` | Buffer da área de desenho, compartilhado entre documentos, com `QUndoStack` próprio. |

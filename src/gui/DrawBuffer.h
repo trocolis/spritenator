@@ -19,7 +19,7 @@
 
 #include "ImageTarget.h"
 #include "commands/UndoLabel.h"
-#include "core/IndexedImage.h"
+#include "core/Image.h"
 #include "core/Palette.h"
 
 #include <QImage>

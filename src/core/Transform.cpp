@@ -21,10 +21,10 @@ int wrap(int value, int modulus)
 /// para cada (x, y) do resultado, "sourceOf" informa de onde ler. Pontos de
 /// origem fora da imagem recebem "fill". O mapeamento inverso garante que
 /// nenhum pixel de destino fique sem valor (sem "buracos").
-template <typename SourceOf>
-IndexedImage remapPixels(const IndexedImage& image, ColorIndex fill, SourceOf&& sourceOf)
+template <typename Pixel, typename SourceOf>
+Image<Pixel> remapPixels(const Image<Pixel>& image, Pixel fill, SourceOf&& sourceOf)
 {
-    IndexedImage result(image.size(), fill);
+    Image<Pixel> result(image.size(), fill);
     for (int y = 0; y < image.height(); ++y) {
         for (int x = 0; x < image.width(); ++x) {
             const Point source = sourceOf(x, y);
@@ -38,47 +38,50 @@ IndexedImage remapPixels(const IndexedImage& image, ColorIndex fill, SourceOf&& 
 
 } // namespace
 
-IndexedImage shifted(const IndexedImage& image, int dx, int dy)
+template <typename Pixel> Image<Pixel> shifted(const Image<Pixel>& image, int dx, int dy)
 {
     if (image.isEmpty()) {
         return image;
     }
-    return remapPixels(image, 0, [&](int x, int y) {
+    return remapPixels(image, Pixel { }, [&](int x, int y) {
         return Point { wrap(x - dx, image.width()), wrap(y - dy, image.height()) };
     });
 }
 
-IndexedImage flippedHorizontally(const IndexedImage& image)
+template <typename Pixel> Image<Pixel> flippedHorizontally(const Image<Pixel>& image)
 {
-    return remapPixels(image, 0, [&](int x, int y) { return Point { image.width() - 1 - x, y }; });
+    return remapPixels(
+        image, Pixel { }, [&](int x, int y) { return Point { image.width() - 1 - x, y }; });
 }
 
-IndexedImage flippedVertically(const IndexedImage& image)
+template <typename Pixel> Image<Pixel> flippedVertically(const Image<Pixel>& image)
 {
-    return remapPixels(image, 0, [&](int x, int y) { return Point { x, image.height() - 1 - y }; });
+    return remapPixels(
+        image, Pixel { }, [&](int x, int y) { return Point { x, image.height() - 1 - y }; });
 }
 
-IndexedImage mirroredHorizontally(const IndexedImage& image)
+template <typename Pixel> Image<Pixel> mirroredHorizontally(const Image<Pixel>& image)
 {
     // Colunas da metade direita leem a coluna espelhada da metade esquerda.
     // Com largura ímpar, a coluna central é mantida.
     const int half = image.width() / 2;
-    return remapPixels(image, 0, [&](int x, int y) {
+    return remapPixels(image, Pixel { }, [&](int x, int y) {
         const bool rightHalf = x >= image.width() - half;
         return Point { rightHalf ? image.width() - 1 - x : x, y };
     });
 }
 
-IndexedImage mirroredVertically(const IndexedImage& image)
+template <typename Pixel> Image<Pixel> mirroredVertically(const Image<Pixel>& image)
 {
     const int half = image.height() / 2;
-    return remapPixels(image, 0, [&](int x, int y) {
+    return remapPixels(image, Pixel { }, [&](int x, int y) {
         const bool bottomHalf = y >= image.height() - half;
         return Point { x, bottomHalf ? image.height() - 1 - y : y };
     });
 }
 
-IndexedImage rotated90(const IndexedImage& image, bool clockwise, ColorIndex fill)
+template <typename Pixel>
+Image<Pixel> rotated90(const Image<Pixel>& image, bool clockwise, std::type_identity_t<Pixel> fill)
 {
     // Rotação exata em torno do centro. Trabalhamos em coordenadas dobradas
     // (2x) para que centros "entre pixels" (tamanhos pares) sejam inteiros.
@@ -99,7 +102,8 @@ IndexedImage rotated90(const IndexedImage& image, bool clockwise, ColorIndex fil
     });
 }
 
-IndexedImage rotated(const IndexedImage& image, double degrees, ColorIndex fill)
+template <typename Pixel>
+Image<Pixel> rotated(const Image<Pixel>& image, double degrees, std::type_identity_t<Pixel> fill)
 {
     const double radians = degrees * std::numbers::pi / 180.0;
     const double cosine = std::cos(radians);
@@ -117,9 +121,9 @@ IndexedImage rotated(const IndexedImage& image, double degrees, ColorIndex fill)
     });
 }
 
-IndexedImage scaled(const IndexedImage& image, Size newSize)
+template <typename Pixel> Image<Pixel> scaled(const Image<Pixel>& image, Size newSize)
 {
-    IndexedImage result(newSize);
+    Image<Pixel> result(newSize);
     for (int y = 0; y < newSize.height; ++y) {
         // Amostra no centro de cada pixel de destino, evitando o viés que
         // descartaria sempre a última linha/coluna ao reduzir.
@@ -144,5 +148,36 @@ IndexedImage shadowed(const IndexedImage& image, ColorIndex background, ColorInd
     }
     return result;
 }
+
+RgbaImage shadowed(const RgbaImage& image, const Rgba& shadow)
+{
+    RgbaImage result = image;
+    for (Rgba& value : result.data()) {
+        if (value.alpha != 0) {
+            value = { shadow.red, shadow.green, shadow.blue, value.alpha };
+        }
+    }
+    return result;
+}
+
+// -----------------------------------------------------------------------------
+// Instanciação explícita para os dois tipos de pixel do editor. Mantém as
+// implementações fora do cabeçalho (compilação mais rápida) e garante que
+// todas as transformações existam para imagens indexadas e RGBA.
+// -----------------------------------------------------------------------------
+#define SPRITENATOR_INSTANTIATE_TRANSFORMS(Pixel)                                                  \
+    template Image<Pixel> shifted(const Image<Pixel>&, int, int);                                  \
+    template Image<Pixel> flippedHorizontally(const Image<Pixel>&);                                \
+    template Image<Pixel> flippedVertically(const Image<Pixel>&);                                  \
+    template Image<Pixel> mirroredHorizontally(const Image<Pixel>&);                               \
+    template Image<Pixel> mirroredVertically(const Image<Pixel>&);                                 \
+    template Image<Pixel> rotated90(const Image<Pixel>&, bool, std::type_identity_t<Pixel>);       \
+    template Image<Pixel> rotated(const Image<Pixel>&, double, std::type_identity_t<Pixel>);       \
+    template Image<Pixel> scaled(const Image<Pixel>&, Size);
+
+SPRITENATOR_INSTANTIATE_TRANSFORMS(ColorIndex)
+SPRITENATOR_INSTANTIATE_TRANSFORMS(Rgba)
+
+#undef SPRITENATOR_INSTANTIATE_TRANSFORMS
 
 } // namespace spritenator::core

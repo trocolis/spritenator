@@ -5,6 +5,22 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [1.4.0] - 2026-10-13
+
+### Adicionado
+- Núcleo genérico pelo tipo de pixel, preparando as imagens RGBA:
+  - `Image<Pixel>`, com `IndexedImage = Image<ColorIndex>` e `RgbaImage = Image<Rgba>`;
+  - tipo `Rgba` (8 bits por canal, alfa 0 = transparente);
+  - `WriteRulesFor<Pixel>`: em RGBA, o efeito transparente ignora pixels com alfa 0;
+  - balde (`floodRegion`) e todas as transformações valem para os dois tipos, com instanciação explícita;
+  - sombra RGBA, que mantém o alfa original.
+- `core/ColorConversion`: indexada → RGBA (exata) e RGBA → indexada (cor mais próxima ou pontilhamento; pixels quase transparentes viram o índice 0).
+- `core/Dithering`: Floyd–Steinberg e cor mais próxima genéricos, compartilhados por `PaletteOps` e pelas conversões.
+- Testes de imagens RGBA e das conversões.
+
+### Alterado
+- `IndexedImage.h/.cpp` foram substituídos por `Image.h` (template, apenas cabeçalho). Nenhuma mudança visível na interface.
+
 ## [1.3.0] - 2026-10-13
 
 ### Adicionado

@@ -11,9 +11,11 @@ add_library(spritenator_core STATIC
     Animation.h
     CharacterLayout.h
     Color.h
+    ColorConversion.cpp
+    ColorConversion.h
+    Dithering.h
     Geometry.h
-    IndexedImage.cpp
-    IndexedImage.h
+    Image.h
     Palette.cpp
     Palette.h
     PaletteOps.cpp

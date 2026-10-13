@@ -14,7 +14,7 @@
 #pragma once
 
 #include "core/CharacterLayout.h"
-#include "core/IndexedImage.h"
+#include "core/Image.h"
 #include "core/Palette.h"
 #include "core/Tone.h"
 #include "tools/Tool.h"

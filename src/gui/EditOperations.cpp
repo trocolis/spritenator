@@ -202,17 +202,17 @@ void EditOperations::transform(TransformKind kind)
             [](const auto& image) { return core::shifted(image, -1, 0); });
         break;
     case TransformKind::FlipVertical:
-        applyToWorkArea(UndoLabel { UndoOperation::FlipVertically }, core::flippedVertically);
+        applyToWorkArea(UndoLabel { UndoOperation::FlipVertically }, core::flippedVertically<core::ColorIndex>);
         break;
     case TransformKind::FlipHorizontal:
-        applyToWorkArea(UndoLabel { UndoOperation::FlipHorizontally }, core::flippedHorizontally);
+        applyToWorkArea(UndoLabel { UndoOperation::FlipHorizontally }, core::flippedHorizontally<core::ColorIndex>);
         break;
     case TransformKind::MirrorVertical:
-        applyToWorkArea(UndoLabel { UndoOperation::VerticalSymmetry }, core::mirroredVertically);
+        applyToWorkArea(UndoLabel { UndoOperation::VerticalSymmetry }, core::mirroredVertically<core::ColorIndex>);
         break;
     case TransformKind::MirrorHorizontal:
         applyToWorkArea(
-            UndoLabel { UndoOperation::HorizontalSymmetry }, core::mirroredHorizontally);
+            UndoLabel { UndoOperation::HorizontalSymmetry }, core::mirroredHorizontally<core::ColorIndex>);
         break;
     case TransformKind::RotateClockwise:
         applyToWorkArea(UndoLabel { UndoOperation::RotateRight },

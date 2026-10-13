@@ -2,7 +2,7 @@
 // RasterTest.cpp — testes dos algoritmos de rasterização.
 // =============================================================================
 #include "core/Raster.h"
-#include "core/IndexedImage.h"
+#include "core/Image.h"
 #include "core/Tone.h"
 
 #include <QTest>

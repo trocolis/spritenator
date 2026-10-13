@@ -10,7 +10,7 @@
 #include "AppSettings.h"
 #include "commands/UndoLabel.h"
 #include "core/Geometry.h"
-#include "core/IndexedImage.h"
+#include "core/Image.h"
 #include "core/Palette.h"
 
 #include <QMainWindow>

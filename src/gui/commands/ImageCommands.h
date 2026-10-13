@@ -10,7 +10,7 @@
 #pragma once
 
 #include "UndoLabel.h"
-#include "core/IndexedImage.h"
+#include "core/Image.h"
 #include "core/Palette.h"
 
 #include <QUndoCommand>

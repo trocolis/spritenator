@@ -13,13 +13,12 @@
 #pragma once
 
 #include "Geometry.h"
+#include "Image.h"
 
 #include <functional>
 #include <vector>
 
 namespace spritenator::core {
-
-class IndexedImage;
 
 /// Função chamada para cada pixel gerado por um algoritmo de rasterização.
 using Plotter = std::function<void(Point)>;
@@ -46,7 +45,55 @@ void plotRoundRectangle(const Rect& bounds, int cornerSize, bool filled, const P
 
 /// Região de preenchimento por inundação (balde de tinta): todos os pixels
 /// 4-conectados a "seed" com a mesma cor dele. Devolve a lista de pixels;
-/// vazia se "seed" estiver fora da imagem.
-[[nodiscard]] std::vector<Point> floodRegion(const IndexedImage& image, Point seed);
+/// vazia se "seed" estiver fora da imagem. Funciona para qualquer tipo de
+/// pixel (índice ou RGBA): "mesma cor" é igualdade exata do pixel.
+template <typename Pixel>
+[[nodiscard]] std::vector<Point> floodRegion(const Image<Pixel>& image, Point seed)
+{
+    std::vector<Point> region;
+    if (!image.contains(seed)) {
+        return region;
+    }
+    const Pixel target = image.pixel(seed.x, seed.y);
+    const int width = image.width();
+    std::vector<bool> visited(static_cast<std::size_t>(image.size().area()), false);
+    const auto indexOf = [width](int x, int y) {
+        return static_cast<std::size_t>(y) * static_cast<std::size_t>(width)
+            + static_cast<std::size_t>(x);
+    };
+    const auto matches = [&](int x, int y) {
+        return image.contains({ x, y }) && !visited[indexOf(x, y)] && image.pixel(x, y) == target;
+    };
+
+    // Algoritmo por varredura de linhas ("scanline fill"): para cada semente,
+    // expande à esquerda e à direita e empilha as linhas de cima e de baixo.
+    // Evita a recursão profunda (e o estouro de pilha) da versão ingênua.
+    std::vector<Point> stack { seed };
+    while (!stack.empty()) {
+        const Point current = stack.back();
+        stack.pop_back();
+        if (!matches(current.x, current.y)) {
+            continue;
+        }
+        int left = current.x;
+        while (matches(left - 1, current.y)) {
+            --left;
+        }
+        int right = current.x;
+        while (matches(right + 1, current.y)) {
+            ++right;
+        }
+        for (int x = left; x <= right; ++x) {
+            visited[indexOf(x, current.y)] = true;
+            region.push_back({ x, current.y });
+            for (const int neighbourY : { current.y - 1, current.y + 1 }) {
+                if (matches(x, neighbourY)) {
+                    stack.push_back({ x, neighbourY });
+                }
+            }
+        }
+    }
+    return region;
+}
 
 } // namespace spritenator::core

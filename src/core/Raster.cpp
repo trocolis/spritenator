@@ -3,8 +3,6 @@
 // =============================================================================
 #include "Raster.h"
 
-#include "IndexedImage.h"
-
 #include <algorithm>
 #include <cstdlib>
 #include <map>
@@ -232,57 +230,6 @@ void plotRoundRectangle(const Rect& bounds, int cornerSize, bool filled, const P
         outline.push_back({ lastX, y });
     }
     plotConvex(outline, filled, plot);
-}
-
-// -----------------------------------------------------------------------------
-// Preenchimento por inundação
-// -----------------------------------------------------------------------------
-std::vector<Point> floodRegion(const IndexedImage& image, Point seed)
-{
-    std::vector<Point> region;
-    if (!image.contains(seed)) {
-        return region;
-    }
-    const ColorIndex target = image.pixel(seed.x, seed.y);
-    const int width = image.width();
-    std::vector<bool> visited(static_cast<std::size_t>(image.size().area()), false);
-    const auto indexOf = [width](int x, int y) {
-        return static_cast<std::size_t>(y) * static_cast<std::size_t>(width)
-            + static_cast<std::size_t>(x);
-    };
-    const auto matches = [&](int x, int y) {
-        return image.contains({ x, y }) && !visited[indexOf(x, y)] && image.pixel(x, y) == target;
-    };
-
-    // Algoritmo por varredura de linhas ("scanline fill"): para cada semente,
-    // expande à esquerda e à direita e empilha as linhas de cima e de baixo.
-    // Evita a recursão profunda (e o estouro de pilha) da versão ingênua.
-    std::vector<Point> stack { seed };
-    while (!stack.empty()) {
-        const Point current = stack.back();
-        stack.pop_back();
-        if (!matches(current.x, current.y)) {
-            continue;
-        }
-        int left = current.x;
-        while (matches(left - 1, current.y)) {
-            --left;
-        }
-        int right = current.x;
-        while (matches(right + 1, current.y)) {
-            ++right;
-        }
-        for (int x = left; x <= right; ++x) {
-            visited[indexOf(x, current.y)] = true;
-            region.push_back({ x, current.y });
-            for (const int neighbourY : { current.y - 1, current.y + 1 }) {
-                if (matches(x, neighbourY)) {
-                    stack.push_back({ x, neighbourY });
-                }
-            }
-        }
-    }
-    return region;
 }
 
 } // namespace spritenator::core

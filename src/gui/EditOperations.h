@@ -12,7 +12,7 @@
 #pragma once
 
 #include "commands/UndoLabel.h"
-#include "core/IndexedImage.h"
+#include "core/Image.h"
 
 #include <QFont>
 #include <QObject>

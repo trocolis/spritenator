@@ -3,7 +3,7 @@
 // =============================================================================
 #include "NewImageDialog.h"
 
-#include "core/IndexedImage.h"
+#include "core/Image.h"
 
 #include <QCheckBox>
 #include <QComboBox>

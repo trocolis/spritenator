@@ -7,7 +7,7 @@
 // =============================================================================
 #pragma once
 
-#include "core/IndexedImage.h"
+#include "core/Image.h"
 
 namespace spritenator::gui {
 
