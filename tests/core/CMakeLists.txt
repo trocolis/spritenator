@@ -17,3 +17,7 @@ spritenator_add_test(test_indexed_image
 spritenator_add_test(test_raster
     SOURCES RasterTest.cpp
     LIBRARIES Spritenator::Core)
+
+spritenator_add_test(test_transform
+    SOURCES TransformTest.cpp
+    LIBRARIES Spritenator::Core)

@@ -18,6 +18,8 @@ add_library(spritenator_gui STATIC
     Document.h
     DrawBuffer.cpp
     DrawBuffer.h
+    EditOperations.cpp
+    EditOperations.h
     EditorSession.cpp
     EditorSession.h
     IconProvider.cpp
@@ -35,6 +37,10 @@ add_library(spritenator_gui STATIC
     dialogs/CharacterSizeDialog.h
     dialogs/NewImageDialog.cpp
     dialogs/NewImageDialog.h
+    dialogs/StretchDialog.cpp
+    dialogs/StretchDialog.h
+    dialogs/TextInputDialog.cpp
+    dialogs/TextInputDialog.h
     tools/PenTool.cpp
     tools/PenTool.h
     tools/ShapeTool.cpp

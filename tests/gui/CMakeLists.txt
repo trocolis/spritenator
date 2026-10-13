@@ -13,3 +13,7 @@ spritenator_add_test(test_document
 spritenator_add_test(test_editor_session
     SOURCES EditorSessionTest.cpp
     LIBRARIES Spritenator::Gui)
+
+spritenator_add_test(test_edit_operations
+    SOURCES EditOperationsTest.cpp
+    LIBRARIES Spritenator::Gui)

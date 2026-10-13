@@ -4,7 +4,11 @@
 #include "IntegratorPanel.h"
 
 #include "ActionCatalog.h"
+#include "DrawBuffer.h"
+#include "EditOperations.h"
 #include "EditorSession.h"
+#include "IconProvider.h"
+#include "dialogs/StretchDialog.h"
 #include "widgets/ColorEditor.h"
 #include "widgets/DrawAreaView.h"
 #include "widgets/OrgAreaView.h"
@@ -13,11 +17,15 @@
 
 #include <QFrame>
 #include <QGridLayout>
+#include <QHBoxLayout>
+#include <QInputDialog>
 #include <QLabel>
 #include <QScrollArea>
 #include <QSplitter>
 #include <QToolButton>
 #include <QVBoxLayout>
+
+#include <functional>
 
 namespace spritenator::gui {
 
@@ -35,9 +43,11 @@ QToolButton* makeActionButton(QAction* action, QWidget* parent)
 
 } // namespace
 
-IntegratorPanel::IntegratorPanel(EditorSession* session, ActionCatalog* actions, QWidget* parent)
+IntegratorPanel::IntegratorPanel(
+    EditorSession* session, ActionCatalog* actions, EditOperations* operations, QWidget* parent)
     : QWidget(parent)
     , m_session(session)
+    , m_operations(operations)
 {
     auto* splitter = new QSplitter(Qt::Horizontal, this);
     splitter->addWidget(createLeftColumn(actions));
@@ -108,8 +118,74 @@ QWidget* IntegratorPanel::createRightColumn()
     m_drawScroll->setAlignment(Qt::AlignCenter);
     m_drawScroll->setBackgroundRole(QPalette::Dark);
     layout->addWidget(m_drawScroll, 1);
+    layout->addWidget(createTransformBar(column));
 
     return column;
+}
+
+QWidget* IntegratorPanel::createTransformBar(QWidget* parent)
+{
+    // Mesma ordem e ícones dos botões do original (MenuButtonS1..S12).
+    struct TransformButton {
+        const char* icon;
+        QString tip;
+        std::function<void()> action;
+    };
+    const auto transform
+        = [this](TransformKind kind) { return [this, kind] { m_operations->transform(kind); }; };
+    const TransformButton buttons[] = {
+        { "shift_up", tr("Shift up"), transform(TransformKind::ShiftUp) },
+        { "shift_right", tr("Shift right"), transform(TransformKind::ShiftRight) },
+        { "shift_down", tr("Shift down"), transform(TransformKind::ShiftDown) },
+        { "shift_left", tr("Shift left"), transform(TransformKind::ShiftLeft) },
+        { "flip_vertical", tr("Flip vertically"), transform(TransformKind::FlipVertical) },
+        { "flip_horizontal", tr("Flip horizontally"), transform(TransformKind::FlipHorizontal) },
+        { "mirror_vertical", tr("Vertical symmetry: copy the top half mirrored onto the bottom"),
+            transform(TransformKind::MirrorVertical) },
+        { "mirror_horizontal",
+            tr("Horizontal symmetry: copy the left half mirrored onto the right"),
+            transform(TransformKind::MirrorHorizontal) },
+        { "rotate_cw", tr("Rotate 90 degrees clockwise"),
+            transform(TransformKind::RotateClockwise) },
+        { "rotate_ccw", tr("Rotate 90 degrees counterclockwise"),
+            transform(TransformKind::RotateCounterClockwise) },
+        { "rotate_free", tr("Rotate by any angle..."), [this] { rotateFreely(); } },
+        { "stretch", tr("Stretch or shrink..."), [this] { stretchWorkArea(); } },
+    };
+
+    auto* bar = new QWidget(parent);
+    auto* layout = new QHBoxLayout(bar);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(1);
+    for (const TransformButton& spec : buttons) {
+        auto* button = new QToolButton(bar);
+        button->setIcon(IconProvider::icon(QString::fromLatin1(spec.icon)));
+        button->setIconSize(QSize(20, 20));
+        button->setToolTip(spec.tip + tr(" (selection or whole drawing area)"));
+        button->setAutoRaise(true);
+        connect(button, &QToolButton::clicked, this, spec.action);
+        layout->addWidget(button);
+    }
+    layout->addStretch(1);
+    return bar;
+}
+
+void IntegratorPanel::rotateFreely()
+{
+    bool accepted = false;
+    const int degrees = QInputDialog::getInt(this, tr("Free Rotation"),
+        tr("Rotation angle (degrees, clockwise):"), 0, -360, 360, 1, &accepted);
+    if (accepted && degrees % 360 != 0) {
+        m_operations->rotate(degrees);
+    }
+}
+
+void IntegratorPanel::stretchWorkArea()
+{
+    StretchDialog dialog(m_session->buffer()->workArea().size(), this);
+    if (dialog.exec() == QDialog::Accepted) {
+        m_operations->stretch(dialog.newSize());
+    }
 }
 
 } // namespace spritenator::gui

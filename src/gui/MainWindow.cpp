@@ -8,11 +8,13 @@
 #include "CanvasWindow.h"
 #include "Document.h"
 #include "DrawBuffer.h"
+#include "EditOperations.h"
 #include "EditorSession.h"
 #include "IconProvider.h"
 #include "IntegratorPanel.h"
 #include "dialogs/CharacterSizeDialog.h"
 #include "dialogs/NewImageDialog.h"
+#include "dialogs/TextInputDialog.h"
 #include "io/ImageFile.h"
 #include "io/IoError.h"
 #include "widgets/DrawAreaView.h"
@@ -22,6 +24,7 @@
 #include <QAction>
 #include <QActionGroup>
 #include <QApplication>
+#include <QClipboard>
 #include <QCloseEvent>
 #include <QDir>
 #include <QDragEnterEvent>
@@ -68,6 +71,7 @@ QString ensureExtension(const QString& path, const QString& selectedFilter)
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , m_session(new EditorSession(this))
+    , m_operations(new EditOperations(m_session, this))
     , m_actions(new ActionCatalog(this))
     , m_mdiArea(new QMdiArea(this))
 {
@@ -81,7 +85,7 @@ MainWindow::MainWindow(QWidget* parent)
     m_mdiArea->setActivationOrder(QMdiArea::ActivationHistoryOrder);
 
     // Layout do original: Integrator de um lado, canvas (MDI) do outro.
-    m_integrator = new IntegratorPanel(m_session, m_actions, this);
+    m_integrator = new IntegratorPanel(m_session, m_actions, m_operations, this);
     m_mainSplitter = new QSplitter(Qt::Horizontal, this);
     m_mainSplitter->addWidget(m_integrator);
     m_mainSplitter->addWidget(m_mdiArea);
@@ -338,6 +342,12 @@ void MainWindow::updateActionStates()
         ActionId::FileNew,
         ActionId::FileOpen,
         ActionId::FileExit,
+        ActionId::EditCut,
+        ActionId::EditCopy,
+        ActionId::EditClear,
+        ActionId::EditSelectAll,
+        ActionId::EditDrawText,
+        ActionId::EditShadow,
         ActionId::ViewCharaSize,
         ActionId::ViewMainGrid,
         ActionId::ViewSubGrid,
@@ -376,6 +386,7 @@ void MainWindow::updateActionStates()
     }
     // Reverter só faz sentido para documentos que já existem em disco.
     action(ActionId::FileRevert)->setEnabled(document != nullptr && document->hasFilePath());
+    action(ActionId::EditPaste)->setEnabled(EditOperations::canPaste());
     updateUndoActions();
 }
 
@@ -665,6 +676,17 @@ void MainWindow::setCanvasReversed(bool reversed)
 {
     // Índice 0 = lado esquerdo do splitter.
     m_mainSplitter->insertWidget(0, reversed ? static_cast<QWidget*>(m_mdiArea) : m_integrator);
+}
+
+// -----------------------------------------------------------------------------
+// Editar > Entrada de texto
+// -----------------------------------------------------------------------------
+void MainWindow::drawText()
+{
+    TextInputDialog dialog(this);
+    if (dialog.exec() == QDialog::Accepted) {
+        m_operations->drawText(dialog.text(), dialog.selectedFont());
+    }
 }
 
 // -----------------------------------------------------------------------------

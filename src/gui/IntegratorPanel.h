@@ -18,6 +18,7 @@ namespace spritenator::gui {
 
 class ActionCatalog;
 class DrawAreaView;
+class EditOperations;
 class EditorSession;
 class PaletteView;
 
@@ -26,7 +27,8 @@ class IntegratorPanel final : public QWidget {
     Q_OBJECT
 
 public:
-    IntegratorPanel(EditorSession* session, ActionCatalog* actions, QWidget* parent = nullptr);
+    IntegratorPanel(EditorSession* session, ActionCatalog* actions, EditOperations* operations,
+        QWidget* parent = nullptr);
 
     [[nodiscard]] DrawAreaView* drawArea() const { return m_drawArea; }
     [[nodiscard]] PaletteView* paletteView() const { return m_paletteView; }
@@ -34,10 +36,18 @@ public:
 private:
     /// Cria a coluna esquerda (paleta, cores, botões).
     QWidget* createLeftColumn(ActionCatalog* actions);
-    /// Cria a coluna direita (prévia + área de desenho).
+    /// Cria a coluna direita (prévia + área de desenho + transformações).
     QWidget* createRightColumn();
+    /// Cria a barra com os 12 botões de transformação.
+    QWidget* createTransformBar(QWidget* parent);
+
+    /// Pede o ângulo e aplica a rotação livre.
+    void rotateFreely();
+    /// Pede o novo tamanho e estica a região de trabalho.
+    void stretchWorkArea();
 
     EditorSession* m_session;
+    EditOperations* m_operations;
     PaletteView* m_paletteView = nullptr;
     DrawAreaView* m_drawArea = nullptr;
     QScrollArea* m_drawScroll = nullptr;

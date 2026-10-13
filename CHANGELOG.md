@@ -5,6 +5,22 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.7.0] - 2026-10-13
+
+### Adicionado
+- Editar: Recortar, Copiar, Colar, Limpar e Selecionar tudo na área de desenho.
+  - Dentro do Spritenator o formato privado preserva os índices de cor; para outros programas é publicada uma imagem comum.
+  - Imagens coladas de fora são convertidas para a cor mais próxima da paleta.
+- Barra com as 12 transformações do original, aplicadas à seleção ou à área inteira:
+  - deslocamento circular nas 4 direções;
+  - espelhamentos e simetrias horizontal e vertical;
+  - rotação de 90° nos dois sentidos e rotação livre;
+  - esticar/encolher, com opção de manter a proporção.
+- "Prepare Shadow" (Ctrl+Q): tudo que não é cor de fundo vira a cor de desenho.
+- "Text Input" (Ctrl+T): fonte, tamanho e estilos, com prévia ampliada. O texto é rasterizado sem suavização e respeita tom e máscara.
+- `core/Transform`: transformações puras com mapeamento inverso (sem buracos).
+- Testes das transformações e das operações de edição (área de transferência, seleção, esticar, sombra e texto).
+
 ## [0.6.0] - 2026-10-13
 
 ### Adicionado

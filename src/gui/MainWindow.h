@@ -26,6 +26,7 @@ namespace spritenator::gui {
 class ActionCatalog;
 class CanvasWindow;
 class Document;
+class EditOperations;
 class EditorSession;
 class IntegratorPanel;
 enum class ActionId : std::size_t;
@@ -91,6 +92,9 @@ private:
     /// Troca os lados do Integrator e da área MDI ("Reverse Canvas").
     void setCanvasReversed(bool reversed);
 
+    // --- Editar ---
+    void drawText();
+
     // --- Exibir ---
     void editCharacterSize();
     /// Aplica a grade de personagens a todas as janelas de canvas abertas.
@@ -111,6 +115,7 @@ private:
 
     AppSettings m_settings;
     EditorSession* m_session = nullptr; ///< Estado central do editor.
+    EditOperations* m_operations = nullptr; ///< Operações de edição do buffer.
     ActionCatalog* m_actions = nullptr; ///< Todas as ações (pai: this).
     QSplitter* m_mainSplitter = nullptr; ///< Integrator | área MDI.
     IntegratorPanel* m_integrator = nullptr; ///< Painel com a área de desenho.

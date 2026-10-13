@@ -17,6 +17,8 @@ add_library(spritenator_core STATIC
     Raster.cpp
     Raster.h
     Tone.h
+    Transform.cpp
+    Transform.h
 )
 add_library(Spritenator::Core ALIAS spritenator_core)
 
