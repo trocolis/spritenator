@@ -77,6 +77,15 @@ Um `QUndoGroup` reúne a pilha do buffer e a de cada documento. A pilha ativa
 passa a ser a última que mudou. Assim, Ctrl+Z desfaz sempre a edição mais
 recente, seja um traço na área de desenho ou uma célula gravada no canvas.
 
+### Troca de idioma em tempo de execução
+
+`Translations::apply()` substitui os tradutores instalados. O Qt então envia
+`QEvent::LanguageChange` a cada janela, e o evento se propaga aos filhos.
+
+- Cada componente que permanece aberto (janela principal, Integrator, painéis, janela de animação, ajuda e janelas de canvas) reaplica seus textos em `retranslate()`.
+- Diálogos modais não precisam disso: enquanto um deles está aberto, não há como trocar o idioma.
+- O histórico de desfazer também é retraduzido, porque cada comando guarda um `UndoLabel` (a operação), e não o texto já traduzido.
+
 ## 4. Pontos de extensão
 
 | Quero... | Onde |
@@ -87,7 +96,8 @@ recente, seja um traço na área de desenho ou uma célula gravada no canvas.
 | Novo comando de menu | `ActionId` + `ActionCatalog` + conexão na `MainWindow`. |
 | Trocar ícones | Substituir os PNGs em `resources/icons` (mesmos nomes). |
 | Novo idioma | `translations/spritenator_<idioma>.ts` em `TS_FILES` (`src/CMakeLists.txt`), `update_translations`, traduzir; opcionalmente `resources/help/manual_<idioma>.html`. |
-| Novo texto na interface | Sempre via `tr()` (ou `QCoreApplication::translate` com contexto literal fora de QObject); depois `update_translations`. |
+| Novo texto na interface | Sempre via `tr()` (ou `QCoreApplication::translate` com contexto literal fora de QObject). Em widgets que ficam abertos, defina-o em `retranslate()`. Depois rode `update_translations`. |
+| Nova operação desfazível | Acrescente-a a `UndoOperation` e a `kSources` (`commands/UndoLabel.cpp`); o `static_assert` impede esquecer o nome. |
 
 ## 5. Testes
 

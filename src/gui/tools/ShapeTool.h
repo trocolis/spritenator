@@ -12,8 +12,7 @@
 #include "Tool.h"
 
 #include "core/Color.h"
-
-#include <QString>
+#include "gui/commands/UndoLabel.h"
 
 namespace spritenator::gui {
 
@@ -34,8 +33,8 @@ private:
     /// Desenha a figura do ponto inicial até "current" (sobre o snapshot).
     void drawShape(EditorSession& session, core::Point current) const;
 
-    /// Nome da operação exibido no menu Desfazer.
-    [[nodiscard]] QString undoText() const;
+    /// Operação registrada no histórico (nome exibido no menu Desfazer).
+    [[nodiscard]] UndoLabel undoLabel() const;
 
     Shape m_shape;
     bool m_filled;

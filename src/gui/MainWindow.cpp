@@ -114,6 +114,7 @@ MainWindow::MainWindow(QWidget* parent)
     createToolBar();
     createStatusBar();
     connectActions();
+    retranslateUi(); // textos iniciais (e a cada troca de idioma)
     updateRecentFilesMenu();
 
     // Janela ativa -> documento ativo da sessão.
@@ -152,7 +153,7 @@ QAction* MainWindow::action(ActionId id) const
 // -----------------------------------------------------------------------------
 void MainWindow::createMenus()
 {
-    m_fileMenu = menuBar()->addMenu(tr("&File"));
+    m_fileMenu = addTranslatedMenu(menuBar(), QT_TR_NOOP("&File"));
     m_fileMenu->addAction(action(ActionId::FileNew));
     m_fileMenu->addAction(action(ActionId::FileOpen));
     m_fileMenu->addAction(action(ActionId::FileRevert));
@@ -176,7 +177,7 @@ void MainWindow::createMenus()
     m_fileMenu->addSeparator();
     m_fileMenu->addAction(action(ActionId::FileExit));
 
-    QMenu* editMenu = menuBar()->addMenu(tr("&Edit"));
+    QMenu* editMenu = addTranslatedMenu(menuBar(), QT_TR_NOOP("&Edit"));
     editMenu->addAction(action(ActionId::EditUndo));
     editMenu->addAction(action(ActionId::EditRedo));
     editMenu->addSeparator();
@@ -190,7 +191,7 @@ void MainWindow::createMenus()
     editMenu->addSeparator();
     editMenu->addAction(action(ActionId::EditShadow));
 
-    QMenu* viewMenu = menuBar()->addMenu(tr("&View"));
+    QMenu* viewMenu = addTranslatedMenu(menuBar(), QT_TR_NOOP("&View"));
     viewMenu->addAction(action(ActionId::ViewCharaSize));
     viewMenu->addAction(action(ActionId::ViewMainGrid));
     viewMenu->addAction(action(ActionId::ViewSubGrid));
@@ -201,13 +202,13 @@ void MainWindow::createMenus()
     viewMenu->addSeparator();
     createLanguageMenu(viewMenu);
 
-    QMenu* canvasMenu = menuBar()->addMenu(tr("&Canvas"));
+    QMenu* canvasMenu = addTranslatedMenu(menuBar(), QT_TR_NOOP("&Canvas"));
     canvasMenu->addAction(action(ActionId::CanvasResize));
     canvasMenu->addSeparator();
     canvasMenu->addAction(action(ActionId::CanvasClearAll));
     canvasMenu->addAction(action(ActionId::CanvasGetAll));
 
-    QMenu* paletteMenu = menuBar()->addMenu(tr("&Palette"));
+    QMenu* paletteMenu = addTranslatedMenu(menuBar(), QT_TR_NOOP("&Palette"));
     paletteMenu->addAction(action(ActionId::PaletteTransparent));
     paletteMenu->addSeparator();
     paletteMenu->addAction(action(ActionId::PaletteLoad));
@@ -221,7 +222,7 @@ void MainWindow::createMenus()
     paletteMenu->addSeparator();
     paletteMenu->addAction(action(ActionId::PaletteGradation));
 
-    QMenu* windowMenu = menuBar()->addMenu(tr("&Window"));
+    QMenu* windowMenu = addTranslatedMenu(menuBar(), QT_TR_NOOP("&Window"));
     windowMenu->addAction(action(ActionId::WindowCascade));
     windowMenu->addAction(action(ActionId::WindowTileHorizontal));
     windowMenu->addAction(action(ActionId::WindowTileVertical));
@@ -230,7 +231,7 @@ void MainWindow::createMenus()
     windowMenu->addSeparator();
     windowMenu->addAction(action(ActionId::WindowReverseCanvas));
 
-    QMenu* helpMenu = menuBar()->addMenu(tr("&Help"));
+    QMenu* helpMenu = addTranslatedMenu(menuBar(), QT_TR_NOOP("&Help"));
     helpMenu->addAction(action(ActionId::HelpContents));
     helpMenu->addSeparator();
     helpMenu->addAction(action(ActionId::HelpAbout));
@@ -241,7 +242,7 @@ void MainWindow::createMenus()
 // -----------------------------------------------------------------------------
 void MainWindow::createToolBar()
 {
-    m_toolBar = addToolBar(tr("Main"));
+    m_toolBar = addToolBar(QString()); // título definido em retranslateUi()
     m_toolBar->setObjectName(QStringLiteral("MainToolBar")); // necessário p/ salvar estado
     m_toolBar->setIconSize(QSize(16, 16));
     m_toolBar->setMovable(false);
@@ -814,13 +815,13 @@ void MainWindow::drawText()
 // Paleta
 // -----------------------------------------------------------------------------
 void MainWindow::commitDocumentState(Document* document, const core::IndexedImage& canvas,
-    const core::Palette& palette, const QString& undoText)
+    const core::Palette& palette, const UndoLabel& undoLabel)
 {
     if (canvas == document->canvas() && palette == document->palette()) {
         return; // nada mudou
     }
     document->undoStack()->push(new DocumentStateCommand(
-        document, document->canvas(), document->palette(), canvas, palette, undoText));
+        document, document->canvas(), document->palette(), canvas, palette, undoLabel));
 }
 
 void MainWindow::loadPalette()
@@ -843,9 +844,9 @@ void MainWindow::loadPalette()
         = core::applyPalette(buffer->image(), oldPalette, newPalette, options);
     commitDocumentState(document,
         core::applyPalette(document->canvas(), oldPalette, newPalette, options), newPalette,
-        tr("Load Palette"));
+        UndoLabel { UndoOperation::LoadPalette });
     if (convertedBuffer != buffer->image()) {
-        buffer->replace(convertedBuffer, tr("Load Palette"));
+        buffer->replace(convertedBuffer, UndoLabel { UndoOperation::LoadPalette });
     }
     m_settings.setLastDirectory(QFileInfo(dialog.filePath()).absolutePath());
 }
@@ -889,13 +890,14 @@ void MainWindow::editPalette()
     if (dialog.exec() != QDialog::Accepted) {
         return;
     }
-    commitDocumentState(document, dialog.canvas(), dialog.palette(), tr("Edit Palette"));
+    commitDocumentState(
+        document, dialog.canvas(), dialog.palette(), UndoLabel { UndoOperation::EditPalette });
 
     // Se as cores foram reorganizadas, o buffer acompanha o remapeamento.
     if (dialog.remap() != core::identityRemap()) {
         core::IndexedImage remapped = m_session->buffer()->image();
         remapped.remap(dialog.remap());
-        m_session->buffer()->replace(remapped, tr("Edit Palette"));
+        m_session->buffer()->replace(remapped, UndoLabel { UndoOperation::EditPalette });
     }
 }
 
@@ -908,8 +910,8 @@ void MainWindow::applyGradation()
     core::Palette palette = document->palette();
     palette.interpolate(m_session->drawColor(), m_session->backgroundColor());
     if (palette != document->palette()) {
-        document->undoStack()->push(
-            new PaletteCommand(document, document->palette(), palette, tr("Gradation")));
+        document->undoStack()->push(new PaletteCommand(
+            document, document->palette(), palette, UndoLabel { UndoOperation::Gradation }));
     }
 }
 
@@ -929,8 +931,8 @@ void MainWindow::resizeCanvas()
     const core::IndexedImage resized = dialog.scaleContents()
         ? core::scaled(document->canvas(), dialog.newSize())
         : document->canvas().resizedCanvas(dialog.newSize(), m_session->backgroundColor());
-    document->undoStack()->push(
-        new ReplaceImageCommand(document, document->canvas(), resized, tr("Canvas Size")));
+    document->undoStack()->push(new ReplaceImageCommand(
+        document, document->canvas(), resized, UndoLabel { UndoOperation::CanvasSize }));
 }
 
 void MainWindow::clearCanvas()
@@ -941,8 +943,8 @@ void MainWindow::clearCanvas()
     }
     const core::IndexedImage cleared(document->canvas().size(), m_session->backgroundColor());
     if (cleared != document->canvas()) {
-        document->undoStack()->push(
-            new ReplaceImageCommand(document, document->canvas(), cleared, tr("Clear All")));
+        document->undoStack()->push(new ReplaceImageCommand(
+            document, document->canvas(), cleared, UndoLabel { UndoOperation::ClearAll }));
     }
 }
 
@@ -951,14 +953,16 @@ void MainWindow::clearCanvas()
 // -----------------------------------------------------------------------------
 void MainWindow::createLanguageMenu(QMenu* viewMenu)
 {
-    QMenu* languageMenu = viewMenu->addMenu(tr("&Language"));
+    QMenu* languageMenu = addTranslatedMenu(viewMenu, QT_TR_NOOP("&Language"));
     auto* group = new QActionGroup(languageMenu);
     group->setExclusive(true);
 
     // Código vazio = idioma do sistema; "en" = inglês original; demais =
-    // traduções embutidas, exibidas no próprio idioma ("português (Brasil)").
+    // traduções embutidas. Os nomes dos idiomas aparecem na própria língua
+    // ("English", "Português (Brasil)") e por isso não são traduzidos; só
+    // "Padrão do sistema" é retraduzido em retranslateUi().
     QList<QPair<QString, QString>> entries = {
-        { QString(), tr("System Default") },
+        { QString(), QString() },
         { QStringLiteral("en"), QStringLiteral("English") },
     };
     for (const QString& code : Translations::availableLanguages()) {
@@ -977,17 +981,60 @@ void MainWindow::createLanguageMenu(QMenu* viewMenu)
         languageAction->setCheckable(true);
         languageAction->setChecked(code == current);
         group->addAction(languageAction);
+        if (code.isEmpty()) {
+            m_systemLanguageAction = languageAction;
+        }
         connect(languageAction, &QAction::triggered, this, [this, code] {
             if (code == m_settings.language()) {
                 return;
             }
             m_settings.setLanguage(code);
-            // Os textos são traduzidos ao criar os widgets: a troca vale na
-            // próxima execução (evita reconstruir toda a interface).
-            QMessageBox::information(this, tr("Language"),
-                tr("The new language will be used the next time Spritenator starts."));
+            // Troca imediata: os tradutores são substituídos e o Qt envia
+            // QEvent::LanguageChange a todas as janelas (ver changeEvent).
+            Translations::apply(Translations::localeFor(code));
         });
     }
+}
+
+QMenu* MainWindow::addTranslatedMenu(QWidget* parent, const char* title)
+{
+    QMenu* menu = nullptr;
+    if (auto* bar = qobject_cast<QMenuBar*>(parent)) {
+        menu = bar->addMenu(QString());
+    } else {
+        menu = qobject_cast<QMenu*>(parent)->addMenu(QString());
+    }
+    m_translatedMenus.append({ menu, title });
+    return menu;
+}
+
+// -----------------------------------------------------------------------------
+// Troca de idioma em tempo de execução
+// -----------------------------------------------------------------------------
+void MainWindow::changeEvent(QEvent* event)
+{
+    if (event->type() == QEvent::LanguageChange) {
+        retranslateUi();
+    }
+    QMainWindow::changeEvent(event);
+}
+
+void MainWindow::retranslateUi()
+{
+    m_actions->retranslate();
+    for (const auto& [menu, title] : std::as_const(m_translatedMenus)) {
+        menu->setTitle(tr(title));
+    }
+    m_toolBar->setWindowTitle(tr("Main"));
+    if (m_systemLanguageAction != nullptr) {
+        m_systemLanguageAction->setText(tr("System Default"));
+    }
+    // Nomes das operações já registradas no histórico e textos que dependem
+    // do estado ("Desfazer Lápis"); o rótulo de posição é refeito no próximo
+    // movimento do mouse.
+    retranslateUndoHistory(m_session->undoGroup());
+    updateUndoActions();
+    m_positionLabel->clear();
 }
 
 // -----------------------------------------------------------------------------

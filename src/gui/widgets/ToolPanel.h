@@ -23,9 +23,14 @@ class ToolPanel final : public QWidget {
 public:
     explicit ToolPanel(EditorSession* session, QWidget* parent = nullptr);
 
+protected:
+    void changeEvent(QEvent* event) override;
+
 private:
     /// Marca os botões correspondentes ao estado atual da sessão.
     void syncFromSession();
+    /// Reaplica as dicas no idioma atual.
+    void retranslate();
 
     EditorSession* m_session;
     QButtonGroup* m_toolGroup = nullptr;

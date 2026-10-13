@@ -103,19 +103,11 @@ public:
     /// Fator de zoom associado a uma ação ViewZoomN (0 se não for de zoom).
     [[nodiscard]] static int zoomFactorOf(ActionId id);
 
+    /// Reaplica textos e dicas no idioma atual (chamado na criação e quando o
+    /// idioma muda com o programa aberto).
+    void retranslate();
+
 private:
-    /// Cria uma ação e a registra no índice informado.
-    QAction* create(
-        ActionId id, const QString& text, const QString& statusTip, const QString& iconName = { });
-
-    void createFileActions();
-    void createEditActions();
-    void createViewActions();
-    void createCanvasActions();
-    void createPaletteActions();
-    void createWindowActions();
-    void createHelpActions();
-
     std::array<QAction*, kActionCount> m_actions { };
     QActionGroup* m_zoomGroup = nullptr;
 };

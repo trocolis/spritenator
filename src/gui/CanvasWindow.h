@@ -27,6 +27,9 @@ public:
     /// Tamanho ideal: o canvas inteiro visível, sem barras de rolagem.
     [[nodiscard]] QSize sizeHint() const override;
 
+protected:
+    void changeEvent(QEvent* event) override;
+
 private:
     /// Atualiza o título: "nome[*] (LxA)". O "[*]" vira "*" se modificado.
     void updateTitle();

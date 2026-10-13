@@ -7,10 +7,12 @@
 #include "EditorSession.h"
 
 #include <QComboBox>
+#include <QEvent>
 #include <QFormLayout>
 #include <QGridLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
+#include <QLabel>
 #include <QListWidget>
 #include <QPainter>
 #include <QPushButton>
@@ -82,44 +84,40 @@ AnimationWindow::AnimationWindow(EditorSession* session, QWidget* parent)
     , m_frameList(new QListWidget(this))
     , m_wait(new QSpinBox(this))
     , m_scale(new QComboBox(this))
-    , m_addCell(new QPushButton(tr("&Add Cell"), this))
-    , m_walkCycle(new QPushButton(tr("&Walk Cycle"), this))
-    , m_playButton(new QPushButton(tr("&Pause"), this))
+    , m_addCell(new QPushButton(this))
+    , m_walkCycle(new QPushButton(this))
+    , m_removeButton(new QPushButton(this))
+    , m_clearButton(new QPushButton(this))
+    , m_playButton(new QPushButton(this))
+    , m_framesBox(new QGroupBox(this))
+    , m_waitLabel(new QLabel(this))
+    , m_zoomLabel(new QLabel(this))
     , m_timer(new QTimer(this))
 {
-    setWindowTitle(tr("Animation"));
+    // Os textos são definidos em retranslate() (também na troca de idioma).
     m_preview = new AnimationPreview(m_session, &m_animation, this);
 
     // --- Controles ---
     m_wait->setRange(core::Animation::kMinWaitMs, core::Animation::kMaxWaitMs);
     m_wait->setSingleStep(10);
     m_wait->setValue(core::Animation::kDefaultWaitMs);
-    m_wait->setSuffix(tr(" ms"));
     for (const int factor : { 1, 2, 3, 4 }) {
         m_scale->addItem(QStringLiteral("%1x").arg(factor), factor);
     }
     m_scale->setCurrentIndex(1);
     m_playButton->setCheckable(true);
-    m_addCell->setToolTip(
-        tr("Add the cell last transferred to the drawing area (right-click on the canvas)"));
-    m_walkCycle->setToolTip(
-        tr("Add the RPG Maker walk cycle (frames 1-2-3-2) of the last transferred cell"));
-
-    auto* removeButton = new QPushButton(tr("&Remove"), this);
-    auto* clearButton = new QPushButton(tr("&Delete All"), this);
 
     auto* settings = new QFormLayout;
-    settings->addRow(tr("Wait:"), m_wait);
-    settings->addRow(tr("Zoom:"), m_scale);
+    settings->addRow(m_waitLabel, m_wait);
+    settings->addRow(m_zoomLabel, m_scale);
 
     auto* frameButtons = new QGridLayout;
     frameButtons->addWidget(m_addCell, 0, 0);
     frameButtons->addWidget(m_walkCycle, 0, 1);
-    frameButtons->addWidget(removeButton, 1, 0);
-    frameButtons->addWidget(clearButton, 1, 1);
+    frameButtons->addWidget(m_removeButton, 1, 0);
+    frameButtons->addWidget(m_clearButton, 1, 1);
 
-    auto* framesBox = new QGroupBox(tr("Frames"), this);
-    auto* framesLayout = new QVBoxLayout(framesBox);
+    auto* framesLayout = new QVBoxLayout(m_framesBox);
     framesLayout->addWidget(m_frameList, 1);
     framesLayout->addLayout(frameButtons);
     framesLayout->addLayout(settings);
@@ -127,13 +125,13 @@ AnimationWindow::AnimationWindow(EditorSession* session, QWidget* parent)
 
     auto* layout = new QHBoxLayout(this);
     layout->addWidget(m_preview, 1);
-    layout->addWidget(framesBox);
+    layout->addWidget(m_framesBox);
 
     // --- Ligações ---
     connect(m_addCell, &QPushButton::clicked, this, &AnimationWindow::addLastCell);
     connect(m_walkCycle, &QPushButton::clicked, this, &AnimationWindow::addWalkCycle);
-    connect(removeButton, &QPushButton::clicked, this, &AnimationWindow::removeSelectedFrame);
-    connect(clearButton, &QPushButton::clicked, this, &AnimationWindow::clearFrames);
+    connect(m_removeButton, &QPushButton::clicked, this, &AnimationWindow::removeSelectedFrame);
+    connect(m_clearButton, &QPushButton::clicked, this, &AnimationWindow::clearFrames);
     connect(m_playButton, &QPushButton::toggled, this, &AnimationWindow::updatePlayback);
     connect(m_wait, &QSpinBox::valueChanged, this, [this](int value) {
         m_animation.setWaitMs(value);
@@ -171,7 +169,45 @@ AnimationWindow::AnimationWindow(EditorSession* session, QWidget* parent)
 
     m_timer->setInterval(m_animation.waitMs());
     m_preview->setScale(2);
+    retranslate();
     refreshFrames();
+}
+
+void AnimationWindow::changeEvent(QEvent* event)
+{
+    if (event->type() == QEvent::LanguageChange) {
+        retranslate();
+    }
+    QWidget::changeEvent(event);
+}
+
+void AnimationWindow::retranslate()
+{
+    setWindowTitle(tr("Animation"));
+    m_addCell->setText(tr("&Add Cell"));
+    m_addCell->setToolTip(
+        tr("Add the cell last transferred to the drawing area (right-click on the canvas)"));
+    m_walkCycle->setText(tr("&Walk Cycle"));
+    m_walkCycle->setToolTip(
+        tr("Add the RPG Maker walk cycle (frames 1-2-3-2) of the last transferred cell"));
+    m_removeButton->setText(tr("&Remove"));
+    m_clearButton->setText(tr("&Delete All"));
+    m_framesBox->setTitle(tr("Frames"));
+    m_waitLabel->setText(tr("Wait:"));
+    m_zoomLabel->setText(tr("Zoom:"));
+    m_wait->setSuffix(tr(" ms"));
+    // Itens da lista: só o texto muda (a seleção e a reprodução continuam).
+    for (int row = 0; row < m_frameList->count(); ++row) {
+        m_frameList->item(row)->setText(frameLabel(row));
+    }
+    m_playButton->setText(m_playButton->isChecked() ? tr("&Pause") : tr("&Play"));
+    m_preview->update(); // "Nenhum quadro" etc. são desenhados na pintura
+}
+
+QString AnimationWindow::frameLabel(int row) const
+{
+    const core::Rect& frame = m_animation.frames().at(static_cast<std::size_t>(row));
+    return tr("%1: (%2, %3)").arg(row + 1).arg(frame.x).arg(frame.y);
 }
 
 void AnimationWindow::addLastCell()
@@ -213,9 +249,8 @@ void AnimationWindow::advanceFrame()
 void AnimationWindow::refreshFrames()
 {
     m_frameList->clear();
-    int number = 1;
-    for (const core::Rect& frame : m_animation.frames()) {
-        m_frameList->addItem(tr("%1: (%2, %3)").arg(number++).arg(frame.x).arg(frame.y));
+    for (int row = 0; row < static_cast<int>(m_animation.size()); ++row) {
+        m_frameList->addItem(frameLabel(row));
     }
     m_preview->setFramePosition(0);
     // Começa a tocar automaticamente quando a lista ganha quadros.

@@ -11,11 +11,25 @@
 namespace spritenator::gui {
 
 // -----------------------------------------------------------------------------
+// LabeledCommand
+// -----------------------------------------------------------------------------
+LabeledCommand::LabeledCommand(const UndoLabel& label)
+    : m_label(label)
+{
+    setText(m_label.text());
+}
+
+void LabeledCommand::retranslate()
+{
+    setText(m_label.text());
+}
+
+// -----------------------------------------------------------------------------
 // RegionCommand
 // -----------------------------------------------------------------------------
 RegionCommand::RegionCommand(ImageTarget* target, core::Point origin, core::IndexedImage before,
-    core::IndexedImage after, const QString& text, bool alreadyApplied)
-    : QUndoCommand(text)
+    core::IndexedImage after, const UndoLabel& label, bool alreadyApplied)
+    : LabeledCommand(label)
     , m_target(target)
     , m_origin(origin)
     , m_before(std::move(before))
@@ -42,9 +56,9 @@ void RegionCommand::redo()
 // -----------------------------------------------------------------------------
 // ReplaceImageCommand
 // -----------------------------------------------------------------------------
-ReplaceImageCommand::ReplaceImageCommand(
-    ImageTarget* target, core::IndexedImage before, core::IndexedImage after, const QString& text)
-    : QUndoCommand(text)
+ReplaceImageCommand::ReplaceImageCommand(ImageTarget* target, core::IndexedImage before,
+    core::IndexedImage after, const UndoLabel& label)
+    : LabeledCommand(label)
     , m_target(target)
     , m_before(std::move(before))
     , m_after(std::move(after))
@@ -65,8 +79,8 @@ void ReplaceImageCommand::redo()
 // PaletteCommand
 // -----------------------------------------------------------------------------
 PaletteCommand::PaletteCommand(Document* document, core::Palette before, core::Palette after,
-    const QString& text, int mergeKey)
-    : QUndoCommand(text)
+    const UndoLabel& label, int mergeKey)
+    : LabeledCommand(label)
     , m_document(document)
     , m_before(std::move(before))
     , m_after(std::move(after))
@@ -106,8 +120,8 @@ bool PaletteCommand::mergeWith(const QUndoCommand* other)
 // -----------------------------------------------------------------------------
 DocumentStateCommand::DocumentStateCommand(Document* document, core::IndexedImage beforeImage,
     core::Palette beforePalette, core::IndexedImage afterImage, core::Palette afterPalette,
-    const QString& text)
-    : QUndoCommand(text)
+    const UndoLabel& label)
+    : LabeledCommand(label)
     , m_document(document)
     , m_beforeImage(std::move(beforeImage))
     , m_beforePalette(std::move(beforePalette))

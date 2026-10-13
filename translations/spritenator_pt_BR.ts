@@ -2,51 +2,6 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="pt_BR" sourcelanguage="en">
 <context>
-    <name>FillTool</name>
-    <message>
-        <source>Fill</source>
-        <translation>Preencher</translation>
-    </message>
-</context>
-<context>
-    <name>PenTool</name>
-    <message>
-        <source>Pen</source>
-        <translation>Lápis</translation>
-    </message>
-</context>
-<context>
-    <name>ShapeTool</name>
-    <message>
-        <source>Line</source>
-        <translation>Reta</translation>
-    </message>
-    <message>
-        <source>Filled Rectangle</source>
-        <translation>Retângulo preenchido</translation>
-    </message>
-    <message>
-        <source>Rectangle</source>
-        <translation>Retângulo</translation>
-    </message>
-    <message>
-        <source>Filled Rounded Rectangle</source>
-        <translation>Retângulo arredondado preenchido</translation>
-    </message>
-    <message>
-        <source>Rounded Rectangle</source>
-        <translation>Retângulo arredondado</translation>
-    </message>
-    <message>
-        <source>Filled Ellipse</source>
-        <translation>Elipse preenchida</translation>
-    </message>
-    <message>
-        <source>Ellipse</source>
-        <translation>Elipse</translation>
-    </message>
-</context>
-<context>
     <name>spritenator::gui::ActionCatalog</name>
     <message>
         <source>&amp;New...</source>
@@ -570,102 +525,12 @@
         <source>B</source>
         <translation>B</translation>
     </message>
-    <message>
-        <source>Edit Color %1</source>
-        <translation>Editar cor %1</translation>
-    </message>
 </context>
 <context>
     <name>spritenator::gui::Document</name>
     <message>
         <source>Untitled%1</source>
         <translation>SemTitulo%1</translation>
-    </message>
-</context>
-<context>
-    <name>spritenator::gui::EditOperations</name>
-    <message>
-        <source>Paste</source>
-        <translation>Colar</translation>
-    </message>
-    <message>
-        <source>Clear</source>
-        <translation>Limpar</translation>
-    </message>
-    <message>
-        <source>Shift Up</source>
-        <translation>Deslocar para cima</translation>
-    </message>
-    <message>
-        <source>Shift Right</source>
-        <translation>Deslocar para a direita</translation>
-    </message>
-    <message>
-        <source>Shift Down</source>
-        <translation>Deslocar para baixo</translation>
-    </message>
-    <message>
-        <source>Shift Left</source>
-        <translation>Deslocar para a esquerda</translation>
-    </message>
-    <message>
-        <source>Flip Vertically</source>
-        <translation>Espelhar verticalmente</translation>
-    </message>
-    <message>
-        <source>Flip Horizontally</source>
-        <translation>Espelhar horizontalmente</translation>
-    </message>
-    <message>
-        <source>Vertical Symmetry</source>
-        <translation>Simetria vertical</translation>
-    </message>
-    <message>
-        <source>Horizontal Symmetry</source>
-        <translation>Simetria horizontal</translation>
-    </message>
-    <message>
-        <source>Rotate Right</source>
-        <translation>Girar para a direita</translation>
-    </message>
-    <message>
-        <source>Rotate Left</source>
-        <translation>Girar para a esquerda</translation>
-    </message>
-    <message>
-        <source>Free Rotation</source>
-        <translation>Rotação livre</translation>
-    </message>
-    <message>
-        <source>Stretch</source>
-        <translation>Esticar</translation>
-    </message>
-    <message>
-        <source>Prepare Shadow</source>
-        <translation>Preparar sombra</translation>
-    </message>
-    <message>
-        <source>Text</source>
-        <translation>Texto</translation>
-    </message>
-</context>
-<context>
-    <name>spritenator::gui::EditorSession</name>
-    <message>
-        <source>Character Size</source>
-        <translation>Tamanho do personagem</translation>
-    </message>
-    <message>
-        <source>Get Cell</source>
-        <translation>Trazer célula</translation>
-    </message>
-    <message>
-        <source>Put Cell</source>
-        <translation>Gravar célula</translation>
-    </message>
-    <message>
-        <source>Transfer All</source>
-        <translation>Transferir tudo</translation>
     </message>
 </context>
 <context>
@@ -938,10 +803,6 @@ Deseja salvar as alterações?</translation>
         <translation>Canvas</translation>
     </message>
     <message>
-        <source>Load Palette</source>
-        <translation>Carregar paleta</translation>
-    </message>
-    <message>
         <source>Save Palette</source>
         <translation>Salvar paleta</translation>
     </message>
@@ -950,36 +811,12 @@ Deseja salvar as alterações?</translation>
         <translation>Paleta salva em %1</translation>
     </message>
     <message>
-        <source>Edit Palette</source>
-        <translation>Editar paleta</translation>
-    </message>
-    <message>
-        <source>Gradation</source>
-        <translation>Gradação</translation>
-    </message>
-    <message>
-        <source>Canvas Size</source>
-        <translation>Tamanho do canvas</translation>
-    </message>
-    <message>
-        <source>Clear All</source>
-        <translation>Limpar tudo</translation>
-    </message>
-    <message>
         <source>&amp;Language</source>
         <translation>&amp;Idioma</translation>
     </message>
     <message>
         <source>System Default</source>
         <translation>Padrão do sistema</translation>
-    </message>
-    <message>
-        <source>Language</source>
-        <translation>Idioma</translation>
-    </message>
-    <message>
-        <source>The new language will be used the next time Spritenator starts.</source>
-        <translation>O novo idioma será usado na próxima vez que o Spritenator for iniciado.</translation>
     </message>
     <message>
         <source>&lt;h3&gt;%1 %2&lt;/h3&gt;&lt;p&gt;%3&lt;/p&gt;&lt;p&gt;A cross-platform recreation of &lt;i&gt;Character Maker 1999&lt;/i&gt; (Copyright &amp;copy; 1998-2000 Yoji Ojima).&lt;/p&gt;&lt;p&gt;Built with Qt %4.&lt;/p&gt;</source>
@@ -1300,12 +1137,151 @@ R: %2  G: %3  B: %4</translation>
         <translation>Desenhar com o tom %1</translation>
     </message>
     <message>
-        <source>Shift the origin of the tone pattern</source>
-        <translation>Desloca a origem do padrão de tom</translation>
-    </message>
-    <message>
         <source>Shift the origin of the tone pattern (current: %1)</source>
         <translation>Desloca a origem do padrão de tom (atual: %1)</translation>
+    </message>
+</context>
+<context>
+    <name>spritenator::gui::UndoLabel</name>
+    <message>
+        <source>Pen</source>
+        <translation>Lápis</translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation>Preencher</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation>Reta</translation>
+    </message>
+    <message>
+        <source>Rectangle</source>
+        <translation>Retângulo</translation>
+    </message>
+    <message>
+        <source>Filled Rectangle</source>
+        <translation>Retângulo preenchido</translation>
+    </message>
+    <message>
+        <source>Rounded Rectangle</source>
+        <translation>Retângulo arredondado</translation>
+    </message>
+    <message>
+        <source>Filled Rounded Rectangle</source>
+        <translation>Retângulo arredondado preenchido</translation>
+    </message>
+    <message>
+        <source>Ellipse</source>
+        <translation>Elipse</translation>
+    </message>
+    <message>
+        <source>Filled Ellipse</source>
+        <translation>Elipse preenchida</translation>
+    </message>
+    <message>
+        <source>Get Cell</source>
+        <translation>Trazer célula</translation>
+    </message>
+    <message>
+        <source>Put Cell</source>
+        <translation>Gravar célula</translation>
+    </message>
+    <message>
+        <source>Transfer All</source>
+        <translation>Transferir tudo</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>Colar</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>Limpar</translation>
+    </message>
+    <message>
+        <source>Prepare Shadow</source>
+        <translation>Preparar sombra</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation>Texto</translation>
+    </message>
+    <message>
+        <source>Shift Up</source>
+        <translation>Deslocar para cima</translation>
+    </message>
+    <message>
+        <source>Shift Right</source>
+        <translation>Deslocar para a direita</translation>
+    </message>
+    <message>
+        <source>Shift Down</source>
+        <translation>Deslocar para baixo</translation>
+    </message>
+    <message>
+        <source>Shift Left</source>
+        <translation>Deslocar para a esquerda</translation>
+    </message>
+    <message>
+        <source>Flip Vertically</source>
+        <translation>Espelhar verticalmente</translation>
+    </message>
+    <message>
+        <source>Flip Horizontally</source>
+        <translation>Espelhar horizontalmente</translation>
+    </message>
+    <message>
+        <source>Vertical Symmetry</source>
+        <translation>Simetria vertical</translation>
+    </message>
+    <message>
+        <source>Horizontal Symmetry</source>
+        <translation>Simetria horizontal</translation>
+    </message>
+    <message>
+        <source>Rotate Right</source>
+        <translation>Girar para a direita</translation>
+    </message>
+    <message>
+        <source>Rotate Left</source>
+        <translation>Girar para a esquerda</translation>
+    </message>
+    <message>
+        <source>Free Rotation</source>
+        <translation>Rotação livre</translation>
+    </message>
+    <message>
+        <source>Stretch</source>
+        <translation>Esticar</translation>
+    </message>
+    <message>
+        <source>Canvas Size</source>
+        <translation>Tamanho do canvas</translation>
+    </message>
+    <message>
+        <source>Clear All</source>
+        <translation>Limpar tudo</translation>
+    </message>
+    <message>
+        <source>Character Size</source>
+        <translation>Tamanho do personagem</translation>
+    </message>
+    <message>
+        <source>Edit Color %1</source>
+        <translation>Editar cor %1</translation>
+    </message>
+    <message>
+        <source>Gradation</source>
+        <translation>Gradação</translation>
+    </message>
+    <message>
+        <source>Load Palette</source>
+        <translation>Carregar paleta</translation>
+    </message>
+    <message>
+        <source>Edit Palette</source>
+        <translation>Editar paleta</translation>
     </message>
 </context>
 <context>

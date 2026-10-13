@@ -7,6 +7,7 @@
 #include "gui/IconProvider.h"
 
 #include <QButtonGroup>
+#include <QEvent>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QToolButton>
@@ -55,14 +56,12 @@ constexpr ToolSpec kToolSpecs[] = {
 constexpr int kToolColumns = 4;
 constexpr int kToneColumns = 3; // 3 x 3: oito tons + botão de deslocamento
 
-/// Cria um botão de ícone sem texto.
-QToolButton* makeIconButton(
-    const QString& icon, const QString& tip, QSize iconSize, QWidget* parent)
+/// Cria um botão de ícone sem texto (a dica é definida em retranslate()).
+QToolButton* makeIconButton(const QString& icon, QSize iconSize, QWidget* parent)
 {
     auto* button = new QToolButton(parent);
     button->setIcon(IconProvider::icon(icon));
     button->setIconSize(iconSize);
-    button->setToolTip(tip);
     button->setAutoRaise(true);
     return button;
 }
@@ -80,8 +79,7 @@ ToolPanel::ToolPanel(EditorSession* session, QWidget* parent)
     toolGrid->setSpacing(1);
     int position = 0;
     for (const ToolSpec& spec : kToolSpecs) {
-        QToolButton* button
-            = makeIconButton(QString::fromLatin1(spec.icon), tr(spec.tip), { 20, 20 }, this);
+        QToolButton* button = makeIconButton(QString::fromLatin1(spec.icon), { 20, 20 }, this);
         button->setCheckable(true);
         m_toolGroup->addButton(button, static_cast<int>(spec.kind));
         toolGrid->addWidget(button, position / kToolColumns, position % kToolColumns);
@@ -93,14 +91,12 @@ ToolPanel::ToolPanel(EditorSession* session, QWidget* parent)
     toneGrid->setSpacing(1);
     for (int index = 0; index < core::kToneCount; ++index) {
         const QChar letter(QLatin1Char(static_cast<char>('a' + index)));
-        QToolButton* button = makeIconButton(QStringLiteral("tone_") + letter,
-            tr("Draw with tone %1").arg(letter.toUpper()), { 20, 16 }, this);
+        QToolButton* button = makeIconButton(QStringLiteral("tone_") + letter, { 20, 16 }, this);
         button->setCheckable(true);
         m_toneGroup->addButton(button, index);
         toneGrid->addWidget(button, index / kToneColumns, index % kToneColumns);
     }
-    m_shiftButton = makeIconButton(
-        QStringLiteral("tone_shift"), tr("Shift the origin of the tone pattern"), { 20, 16 }, this);
+    m_shiftButton = makeIconButton(QStringLiteral("tone_shift"), { 20, 16 }, this);
     toneGrid->addWidget(
         m_shiftButton, core::kToneCount / kToneColumns, core::kToneCount % kToneColumns);
 
@@ -119,7 +115,27 @@ ToolPanel::ToolPanel(EditorSession* session, QWidget* parent)
     connect(m_shiftButton, &QToolButton::clicked, m_session, &EditorSession::cycleToneShift);
     connect(m_session, &EditorSession::toolChanged, this, &ToolPanel::syncFromSession);
     connect(m_session, &EditorSession::toneChanged, this, &ToolPanel::syncFromSession);
-    syncFromSession();
+    retranslate(); // dicas iniciais; também sincroniza com a sessão
+}
+
+void ToolPanel::changeEvent(QEvent* event)
+{
+    if (event->type() == QEvent::LanguageChange) {
+        retranslate();
+    }
+    QWidget::changeEvent(event);
+}
+
+void ToolPanel::retranslate()
+{
+    for (const ToolSpec& spec : kToolSpecs) {
+        m_toolGroup->button(static_cast<int>(spec.kind))->setToolTip(tr(spec.tip));
+    }
+    for (int index = 0; index < core::kToneCount; ++index) {
+        const QChar letter(QLatin1Char(static_cast<char>('A' + index)));
+        m_toneGroup->button(index)->setToolTip(tr("Draw with tone %1").arg(letter));
+    }
+    syncFromSession(); // a dica do deslocamento inclui o estado atual
 }
 
 void ToolPanel::syncFromSession()

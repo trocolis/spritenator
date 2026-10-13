@@ -191,7 +191,7 @@ void EditorSession::setCharacterLayout(const core::CharacterLayout& layout)
     if (cellSizeChanged && m_buffer->image().size() != layout.cellSize) {
         // O buffer acompanha o tamanho da célula (conteúdo preservado no canto).
         m_buffer->replace(m_buffer->image().resizedCanvas(layout.cellSize, m_backgroundColor),
-            tr("Character Size"));
+            UndoLabel { UndoOperation::CharacterSize });
     }
     emit characterLayoutChanged(m_layout);
 }
@@ -353,7 +353,8 @@ void EditorSession::getFromCanvas(Document* document, const core::Rect& cell)
     }
     cancelTool();
     // Áreas da célula fora do canvas viram cor de fundo.
-    m_buffer->replace(document->canvas().copy(cell, m_backgroundColor), tr("Get Cell"));
+    m_buffer->replace(
+        document->canvas().copy(cell, m_backgroundColor), UndoLabel { UndoOperation::GetCell });
     m_buffer->setSelection(std::nullopt);
     m_lastCell = cell;
     emit lastCellChanged(cell);
@@ -377,15 +378,15 @@ void EditorSession::putToCanvas(Document* document, const core::Rect& cell)
     if (after == before) {
         return;
     }
-    document->undoStack()->push(
-        new RegionCommand(document, target.topLeft(), before, std::move(after), tr("Put Cell")));
+    document->undoStack()->push(new RegionCommand(document, target.topLeft(), before,
+        std::move(after), UndoLabel { UndoOperation::PutCell }));
 }
 
 void EditorSession::transferAll()
 {
     if (m_activeDocument) {
         cancelTool();
-        m_buffer->replace(m_activeDocument->canvas(), tr("Transfer All"));
+        m_buffer->replace(m_activeDocument->canvas(), UndoLabel { UndoOperation::TransferAll });
     }
 }
 

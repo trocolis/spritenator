@@ -6,6 +6,7 @@
 #include "gui/DrawBuffer.h"
 #include "gui/EditorSession.h"
 
+#include <QEvent>
 #include <QPainter>
 
 namespace spritenator::gui {
@@ -14,7 +15,7 @@ OrgAreaView::OrgAreaView(EditorSession* session, QWidget* parent)
     : QWidget(parent)
     , m_session(session)
 {
-    setToolTip(tr("Actual size preview of the drawing area"));
+    retranslate();
     const auto refresh = [this] {
         updateGeometry();
         update();
@@ -22,6 +23,19 @@ OrgAreaView::OrgAreaView(EditorSession* session, QWidget* parent)
     connect(m_session->buffer(), &DrawBuffer::changed, this, qOverload<>(&QWidget::update));
     connect(m_session->buffer(), &DrawBuffer::resized, this, refresh);
     connect(m_session, &EditorSession::characterLayoutChanged, this, refresh);
+}
+
+void OrgAreaView::changeEvent(QEvent* event)
+{
+    if (event->type() == QEvent::LanguageChange) {
+        retranslate();
+    }
+    QWidget::changeEvent(event);
+}
+
+void OrgAreaView::retranslate()
+{
+    setToolTip(tr("Actual size preview of the drawing area"));
 }
 
 int OrgAreaView::scale() const

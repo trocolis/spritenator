@@ -8,6 +8,7 @@
 #include <spritenator/Version.h>
 
 #include <QAction>
+#include <QEvent>
 #include <QFile>
 #include <QLocale>
 #include <QTextBrowser>
@@ -51,16 +52,31 @@ QString plainText(const QAction* action)
 
 HelpWindow::HelpWindow(const ActionCatalog* actions, QWidget* parent)
     : QWidget(parent, Qt::Window)
+    , m_actions(actions)
     , m_browser(new QTextBrowser(this))
 {
-    setWindowTitle(tr("Spritenator Help"));
     m_browser->setOpenExternalLinks(true);
-    m_browser->setHtml(buildHtml(actions));
+    retranslate();
 
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(m_browser);
     resize(720, 640);
+}
+
+void HelpWindow::changeEvent(QEvent* event)
+{
+    // Troca de idioma: título, manual e tabela de atalhos são refeitos.
+    if (event->type() == QEvent::LanguageChange) {
+        retranslate();
+    }
+    QWidget::changeEvent(event);
+}
+
+void HelpWindow::retranslate()
+{
+    setWindowTitle(tr("Spritenator Help"));
+    m_browser->setHtml(buildHtml(m_actions));
 }
 
 QString HelpWindow::buildHtml(const ActionCatalog* actions)

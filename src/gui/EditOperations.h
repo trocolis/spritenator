@@ -11,6 +11,7 @@
 // =============================================================================
 #pragma once
 
+#include "commands/UndoLabel.h"
 #include "core/IndexedImage.h"
 
 #include <QFont>
@@ -79,7 +80,7 @@ public:
 
 private:
     /// Aplica "function" à região de trabalho, registrando um passo de desfazer.
-    void applyToWorkArea(const QString& undoText,
+    void applyToWorkArea(const UndoLabel& undoLabel,
         const std::function<core::IndexedImage(const core::IndexedImage&)>& function);
 
     EditorSession* m_session;

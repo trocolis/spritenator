@@ -8,6 +8,7 @@
 #include "gui/ImageRendering.h"
 #include "gui/commands/ImageCommands.h"
 
+#include <QEvent>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -43,8 +44,6 @@ ColorEditor::ColorEditor(EditorSession* session, QWidget* parent)
         swatch->setAlignment(Qt::AlignCenter);
         swatch->setMinimumSize(40, 28);
     }
-    m_drawSwatch->setToolTip(tr("Drawing color (select with the left button)"));
-    m_backgroundSwatch->setToolTip(tr("Background color (select with the right button)"));
 
     auto* swatches = new QHBoxLayout;
     swatches->addWidget(m_drawSwatch);
@@ -52,13 +51,14 @@ ColorEditor::ColorEditor(EditorSession* session, QWidget* parent)
 
     // --- Controles RGB ---
     auto* channels = new QGridLayout;
-    const QString names[] = { tr("R"), tr("G"), tr("B") };
     for (int channel = 0; channel < 3; ++channel) {
         auto* slider = new QSlider(Qt::Horizontal, this);
         auto* spin = new QSpinBox(this);
         slider->setRange(0, 255);
         spin->setRange(0, 255);
-        channels->addWidget(new QLabel(names[channel], this), channel, 0);
+        auto* label = new QLabel(this);
+        channels->addWidget(label, channel, 0);
+        m_channelLabels.at(static_cast<std::size_t>(channel)) = label;
         channels->addWidget(slider, channel, 1);
         channels->addWidget(spin, channel, 2);
 
@@ -80,7 +80,26 @@ ColorEditor::ColorEditor(EditorSession* session, QWidget* parent)
     connect(m_session, &EditorSession::colorsChanged, this, &ColorEditor::refresh);
     connect(m_session, &EditorSession::paletteChanged, this, &ColorEditor::refresh);
     connect(m_session, &EditorSession::activeDocumentChanged, this, &ColorEditor::refresh);
+    retranslate();
     refresh();
+}
+
+void ColorEditor::changeEvent(QEvent* event)
+{
+    if (event->type() == QEvent::LanguageChange) {
+        retranslate();
+    }
+    QWidget::changeEvent(event);
+}
+
+void ColorEditor::retranslate()
+{
+    m_drawSwatch->setToolTip(tr("Drawing color (select with the left button)"));
+    m_backgroundSwatch->setToolTip(tr("Background color (select with the right button)"));
+    const QString names[] = { tr("R"), tr("G"), tr("B") };
+    for (std::size_t channel = 0; channel < 3; ++channel) {
+        m_channelLabels.at(channel)->setText(names[channel]);
+    }
 }
 
 void ColorEditor::refresh()
@@ -125,8 +144,8 @@ void ColorEditor::applyChannel(int channel, int value)
     }
     after.setColor(index, color);
     // mergeKey = índice da cor: ajustes seguidos na mesma cor viram 1 passo.
-    document->undoStack()->push(new PaletteCommand(
-        document, document->palette(), after, tr("Edit Color %1").arg(index), index));
+    document->undoStack()->push(new PaletteCommand(document, document->palette(), after,
+        UndoLabel { UndoOperation::EditColor, index }, index));
 }
 
 } // namespace spritenator::gui

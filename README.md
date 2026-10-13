@@ -91,13 +91,16 @@ A arquitetura, os padrões de projeto e o fluxo de dados estão descritos em
 
 A interface está disponível em **português do Brasil** e em inglês, o idioma
 original. Por padrão o programa segue o idioma do sistema; para mudar, use
-*Exibir > Idioma*, que vale a partir da próxima execução.
+*Exibir > Idioma*. A troca vale na hora, sem reiniciar: menus, painéis, janelas
+abertas, ajuda e até os nomes já registrados no histórico de desfazer mudam de
+idioma.
 
 - As traduções ficam em `translations/spritenator_<idioma>.ts` e podem ser editadas no Qt Linguist ou num editor de texto.
 - A cada build, o `lrelease` compila os `.ts` em `.qm`, que vão embutidos no executável.
 - Depois de alterar textos no código, rode `cmake --build build --target update_translations` para atualizar os `.ts`.
 - Para um novo idioma, acrescente o `.ts` em `TS_FILES` (`src/CMakeLists.txt`) e, se quiser, o manual `resources/help/manual_<idioma>.html`.
-- O teste `test_translation` verifica se as traduções estão completas e se preservam os marcadores (`%1`, `%n`), os aceleradores (`&`) e as quebras de linha. Ele também garante que nenhum menu traduzido tem letras de atalho repetidas.
+- Textos de widgets que ficam abertos são definidos num método `retranslate()`, chamado na construção e no `changeEvent(QEvent::LanguageChange)`. Os comandos de desfazer guardam um `UndoLabel` (a operação), e não o texto pronto.
+- O teste `test_translation` verifica se as traduções estão completas e se preservam os marcadores (`%1`, `%n`), os aceleradores (`&`) e as quebras de linha. Ele também garante que nenhum menu traduzido tem letras de atalho repetidas. Além disso, troca o idioma com o programa aberto e confere que nenhum texto do idioma anterior continua visível.
 
 ## Ícones
 

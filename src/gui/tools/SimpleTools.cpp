@@ -7,8 +7,6 @@
 #include "gui/DrawBuffer.h"
 #include "gui/EditorSession.h"
 
-#include <QCoreApplication>
-
 namespace spritenator::gui {
 
 // -----------------------------------------------------------------------------
@@ -39,7 +37,7 @@ void FillTool::press(EditorSession& session, core::Point point, Qt::MouseButton 
         }
         return bounds;
     });
-    buffer->commitEdit(QCoreApplication::translate("FillTool", "Fill"));
+    buffer->commitEdit(UndoLabel { UndoOperation::Fill });
 }
 
 void FillTool::move(EditorSession& /*session*/, core::Point /*point*/)

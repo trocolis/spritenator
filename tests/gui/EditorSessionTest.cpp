@@ -79,7 +79,7 @@ private slots:
         // Buffer: tudo cor 0, exceto um pixel cor 9.
         core::IndexedImage frame({ 24, 32 }, 0);
         frame.setPixel({ 1, 1 }, 9);
-        session.buffer()->replace(frame, QStringLiteral("test"));
+        session.buffer()->replace(frame, gui::UndoLabel { gui::UndoOperation::Paste });
 
         session.putToCanvas(document.get(), { 0, 0, 24, 32 });
         QCOMPARE(int(document->canvas().pixel(0, 0)), 3); // preservado

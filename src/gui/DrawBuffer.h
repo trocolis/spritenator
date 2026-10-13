@@ -18,6 +18,7 @@
 #pragma once
 
 #include "ImageTarget.h"
+#include "commands/UndoLabel.h"
 #include "core/IndexedImage.h"
 #include "core/Palette.h"
 
@@ -53,7 +54,7 @@ public:
     void setPalette(const core::Palette& palette);
 
     /// Substitui o conteúdo inteiro registrando um passo de desfazer.
-    void replace(const core::IndexedImage& image, const QString& undoText);
+    void replace(const core::IndexedImage& image, const UndoLabel& undoLabel);
 
     // --- Edição ao vivo ---
     void beginEdit();
@@ -63,7 +64,7 @@ public:
     /// de forma, que redesenham a figura inteira a cada movimento).
     void restoreSnapshot();
     /// Finaliza a edição; registra um comando se algo mudou.
-    void commitEdit(const QString& undoText);
+    void commitEdit(const UndoLabel& undoLabel);
     /// Desfaz a edição em andamento sem registrar nada.
     void cancelEdit();
     /// Imagem do início da edição em andamento (vazia se não houver edição).

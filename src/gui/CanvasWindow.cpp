@@ -6,6 +6,7 @@
 #include "CanvasView.h"
 #include "Document.h"
 
+#include <QEvent>
 #include <QScrollBar>
 
 namespace spritenator::gui {
@@ -27,6 +28,15 @@ CanvasWindow::CanvasWindow(Document* document, QWidget* parent)
     connect(m_document, &Document::filePathChanged, this, &CanvasWindow::updateTitle);
     connect(m_document, &Document::canvasResized, this, &CanvasWindow::updateTitle);
     updateTitle();
+}
+
+void CanvasWindow::changeEvent(QEvent* event)
+{
+    // "SemTitulo1"/"Untitled1" depende do idioma.
+    if (event->type() == QEvent::LanguageChange) {
+        updateTitle();
+    }
+    QScrollArea::changeEvent(event);
 }
 
 QSize CanvasWindow::sizeHint() const

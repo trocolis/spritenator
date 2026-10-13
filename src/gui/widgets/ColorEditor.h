@@ -26,7 +26,13 @@ class ColorEditor final : public QWidget {
 public:
     explicit ColorEditor(EditorSession* session, QWidget* parent = nullptr);
 
+protected:
+    void changeEvent(QEvent* event) override;
+
 private:
+    /// Reaplica dicas e rótulos no idioma atual.
+    void retranslate();
+
     /// Atualiza amostras e controles a partir do estado da sessão.
     void refresh();
 
@@ -38,6 +44,7 @@ private:
     QLabel* m_backgroundSwatch = nullptr;
     std::array<QSlider*, 3> m_sliders { };
     std::array<QSpinBox*, 3> m_spins { };
+    std::array<QLabel*, 3> m_channelLabels { };
     bool m_updating = false; ///< evita laços sinal -> atualização -> sinal
 };
 

@@ -24,9 +24,13 @@ public:
     [[nodiscard]] QSize minimumSizeHint() const override;
 
 protected:
+    void changeEvent(QEvent* event) override;
     void paintEvent(QPaintEvent* event) override;
 
 private:
+    /// Reaplica a dica no idioma atual.
+    void retranslate();
+
     /// Fator de exibição (1 ou 2, conforme a grade de personagens).
     [[nodiscard]] int scale() const;
 

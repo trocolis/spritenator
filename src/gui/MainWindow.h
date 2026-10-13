@@ -8,6 +8,7 @@
 #pragma once
 
 #include "AppSettings.h"
+#include "commands/UndoLabel.h"
 #include "core/Geometry.h"
 #include "core/IndexedImage.h"
 #include "core/Palette.h"
@@ -58,6 +59,7 @@ public:
     [[nodiscard]] ActionCatalog* actions() const { return m_actions; }
 
 protected:
+    void changeEvent(QEvent* event) override;
     void closeEvent(QCloseEvent* event) override;
     bool eventFilter(QObject* watched, QEvent* event) override;
     void dragEnterEvent(QDragEnterEvent* event) override;
@@ -115,7 +117,7 @@ private:
     /// Aplica imagem + paleta novas ao documento como um passo de desfazer e
     /// converte o buffer da área de desenho com a mesma tabela/opções.
     void commitDocumentState(Document* document, const core::IndexedImage& canvas,
-        const core::Palette& palette, const QString& undoText);
+        const core::Palette& palette, const UndoLabel& undoLabel);
 
     // --- Canvas ---
     void resizeCanvas();
@@ -124,6 +126,11 @@ private:
     // --- Exibir ---
     /// Cria o submenu Exibir > Idioma (sistema, inglês e traduções embutidas).
     void createLanguageMenu(QMenu* viewMenu);
+    /// Cria um menu cujo título (texto-fonte em inglês, marcado com
+    /// QT_TR_NOOP) é traduzido em retranslateUi().
+    QMenu* addTranslatedMenu(QWidget* parent, const char* title);
+    /// Reaplica todos os textos da janela no idioma atual.
+    void retranslateUi();
     void showAnimationWindow();
     void editCharacterSize();
     /// Aplica a grade de personagens a todas as janelas de canvas abertas.
@@ -161,6 +168,8 @@ private:
     QLabel* m_positionLabel = nullptr; ///< Posição do mouse no canvas.
     AnimationWindow* m_animationWindow = nullptr; ///< Criada sob demanda (F2).
     HelpWindow* m_helpWindow = nullptr; ///< Criada sob demanda (F1).
+    QList<QPair<QMenu*, const char*>> m_translatedMenus; ///< menu e título-fonte
+    QAction* m_systemLanguageAction = nullptr; ///< item "padrão do sistema"
 };
 
 } // namespace spritenator::gui

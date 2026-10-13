@@ -15,6 +15,7 @@
 #include "widgets/PaletteView.h"
 #include "widgets/ToolPanel.h"
 
+#include <QEvent>
 #include <QFrame>
 #include <QGridLayout>
 #include <QHBoxLayout>
@@ -59,6 +60,7 @@ IntegratorPanel::IntegratorPanel(
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(splitter);
+    retranslate();
 }
 
 QWidget* IntegratorPanel::createLeftColumn(ActionCatalog* actions)
@@ -125,32 +127,35 @@ QWidget* IntegratorPanel::createRightColumn()
 
 QWidget* IntegratorPanel::createTransformBar(QWidget* parent)
 {
-    // Mesma ordem e ícones dos botões do original (MenuButtonS1..S12).
+    // Mesma ordem e ícones dos botões do original (MenuButtonS1..S12). As
+    // dicas são textos-fonte (QT_TR_NOOP), traduzidos em retranslate().
     struct TransformButton {
         const char* icon;
-        QString tip;
+        const char* tip;
         std::function<void()> action;
     };
     const auto transform
         = [this](TransformKind kind) { return [this, kind] { m_operations->transform(kind); }; };
     const TransformButton buttons[] = {
-        { "shift_up", tr("Shift up"), transform(TransformKind::ShiftUp) },
-        { "shift_right", tr("Shift right"), transform(TransformKind::ShiftRight) },
-        { "shift_down", tr("Shift down"), transform(TransformKind::ShiftDown) },
-        { "shift_left", tr("Shift left"), transform(TransformKind::ShiftLeft) },
-        { "flip_vertical", tr("Flip vertically"), transform(TransformKind::FlipVertical) },
-        { "flip_horizontal", tr("Flip horizontally"), transform(TransformKind::FlipHorizontal) },
-        { "mirror_vertical", tr("Vertical symmetry: copy the top half mirrored onto the bottom"),
+        { "shift_up", QT_TR_NOOP("Shift up"), transform(TransformKind::ShiftUp) },
+        { "shift_right", QT_TR_NOOP("Shift right"), transform(TransformKind::ShiftRight) },
+        { "shift_down", QT_TR_NOOP("Shift down"), transform(TransformKind::ShiftDown) },
+        { "shift_left", QT_TR_NOOP("Shift left"), transform(TransformKind::ShiftLeft) },
+        { "flip_vertical", QT_TR_NOOP("Flip vertically"), transform(TransformKind::FlipVertical) },
+        { "flip_horizontal", QT_TR_NOOP("Flip horizontally"),
+            transform(TransformKind::FlipHorizontal) },
+        { "mirror_vertical",
+            QT_TR_NOOP("Vertical symmetry: copy the top half mirrored onto the bottom"),
             transform(TransformKind::MirrorVertical) },
         { "mirror_horizontal",
-            tr("Horizontal symmetry: copy the left half mirrored onto the right"),
+            QT_TR_NOOP("Horizontal symmetry: copy the left half mirrored onto the right"),
             transform(TransformKind::MirrorHorizontal) },
-        { "rotate_cw", tr("Rotate 90 degrees clockwise"),
+        { "rotate_cw", QT_TR_NOOP("Rotate 90 degrees clockwise"),
             transform(TransformKind::RotateClockwise) },
-        { "rotate_ccw", tr("Rotate 90 degrees counterclockwise"),
+        { "rotate_ccw", QT_TR_NOOP("Rotate 90 degrees counterclockwise"),
             transform(TransformKind::RotateCounterClockwise) },
-        { "rotate_free", tr("Rotate by any angle..."), [this] { rotateFreely(); } },
-        { "stretch", tr("Stretch or shrink..."), [this] { stretchWorkArea(); } },
+        { "rotate_free", QT_TR_NOOP("Rotate by any angle..."), [this] { rotateFreely(); } },
+        { "stretch", QT_TR_NOOP("Stretch or shrink..."), [this] { stretchWorkArea(); } },
     };
 
     auto* bar = new QWidget(parent);
@@ -161,13 +166,28 @@ QWidget* IntegratorPanel::createTransformBar(QWidget* parent)
         auto* button = new QToolButton(bar);
         button->setIcon(IconProvider::icon(QString::fromLatin1(spec.icon)));
         button->setIconSize(QSize(20, 20));
-        button->setToolTip(spec.tip + tr(" (selection or whole drawing area)"));
         button->setAutoRaise(true);
         connect(button, &QToolButton::clicked, this, spec.action);
         layout->addWidget(button);
+        m_transformButtons.append({ button, spec.tip });
     }
     layout->addStretch(1);
     return bar;
+}
+
+void IntegratorPanel::changeEvent(QEvent* event)
+{
+    if (event->type() == QEvent::LanguageChange) {
+        retranslate();
+    }
+    QWidget::changeEvent(event);
+}
+
+void IntegratorPanel::retranslate()
+{
+    for (const auto& [button, tip] : std::as_const(m_transformButtons)) {
+        button->setToolTip(tr(tip) + tr(" (selection or whole drawing area)"));
+    }
 }
 
 void IntegratorPanel::rotateFreely()

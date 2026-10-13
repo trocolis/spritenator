@@ -25,7 +25,7 @@ private slots:
         gui::DrawBuffer* buffer = session.buffer();
         core::IndexedImage frame = buffer->image();
         frame.setPixel({ 1, 1 }, 200);
-        buffer->replace(frame, QStringLiteral("setup"));
+        buffer->replace(frame, gui::UndoLabel { gui::UndoOperation::Paste });
 
         buffer->setSelection(core::Rect { 1, 1, 2, 2 });
         operations.copy();
@@ -58,7 +58,7 @@ private slots:
         core::IndexedImage frame = buffer->image();
         frame.setPixel({ 0, 0 }, 5);
         frame.setPixel({ 10, 0 }, 6);
-        buffer->replace(frame, QStringLiteral("setup"));
+        buffer->replace(frame, gui::UndoLabel { gui::UndoOperation::Paste });
         buffer->setSelection(core::Rect { 0, 0, 4, 4 });
 
         const int before = buffer->undoStack()->count();
@@ -79,7 +79,7 @@ private slots:
         gui::DrawBuffer* buffer = session.buffer();
         core::IndexedImage frame = buffer->image();
         frame.setPixel({ 0, 0 }, 4);
-        buffer->replace(frame, QStringLiteral("setup"));
+        buffer->replace(frame, gui::UndoLabel { gui::UndoOperation::Paste });
         buffer->setSelection(core::Rect { 0, 0, 2, 2 });
         operations.stretch({ 4, 4 });
         QCOMPARE(int(buffer->image().pixel(1, 1)), 4);
@@ -93,7 +93,7 @@ private slots:
         EditOperations operations(&session);
         core::IndexedImage frame = session.buffer()->image();
         frame.setPixel({ 2, 2 }, 8);
-        session.buffer()->replace(frame, QStringLiteral("setup"));
+        session.buffer()->replace(frame, gui::UndoLabel { gui::UndoOperation::Paste });
         session.setBackgroundColor(0);
         session.setDrawColor(1);
         operations.prepareShadow();

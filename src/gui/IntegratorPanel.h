@@ -9,9 +9,12 @@
 // =============================================================================
 #pragma once
 
+#include <QList>
+#include <QPair>
 #include <QWidget>
 
 class QScrollArea;
+class QToolButton;
 class QVBoxLayout;
 
 namespace spritenator::gui {
@@ -33,7 +36,13 @@ public:
     [[nodiscard]] DrawAreaView* drawArea() const { return m_drawArea; }
     [[nodiscard]] PaletteView* paletteView() const { return m_paletteView; }
 
+protected:
+    void changeEvent(QEvent* event) override;
+
 private:
+    /// Reaplica as dicas no idioma atual.
+    void retranslate();
+
     /// Cria a coluna esquerda (paleta, cores, botões).
     QWidget* createLeftColumn(ActionCatalog* actions);
     /// Cria a coluna direita (prévia + área de desenho + transformações).
@@ -51,6 +60,7 @@ private:
     PaletteView* m_paletteView = nullptr;
     DrawAreaView* m_drawArea = nullptr;
     QScrollArea* m_drawScroll = nullptr;
+    QList<QPair<QToolButton*, const char*>> m_transformButtons; ///< botão e dica-fonte
 };
 
 } // namespace spritenator::gui

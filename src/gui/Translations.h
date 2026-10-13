@@ -7,6 +7,11 @@
 //   - o do próprio Qt ("qtbase_<idioma>.qm"), que traduz os diálogos padrão
 //     (botões "Salvar"/"Cancelar", seletor de arquivos, nomes de teclas).
 //
+// O idioma pode ser trocado com o programa aberto: apply() remove os
+// tradutores anteriores e instala os novos. O Qt então envia
+// QEvent::LanguageChange a todas as janelas, e cada componente reaplica seus
+// textos no próprio retranslate() (ver MainWindow::changeEvent).
+//
 // O idioma vem das preferências (menu Exibir > Idioma); vazio = idioma do
 // sistema. Textos sem tradução caem automaticamente no inglês original.
 // =============================================================================
@@ -16,11 +21,9 @@
 #include <QString>
 #include <QStringList>
 
-class QCoreApplication;
-
 namespace spritenator::gui {
 
-/// Carregamento das traduções (classe puramente estática).
+/// Carregamento e troca das traduções (classe puramente estática).
 class Translations final {
 public:
     Translations() = delete;
@@ -31,11 +34,11 @@ public:
     /// Localidade correspondente a um código ("pt_BR", "en"); vazio = sistema.
     [[nodiscard]] static QLocale localeFor(const QString& languageCode);
 
-    /// Instala os tradutores do idioma informado na aplicação e define a
+    /// Substitui as traduções atuais pelas do idioma informado e define a
     /// localidade padrão (QLocale::setDefault), usada também pela ajuda.
-    /// Devolve true se a tradução do Spritenator foi carregada (false para o
-    /// inglês, que é o idioma original e não precisa de tradução).
-    static bool install(QCoreApplication& application, const QLocale& locale);
+    /// Requer uma QCoreApplication existente. Devolve true se a tradução do
+    /// Spritenator foi carregada (false para o inglês, o idioma original).
+    static bool apply(const QLocale& locale);
 };
 
 } // namespace spritenator::gui

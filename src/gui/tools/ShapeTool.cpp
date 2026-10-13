@@ -7,8 +7,6 @@
 #include "gui/DrawBuffer.h"
 #include "gui/EditorSession.h"
 
-#include <QCoreApplication>
-
 namespace spritenator::gui {
 
 ShapeTool::ShapeTool(Shape shape, bool filled)
@@ -47,7 +45,7 @@ void ShapeTool::release(EditorSession& session, core::Point /*point*/)
         return;
     }
     m_active = false;
-    session.buffer()->commitEdit(undoText());
+    session.buffer()->commitEdit(undoLabel());
 }
 
 void ShapeTool::cancel(EditorSession& session)
@@ -73,21 +71,19 @@ void ShapeTool::drawShape(EditorSession& session, core::Point current) const
     });
 }
 
-QString ShapeTool::undoText() const
+UndoLabel ShapeTool::undoLabel() const
 {
     switch (m_shape) {
-    case Shape::Line: return QCoreApplication::translate("ShapeTool", "Line");
+    case Shape::Line: return { UndoOperation::Line };
     case Shape::Rectangle:
-        return m_filled ? QCoreApplication::translate("ShapeTool", "Filled Rectangle")
-                        : QCoreApplication::translate("ShapeTool", "Rectangle");
+        return { m_filled ? UndoOperation::FilledRectangle : UndoOperation::Rectangle };
     case Shape::RoundRectangle:
-        return m_filled ? QCoreApplication::translate("ShapeTool", "Filled Rounded Rectangle")
-                        : QCoreApplication::translate("ShapeTool", "Rounded Rectangle");
+        return { m_filled ? UndoOperation::FilledRoundedRectangle
+                          : UndoOperation::RoundedRectangle };
     case Shape::Ellipse:
-        return m_filled ? QCoreApplication::translate("ShapeTool", "Filled Ellipse")
-                        : QCoreApplication::translate("ShapeTool", "Ellipse");
+        return { m_filled ? UndoOperation::FilledEllipse : UndoOperation::Ellipse };
     }
-    return { };
+    return { UndoOperation::Line };
 }
 
 } // namespace spritenator::gui

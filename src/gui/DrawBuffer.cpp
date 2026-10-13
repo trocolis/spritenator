@@ -28,12 +28,12 @@ void DrawBuffer::setPalette(const core::Palette& palette)
     emit changed(m_image.bounds());
 }
 
-void DrawBuffer::replace(const core::IndexedImage& image, const QString& undoText)
+void DrawBuffer::replace(const core::IndexedImage& image, const UndoLabel& undoLabel)
 {
     if (m_editing) {
         cancelEdit();
     }
-    m_undoStack->push(new ReplaceImageCommand(this, m_image, image, undoText));
+    m_undoStack->push(new ReplaceImageCommand(this, m_image, image, undoLabel));
 }
 
 // -----------------------------------------------------------------------------
@@ -69,7 +69,7 @@ void DrawBuffer::restoreSnapshot()
     notifyChanged(m_dirty);
 }
 
-void DrawBuffer::commitEdit(const QString& undoText)
+void DrawBuffer::commitEdit(const UndoLabel& undoLabel)
 {
     if (!m_editing) {
         return;
@@ -86,7 +86,7 @@ void DrawBuffer::commitEdit(const QString& undoText)
     }
     // A edição já está aplicada: o comando não deve reaplicá-la no push.
     m_undoStack->push(new RegionCommand(
-        this, m_dirty.topLeft(), std::move(before), std::move(after), undoText, true));
+        this, m_dirty.topLeft(), std::move(before), std::move(after), undoLabel, true));
 }
 
 void DrawBuffer::cancelEdit()

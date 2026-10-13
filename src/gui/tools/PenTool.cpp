@@ -7,8 +7,6 @@
 #include "gui/DrawBuffer.h"
 #include "gui/EditorSession.h"
 
-#include <QCoreApplication>
-
 namespace spritenator::gui {
 
 namespace {
@@ -54,7 +52,7 @@ void PenTool::release(EditorSession& session, core::Point /*point*/)
         return;
     }
     m_active = false;
-    session.buffer()->commitEdit(QCoreApplication::translate("PenTool", "Pen"));
+    session.buffer()->commitEdit(UndoLabel { UndoOperation::Pen });
 }
 
 void PenTool::cancel(EditorSession& session)

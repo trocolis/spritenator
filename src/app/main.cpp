@@ -26,8 +26,7 @@ int main(int argc, char* argv[])
     // Traduções: precisam ser instaladas ANTES de criar qualquer janela, pois
     // os textos são traduzidos no momento em que os widgets são construídos.
     const QString language = spritenator::gui::AppSettings().language();
-    spritenator::gui::Translations::install(
-        application, spritenator::gui::Translations::localeFor(language));
+    spritenator::gui::Translations::apply(spritenator::gui::Translations::localeFor(language));
 
     spritenator::gui::MainWindow mainWindow;
     mainWindow.show();

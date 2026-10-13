@@ -86,7 +86,7 @@ EditOperations::EditOperations(EditorSession* session, QObject* parent)
 {
 }
 
-void EditOperations::applyToWorkArea(const QString& undoText,
+void EditOperations::applyToWorkArea(const UndoLabel& undoLabel,
     const std::function<core::IndexedImage(const core::IndexedImage&)>& function)
 {
     m_session->cancelTool();
@@ -98,7 +98,7 @@ void EditOperations::applyToWorkArea(const QString& undoText,
         return; // nada mudou: não polui o histórico
     }
     buffer->undoStack()->push(
-        new RegionCommand(buffer, area.topLeft(), std::move(before), std::move(after), undoText));
+        new RegionCommand(buffer, area.topLeft(), std::move(before), std::move(after), undoLabel));
 }
 
 // -----------------------------------------------------------------------------
@@ -157,8 +157,8 @@ void EditOperations::paste()
     core::IndexedImage before = buffer->image().copy(target);
     core::IndexedImage after = before;
     after.paste(pasted, origin - target.topLeft(), m_session->drawingRules());
-    buffer->undoStack()->push(new RegionCommand(
-        buffer, target.topLeft(), std::move(before), std::move(after), tr("Paste")));
+    buffer->undoStack()->push(new RegionCommand(buffer, target.topLeft(), std::move(before),
+        std::move(after), UndoLabel { UndoOperation::Paste }));
     buffer->setSelection(target); // o conteúdo colado fica selecionado
 }
 
@@ -166,7 +166,7 @@ void EditOperations::clear()
 {
     const core::ColorIndex background = m_session->backgroundColor();
     const core::WriteRules rules = m_session->drawingRules();
-    applyToWorkArea(tr("Clear"), [&](const core::IndexedImage& region) {
+    applyToWorkArea(UndoLabel { UndoOperation::Clear }, [&](const core::IndexedImage& region) {
         core::IndexedImage result = region;
         result.fillRect(result.bounds(), background, rules);
         return result;
@@ -186,39 +186,40 @@ void EditOperations::transform(TransformKind kind)
     const core::ColorIndex fill = m_session->backgroundColor();
     switch (kind) {
     case TransformKind::ShiftUp:
-        applyToWorkArea(
-            tr("Shift Up"), [](const auto& image) { return core::shifted(image, 0, -1); });
+        applyToWorkArea(UndoLabel { UndoOperation::ShiftUp },
+            [](const auto& image) { return core::shifted(image, 0, -1); });
         break;
     case TransformKind::ShiftRight:
-        applyToWorkArea(
-            tr("Shift Right"), [](const auto& image) { return core::shifted(image, 1, 0); });
+        applyToWorkArea(UndoLabel { UndoOperation::ShiftRight },
+            [](const auto& image) { return core::shifted(image, 1, 0); });
         break;
     case TransformKind::ShiftDown:
-        applyToWorkArea(
-            tr("Shift Down"), [](const auto& image) { return core::shifted(image, 0, 1); });
+        applyToWorkArea(UndoLabel { UndoOperation::ShiftDown },
+            [](const auto& image) { return core::shifted(image, 0, 1); });
         break;
     case TransformKind::ShiftLeft:
-        applyToWorkArea(
-            tr("Shift Left"), [](const auto& image) { return core::shifted(image, -1, 0); });
+        applyToWorkArea(UndoLabel { UndoOperation::ShiftLeft },
+            [](const auto& image) { return core::shifted(image, -1, 0); });
         break;
     case TransformKind::FlipVertical:
-        applyToWorkArea(tr("Flip Vertically"), core::flippedVertically);
+        applyToWorkArea(UndoLabel { UndoOperation::FlipVertically }, core::flippedVertically);
         break;
     case TransformKind::FlipHorizontal:
-        applyToWorkArea(tr("Flip Horizontally"), core::flippedHorizontally);
+        applyToWorkArea(UndoLabel { UndoOperation::FlipHorizontally }, core::flippedHorizontally);
         break;
     case TransformKind::MirrorVertical:
-        applyToWorkArea(tr("Vertical Symmetry"), core::mirroredVertically);
+        applyToWorkArea(UndoLabel { UndoOperation::VerticalSymmetry }, core::mirroredVertically);
         break;
     case TransformKind::MirrorHorizontal:
-        applyToWorkArea(tr("Horizontal Symmetry"), core::mirroredHorizontally);
+        applyToWorkArea(
+            UndoLabel { UndoOperation::HorizontalSymmetry }, core::mirroredHorizontally);
         break;
     case TransformKind::RotateClockwise:
-        applyToWorkArea(tr("Rotate Right"),
+        applyToWorkArea(UndoLabel { UndoOperation::RotateRight },
             [fill](const auto& image) { return core::rotated90(image, true, fill); });
         break;
     case TransformKind::RotateCounterClockwise:
-        applyToWorkArea(tr("Rotate Left"),
+        applyToWorkArea(UndoLabel { UndoOperation::RotateLeft },
             [fill](const auto& image) { return core::rotated90(image, false, fill); });
         break;
     }
@@ -227,7 +228,7 @@ void EditOperations::transform(TransformKind kind)
 void EditOperations::rotate(double degrees)
 {
     const core::ColorIndex fill = m_session->backgroundColor();
-    applyToWorkArea(tr("Free Rotation"),
+    applyToWorkArea(UndoLabel { UndoOperation::FreeRotation },
         [&](const core::IndexedImage& image) { return core::rotated(image, degrees, fill); });
 }
 
@@ -252,8 +253,8 @@ void EditOperations::stretch(core::Size newSize)
     if (after == before) {
         return;
     }
-    buffer->undoStack()->push(new RegionCommand(
-        buffer, affected.topLeft(), std::move(before), std::move(after), tr("Stretch")));
+    buffer->undoStack()->push(new RegionCommand(buffer, affected.topLeft(), std::move(before),
+        std::move(after), UndoLabel { UndoOperation::Stretch }));
     buffer->setSelection(newArea);
 }
 
@@ -264,7 +265,7 @@ void EditOperations::prepareShadow()
 {
     const core::ColorIndex background = m_session->backgroundColor();
     const core::ColorIndex shadow = m_session->drawColor();
-    applyToWorkArea(tr("Prepare Shadow"),
+    applyToWorkArea(UndoLabel { UndoOperation::PrepareShadow },
         [&](const core::IndexedImage& image) { return core::shadowed(image, background, shadow); });
 }
 
@@ -327,7 +328,7 @@ void EditOperations::drawText(const QString& text, const QFont& font)
         }
         return core::Rect::fromPointAndSize(origin, mask.size());
     });
-    buffer->commitEdit(tr("Text"));
+    buffer->commitEdit(UndoLabel { UndoOperation::Text });
 }
 
 } // namespace spritenator::gui

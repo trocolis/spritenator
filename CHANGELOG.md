@@ -5,6 +5,24 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [1.2.0] - 2026-10-13
+
+### Adicionado
+- Troca de idioma **sem reiniciar**: escolher um idioma em *Exibir > Idioma* atualiza na hora toda a interface:
+  - menus, barra de ferramentas e Integrator (dicas de ferramentas, tons e transformações);
+  - controles de cor, janelas de canvas ("SemTitulo1"), janela de animação e ajuda;
+  - nomes das operações já registradas no histórico de desfazer.
+- `UndoLabel`/`UndoOperation`: catálogo tipado dos nomes das operações de desfazer. Os comandos (`LabeledCommand`) guardam a operação e se retraduzem.
+- Teste que troca o idioma com o programa aberto (inglês → português → inglês) e varre todos os widgets e ações visíveis, garantindo que nenhum texto do idioma anterior permanece.
+
+### Alterado
+- `ActionCatalog`: todas as ações passaram a ser descritas numa única tabela declarativa (texto, dica, ícone, atalho), reutilizada em `retranslate()`.
+- `Translations::install()` virou `Translations::apply()`, que substitui os tradutores já instalados.
+- Componentes persistentes definem seus textos em `retranslate()`, chamado na construção e em `changeEvent(QEvent::LanguageChange)`.
+
+### Removido
+- O aviso "o novo idioma será usado na próxima execução".
+
 ## [1.1.0] - 2026-10-13
 
 ### Adicionado

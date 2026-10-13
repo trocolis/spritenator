@@ -39,6 +39,8 @@ add_library(spritenator_gui STATIC
     Translations.h
     commands/ImageCommands.cpp
     commands/ImageCommands.h
+    commands/UndoLabel.cpp
+    commands/UndoLabel.h
     dialogs/BackupFolderDialog.cpp
     dialogs/BackupFolderDialog.h
     dialogs/CanvasSizeDialog.cpp

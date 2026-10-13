@@ -17,6 +17,8 @@
 #include <QWidget>
 
 class QComboBox;
+class QGroupBox;
+class QLabel;
 class QListWidget;
 class QPushButton;
 class QSpinBox;
@@ -63,7 +65,15 @@ public:
     /// Adiciona o ciclo de caminhada a partir da última célula transferida.
     void addWalkCycle();
 
+protected:
+    void changeEvent(QEvent* event) override;
+
 private:
+    /// Reaplica todos os textos no idioma atual.
+    void retranslate();
+    /// Texto exibido na lista para o quadro da linha informada.
+    [[nodiscard]] QString frameLabel(int row) const;
+
     void removeSelectedFrame();
     void clearFrames();
     void advanceFrame();
@@ -80,7 +90,12 @@ private:
     QComboBox* m_scale = nullptr;
     QPushButton* m_addCell = nullptr;
     QPushButton* m_walkCycle = nullptr;
+    QPushButton* m_removeButton = nullptr;
+    QPushButton* m_clearButton = nullptr;
     QPushButton* m_playButton = nullptr;
+    QGroupBox* m_framesBox = nullptr;
+    QLabel* m_waitLabel = nullptr;
+    QLabel* m_zoomLabel = nullptr;
     QTimer* m_timer = nullptr;
 };
 
