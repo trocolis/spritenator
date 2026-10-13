@@ -17,3 +17,6 @@ out/
 *.user
 .cache/
 compile_commands.json
+
+# Cache do Python (tools/*.py)
+__pycache__/
