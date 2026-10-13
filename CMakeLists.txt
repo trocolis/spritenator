@@ -10,7 +10,7 @@ cmake_minimum_required(VERSION 3.21)
 # para o empacotamento (CPack). Sempre que uma etapa é concluída, este número
 # é incrementado seguindo o versionamento semântico (MAJOR.MINOR.PATCH).
 project(Spritenator
-    VERSION 0.5.0
+    VERSION 0.6.0
     DESCRIPTION "Editor de sprites com cores indexadas inspirado no Character Maker 1999"
     LANGUAGES CXX)
 

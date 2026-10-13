@@ -9,6 +9,7 @@
 #include "widgets/DrawAreaView.h"
 #include "widgets/OrgAreaView.h"
 #include "widgets/PaletteView.h"
+#include "widgets/ToolPanel.h"
 
 #include <QFrame>
 #include <QGridLayout>
@@ -81,6 +82,7 @@ QWidget* IntegratorPanel::createLeftColumn(ActionCatalog* actions)
     layout->addLayout(paletteButtons);
 
     layout->addWidget(new ColorEditor(m_session, column));
+    layout->addWidget(new ToolPanel(m_session, column));
     layout->addStretch(1);
 
     column->setMinimumWidth(m_paletteView->minimumSizeHint().width() + 8);

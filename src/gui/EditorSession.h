@@ -16,6 +16,7 @@
 #include "core/CharacterLayout.h"
 #include "core/IndexedImage.h"
 #include "core/Palette.h"
+#include "core/Tone.h"
 #include "tools/Tool.h"
 
 #include <QObject>
@@ -90,8 +91,16 @@ public:
     /// Regras usadas ao gravar o buffer no canvas (transparência + máscara).
     [[nodiscard]] core::WriteRules transferRules() const;
 
-    /// Pinta um pixel respeitando as regras de desenho. Ponto central por onde
-    /// TODAS as ferramentas desenham. Devolve true se o pixel mudou.
+    // --- Tom (retícula) ---
+    [[nodiscard]] core::Tone tone() const { return m_tone; }
+    void setTone(core::Tone tone);
+    /// Deslocamento atual do padrão (0..15).
+    [[nodiscard]] int toneShift() const { return m_toneShift; }
+    /// Avança para o próximo deslocamento (botão "tone shift").
+    void cycleToneShift();
+
+    /// Pinta um pixel respeitando o tom e as regras de desenho. Ponto central
+    /// por onde TODAS as ferramentas desenham. Devolve true se o pixel mudou.
     bool plot(core::IndexedImage& image, core::Point point, core::ColorIndex color) const;
 
     // --- Ferramentas ---
@@ -119,6 +128,7 @@ signals:
     void characterLayoutChanged(const core::CharacterLayout& layout);
     void transparentEffectChanged(bool enabled);
     void toolChanged(gui::ToolKind kind);
+    void toneChanged();
 
 private:
     /// Ajusta as cores ao tamanho da paleta e repassa a paleta ao buffer.
@@ -139,6 +149,9 @@ private:
     bool m_subGridVisible = false;
     core::CharacterLayout m_layout;
     bool m_transparentEffect = false;
+
+    core::Tone m_tone = core::Tone::A;
+    int m_toneShift = 0;
 
     ToolKind m_toolKind = ToolKind::PenThin;
     std::map<ToolKind, std::unique_ptr<Tool>> m_tools;

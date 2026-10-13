@@ -7,6 +7,8 @@
 #include "DrawBuffer.h"
 #include "commands/ImageCommands.h"
 #include "tools/PenTool.h"
+#include "tools/ShapeTool.h"
+#include "tools/SimpleTools.h"
 
 #include <QUndoGroup>
 #include <QUndoStack>
@@ -27,9 +29,21 @@ EditorSession::EditorSession(QObject* parent)
     trackUndoStack(m_buffer->undoStack());
     m_undoGroup->setActiveStack(m_buffer->undoStack());
 
-    // Registro das ferramentas disponíveis.
+    // Registro das ferramentas disponíveis (uma instância de cada).
+    m_tools.emplace(ToolKind::Select, std::make_unique<SelectTool>());
+    m_tools.emplace(ToolKind::Zoom, std::make_unique<ZoomTool>());
+    m_tools.emplace(ToolKind::Fill, std::make_unique<FillTool>());
     m_tools.emplace(ToolKind::PenThin, std::make_unique<PenTool>(false));
     m_tools.emplace(ToolKind::PenThick, std::make_unique<PenTool>(true));
+    m_tools.emplace(ToolKind::Line, std::make_unique<ShapeTool>(Shape::Line, false));
+    m_tools.emplace(ToolKind::Rectangle, std::make_unique<ShapeTool>(Shape::Rectangle, false));
+    m_tools.emplace(
+        ToolKind::RoundRectangle, std::make_unique<ShapeTool>(Shape::RoundRectangle, false));
+    m_tools.emplace(ToolKind::Ellipse, std::make_unique<ShapeTool>(Shape::Ellipse, false));
+    m_tools.emplace(ToolKind::FilledRectangle, std::make_unique<ShapeTool>(Shape::Rectangle, true));
+    m_tools.emplace(
+        ToolKind::FilledRoundRectangle, std::make_unique<ShapeTool>(Shape::RoundRectangle, true));
+    m_tools.emplace(ToolKind::FilledEllipse, std::make_unique<ShapeTool>(Shape::Ellipse, true));
 }
 
 EditorSession::~EditorSession() = default;
@@ -210,7 +224,28 @@ core::WriteRules EditorSession::transferRules() const
 
 bool EditorSession::plot(core::IndexedImage& image, core::Point point, core::ColorIndex color) const
 {
+    // Pixels fora do padrão de tom ficam intactos.
+    if (!core::toneCovers(m_tone, point, m_toneShift)) {
+        return false;
+    }
     return image.setPixel(point, color, drawingRules());
+}
+
+// -----------------------------------------------------------------------------
+// Tom
+// -----------------------------------------------------------------------------
+void EditorSession::setTone(core::Tone tone)
+{
+    if (tone != m_tone) {
+        m_tone = tone;
+        emit toneChanged();
+    }
+}
+
+void EditorSession::cycleToneShift()
+{
+    m_toneShift = (m_toneShift + 1) % core::kToneShiftCount;
+    emit toneChanged();
 }
 
 // -----------------------------------------------------------------------------

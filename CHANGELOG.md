@@ -5,6 +5,21 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.6.0] - 2026-10-13
+
+### Adicionado
+- Todas as 12 ferramentas do original no painel de ferramentas:
+  - seleção retangular e lupa (esquerdo amplia, direito reduz);
+  - balde de tinta e lápis fino/grosso;
+  - reta, retângulo, retângulo arredondado e elipse, em contorno ou preenchidos, com efeito elástico durante o arraste.
+- Tons de retícula A–H (`core/Tone`), copiados pixel a pixel dos ícones originais, e o botão de deslocamento de tom (16 fases). Os tons se aplicam a todas as ferramentas de desenho.
+- Núcleo de rasterização:
+  - retângulo;
+  - elipse pelo algoritmo de Zingl (diâmetros pares e ímpares, elipses achatadas);
+  - retângulo arredondado;
+  - preenchimento por inundação em varredura de linhas (sem recursão).
+- Testes de figuras, simetria da elipse, preenchimento, cobertura e deslocamento dos tons, efeito elástico, balde com tom e seleção.
+
 ## [0.5.0] - 2026-10-13
 
 ### Adicionado

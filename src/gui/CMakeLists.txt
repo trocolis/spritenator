@@ -37,6 +37,10 @@ add_library(spritenator_gui STATIC
     dialogs/NewImageDialog.h
     tools/PenTool.cpp
     tools/PenTool.h
+    tools/ShapeTool.cpp
+    tools/ShapeTool.h
+    tools/SimpleTools.cpp
+    tools/SimpleTools.h
     tools/Tool.cpp
     tools/Tool.h
     widgets/ColorEditor.cpp
@@ -47,6 +51,8 @@ add_library(spritenator_gui STATIC
     widgets/OrgAreaView.h
     widgets/PaletteView.cpp
     widgets/PaletteView.h
+    widgets/ToolPanel.cpp
+    widgets/ToolPanel.h
 )
 add_library(Spritenator::Gui ALIAS spritenator_gui)
 

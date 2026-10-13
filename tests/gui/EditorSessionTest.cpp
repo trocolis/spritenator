@@ -118,6 +118,52 @@ private slots:
         QCOMPARE(session.buffer()->undoStack()->count(), 0);
     }
 
+    /// Figuras: o efeito elástico deixa apenas a figura final.
+    void shapeToolKeepsOnlyFinalShape()
+    {
+        EditorSession session;
+        session.setToolKind(ToolKind::Rectangle);
+        session.setDrawColor(5);
+        gui::Tool& tool = session.tool();
+        tool.press(session, { 1, 1 }, Qt::LeftButton);
+        tool.move(session, { 10, 10 }); // retângulo grande (temporário)
+        tool.move(session, { 4, 4 }); // retângulo final, menor
+        tool.release(session, { 4, 4 });
+        QCOMPARE(int(session.buffer()->image().pixel(10, 10)), 0); // apagado
+        QCOMPARE(int(session.buffer()->image().pixel(4, 4)), 5);
+        QCOMPARE(int(session.buffer()->image().pixel(2, 2)), 0); // contorno: interior vazio
+        QCOMPARE(session.buffer()->undoStack()->count(), 1);
+    }
+
+    /// Balde com tom: só os pixels do padrão são pintados.
+    void fillHonoursTone()
+    {
+        EditorSession session;
+        session.setToolKind(ToolKind::Fill);
+        session.setTone(core::Tone::E); // xadrez
+        session.setDrawColor(9);
+        session.tool().press(session, { 0, 0 }, Qt::LeftButton);
+        session.tool().release(session, { 0, 0 });
+        QCOMPARE(int(session.buffer()->image().pixel(0, 0)), 9);
+        QCOMPARE(int(session.buffer()->image().pixel(1, 0)), 0);
+        QCOMPARE(int(session.buffer()->image().pixel(1, 1)), 9);
+    }
+
+    /// Seleção: arrastar seleciona; clique simples limpa.
+    void selectToolCreatesAndClearsSelection()
+    {
+        EditorSession session;
+        session.setToolKind(ToolKind::Select);
+        gui::Tool& tool = session.tool();
+        tool.press(session, { 5, 6 }, Qt::LeftButton);
+        tool.move(session, { 2, 3 });
+        tool.release(session, { 2, 3 });
+        QCOMPARE(session.buffer()->selection().value(), (core::Rect { 2, 3, 4, 4 }));
+        tool.press(session, { 1, 1 }, Qt::LeftButton);
+        tool.release(session, { 1, 1 });
+        QVERIFY(!session.buffer()->selection().has_value());
+    }
+
     /// Mudar o tamanho da célula redimensiona o buffer.
     void layoutChangeResizesBuffer()
     {
