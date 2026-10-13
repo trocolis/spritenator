@@ -4,7 +4,7 @@ Editor de sprites com cores indexadas, multiplataforma, escrito em **C++20**
 com **Qt 6**. É uma recriação do *Character Maker 1999* (Yoji Ojima), um
 editor clássico de *charsets* e *chipsets* para o RPG Maker.
 
-> Versão atual: **0.1.0**. Veja o [CHANGELOG](CHANGELOG.md).
+> Histórico de versões: veja o [CHANGELOG](CHANGELOG.md).
 
 ## Compilação
 

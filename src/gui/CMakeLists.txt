@@ -21,6 +21,7 @@ target_include_directories(spritenator_gui PUBLIC "${PROJECT_SOURCE_DIR}/src")
 target_link_libraries(spritenator_gui
     PUBLIC
         Qt6::Widgets
+        Spritenator::Core
         Spritenator::Version
 )
 

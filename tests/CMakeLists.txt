@@ -20,4 +20,5 @@ function(spritenator_add_test name)
     set_tests_properties(${name} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endfunction()
 
+add_subdirectory(core)
 add_subdirectory(gui)

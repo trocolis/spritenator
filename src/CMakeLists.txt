@@ -23,5 +23,6 @@ add_library(spritenator_version INTERFACE)
 add_library(Spritenator::Version ALIAS spritenator_version)
 target_include_directories(spritenator_version INTERFACE "${SPRITENATOR_GENERATED_DIR}")
 
+add_subdirectory(core)
 add_subdirectory(gui)
 add_subdirectory(app)
