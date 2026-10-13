@@ -9,6 +9,8 @@
 
 #include "AppSettings.h"
 #include "core/Geometry.h"
+#include "core/IndexedImage.h"
+#include "core/Palette.h"
 
 #include <QMainWindow>
 
@@ -48,6 +50,10 @@ public:
 
     /// Documento da janela MDI ativa (nulo se não houver).
     [[nodiscard]] Document* activeDocument() const;
+
+    /// Estado do editor e catálogo de ações (expostos para testes de integração).
+    [[nodiscard]] EditorSession* session() const { return m_session; }
+    [[nodiscard]] ActionCatalog* actions() const { return m_actions; }
 
 protected:
     void closeEvent(QCloseEvent* event) override;
@@ -94,6 +100,16 @@ private:
 
     // --- Editar ---
     void drawText();
+
+    // --- Paleta ---
+    void loadPalette();
+    void savePalette();
+    void editPalette();
+    void applyGradation();
+    /// Aplica imagem + paleta novas ao documento como um passo de desfazer e
+    /// converte o buffer da área de desenho com a mesma tabela/opções.
+    void commitDocumentState(Document* document, const core::IndexedImage& canvas,
+        const core::Palette& palette, const QString& undoText);
 
     // --- Exibir ---
     void editCharacterSize();

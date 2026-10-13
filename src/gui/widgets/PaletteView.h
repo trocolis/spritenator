@@ -4,6 +4,10 @@
 // Grade com as cores da paleta (TPaletteArea no original). Botão esquerdo
 // escolhe a cor de desenho; botão direito, a cor de fundo. As cores
 // selecionadas são marcadas com molduras distintas.
+//
+// No modo máscara (F5) o comportamento muda, como no original:
+//   - esquerdo: marca/desmarca a cor como protegida;
+//   - direito: inverte a máscara; duplo clique direito: limpa a máscara.
 // =============================================================================
 #pragma once
 
@@ -34,6 +38,7 @@ signals:
 protected:
     void paintEvent(QPaintEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
+    void mouseDoubleClickEvent(QMouseEvent* event) override;
     bool event(QEvent* event) override; // dicas (tooltips) por cor
 
 private:

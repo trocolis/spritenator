@@ -35,8 +35,12 @@ add_library(spritenator_gui STATIC
     commands/ImageCommands.h
     dialogs/CharacterSizeDialog.cpp
     dialogs/CharacterSizeDialog.h
+    dialogs/LoadPaletteDialog.cpp
+    dialogs/LoadPaletteDialog.h
     dialogs/NewImageDialog.cpp
     dialogs/NewImageDialog.h
+    dialogs/PaletteEditDialog.cpp
+    dialogs/PaletteEditDialog.h
     dialogs/StretchDialog.cpp
     dialogs/StretchDialog.h
     dialogs/TextInputDialog.cpp
@@ -55,6 +59,8 @@ add_library(spritenator_gui STATIC
     widgets/DrawAreaView.h
     widgets/OrgAreaView.cpp
     widgets/OrgAreaView.h
+    widgets/PaletteGrid.cpp
+    widgets/PaletteGrid.h
     widgets/PaletteView.cpp
     widgets/PaletteView.h
     widgets/ToolPanel.cpp

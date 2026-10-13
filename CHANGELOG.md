@@ -5,6 +5,32 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.8.0] - 2026-10-13
+
+### Adicionado
+- Máscara de cores protegidas: pixels dessas cores não são alterados pelo desenho nem pela gravação no canvas.
+  - Modo máscara (F5): esquerdo marca a cor, direito inverte e duplo clique direito limpa.
+  - Limpar (F6), Inverter (F7) e Máscara automática (F9), que protege tudo exceto a cor de fundo e restaura a máscara anterior ao desligar.
+  - As cores protegidas aparecem marcadas com um "X".
+- Gradação (Ctrl+D): interpola a paleta entre a cor de desenho e a de fundo.
+- Editor de paleta (Shift+E), com uma intervenção no histórico ao confirmar:
+  - editar cor, copiar e colar cores;
+  - trocar duas cores sem alterar a aparência da imagem;
+  - gradiente, remoção de cores não usadas (com remapeamento), cores de 15 bits e restaurar paleta.
+- Carregar paleta (Shift+L), com prévia das cores lidas e da paleta resultante:
+  - leitura total ou por intervalo ("N cores a partir de X na posição Y");
+  - pixels: manter índices, cor mais próxima ou difusão de erro (Floyd–Steinberg);
+  - opções de evitar as 20 cores do sistema e tratar o índice 0 como transparente;
+  - o buffer da área de desenho é convertido junto com o canvas.
+- Salvar paleta (Shift+S) em RIFF `.pal`, JASC `.pal` ou `.act`.
+- `core/PaletteOps`: remapeamento, compactação, troca, mesclagem e pontilhamento.
+- `PaletteGrid`, uma grade de paleta reutilizável nos diálogos.
+- Testes de integração da janela principal, que disparam as ações reais dos menus, e testes de `PaletteOps`.
+
+### Corrigido
+- As ações de Recortar, Copiar, Colar, Limpar, Selecionar tudo, Preparar sombra e Entrada de texto não estavam ligadas aos menus na 0.7.0.
+- Um documento recém-aberto agora sempre se torna o documento ativo, independentemente do foco da janela.
+
 ## [0.7.0] - 2026-10-13
 
 ### Adicionado

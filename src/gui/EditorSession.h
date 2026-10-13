@@ -86,6 +86,22 @@ public:
     [[nodiscard]] bool transparentEffect() const { return m_transparentEffect; }
     void setTransparentEffect(bool enabled);
 
+    // --- Máscara de cores protegidas ---
+    /// Cores cujos pixels NÃO podem ser alterados pelo desenho nem pela
+    /// gravação no canvas.
+    [[nodiscard]] const core::ColorSet& mask() const { return m_mask; }
+    void setMask(const core::ColorSet& mask);
+    void toggleMasked(int index);
+    void clearMask();
+    void invertMask();
+    /// Modo de edição da máscara: cliques na paleta marcam/desmarcam cores.
+    [[nodiscard]] bool maskMode() const { return m_maskMode; }
+    void setMaskMode(bool enabled);
+    /// Máscara automática: protege tudo exceto a cor de fundo; ao desligar,
+    /// a máscara anterior é restaurada.
+    [[nodiscard]] bool autoMask() const { return m_autoMask; }
+    void setAutoMask(bool enabled);
+
     /// Regras usadas pelas ferramentas de desenho (máscara de cores).
     [[nodiscard]] core::WriteRules drawingRules() const;
     /// Regras usadas ao gravar o buffer no canvas (transparência + máscara).
@@ -129,6 +145,9 @@ signals:
     void transparentEffectChanged(bool enabled);
     void toolChanged(gui::ToolKind kind);
     void toneChanged();
+    void maskChanged();
+    void maskModeChanged(bool enabled);
+    void autoMaskChanged(bool enabled);
 
 private:
     /// Ajusta as cores ao tamanho da paleta e repassa a paleta ao buffer.
@@ -149,6 +168,11 @@ private:
     bool m_subGridVisible = false;
     core::CharacterLayout m_layout;
     bool m_transparentEffect = false;
+
+    core::ColorSet m_mask;
+    core::ColorSet m_maskBeforeAuto; ///< restaurada ao desligar a máscara automática
+    bool m_maskMode = false;
+    bool m_autoMask = false;
 
     core::Tone m_tone = core::Tone::A;
     int m_toneShift = 0;

@@ -14,6 +14,8 @@ add_library(spritenator_core STATIC
     IndexedImage.h
     Palette.cpp
     Palette.h
+    PaletteOps.cpp
+    PaletteOps.h
     Raster.cpp
     Raster.h
     Tone.h

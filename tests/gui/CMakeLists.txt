@@ -17,3 +17,7 @@ spritenator_add_test(test_editor_session
 spritenator_add_test(test_edit_operations
     SOURCES EditOperationsTest.cpp
     LIBRARIES Spritenator::Gui)
+
+spritenator_add_test(test_main_window
+    SOURCES MainWindowTest.cpp
+    LIBRARIES Spritenator::Gui)

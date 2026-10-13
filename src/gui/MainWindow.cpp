@@ -12,11 +12,16 @@
 #include "EditorSession.h"
 #include "IconProvider.h"
 #include "IntegratorPanel.h"
+#include "commands/ImageCommands.h"
+#include "core/PaletteOps.h"
 #include "dialogs/CharacterSizeDialog.h"
+#include "dialogs/LoadPaletteDialog.h"
 #include "dialogs/NewImageDialog.h"
+#include "dialogs/PaletteEditDialog.h"
 #include "dialogs/TextInputDialog.h"
 #include "io/ImageFile.h"
 #include "io/IoError.h"
+#include "io/PaletteFile.h"
 #include "widgets/DrawAreaView.h"
 
 #include <spritenator/Version.h>
@@ -287,6 +292,20 @@ void MainWindow::connectActions()
     connect(undoGroup, &QUndoGroup::redoTextChanged, this, &MainWindow::updateUndoActions);
     connect(undoGroup, &QUndoGroup::activeStackChanged, this, &MainWindow::updateUndoActions);
 
+    // --- Editar: operações sobre a área de desenho ---
+    connect(action(ActionId::EditCut), &QAction::triggered, m_operations, &EditOperations::cut);
+    connect(action(ActionId::EditCopy), &QAction::triggered, m_operations, &EditOperations::copy);
+    connect(action(ActionId::EditPaste), &QAction::triggered, m_operations, &EditOperations::paste);
+    connect(action(ActionId::EditClear), &QAction::triggered, m_operations, &EditOperations::clear);
+    connect(action(ActionId::EditSelectAll), &QAction::triggered, m_operations,
+        &EditOperations::selectAll);
+    connect(action(ActionId::EditShadow), &QAction::triggered, m_operations,
+        &EditOperations::prepareShadow);
+    connect(action(ActionId::EditDrawText), &QAction::triggered, this, &MainWindow::drawText);
+    // "Colar" só fica ativo quando há algo colável na área de transferência.
+    connect(QApplication::clipboard(), &QClipboard::dataChanged, this,
+        [this] { action(ActionId::EditPaste)->setEnabled(EditOperations::canPaste()); });
+
     // --- Exibir ---
     connect(
         action(ActionId::ViewCharaSize), &QAction::triggered, this, &MainWindow::editCharacterSize);
@@ -315,6 +334,25 @@ void MainWindow::connectActions()
     // --- Paleta ---
     connect(action(ActionId::PaletteTransparent), &QAction::toggled, m_session,
         &EditorSession::setTransparentEffect);
+    connect(action(ActionId::PaletteLoad), &QAction::triggered, this, &MainWindow::loadPalette);
+    connect(action(ActionId::PaletteSave), &QAction::triggered, this, &MainWindow::savePalette);
+    connect(action(ActionId::PaletteEdit), &QAction::triggered, this, &MainWindow::editPalette);
+    connect(
+        action(ActionId::PaletteGradation), &QAction::triggered, this, &MainWindow::applyGradation);
+
+    // Máscara: as ações espelham o estado da sessão nos dois sentidos.
+    connect(action(ActionId::PaletteMaskMode), &QAction::toggled, m_session,
+        &EditorSession::setMaskMode);
+    connect(m_session, &EditorSession::maskModeChanged, action(ActionId::PaletteMaskMode),
+        &QAction::setChecked);
+    connect(action(ActionId::PaletteAutoMask), &QAction::toggled, m_session,
+        &EditorSession::setAutoMask);
+    connect(m_session, &EditorSession::autoMaskChanged, action(ActionId::PaletteAutoMask),
+        &QAction::setChecked);
+    connect(action(ActionId::PaletteClearMask), &QAction::triggered, m_session,
+        &EditorSession::clearMask);
+    connect(action(ActionId::PaletteInvertMask), &QAction::triggered, m_session,
+        &EditorSession::invertMask);
 
     // --- Barra de status: posição na área de desenho ---
     connect(m_integrator->drawArea(), &DrawAreaView::pixelHovered, this,
@@ -358,6 +396,10 @@ void MainWindow::updateActionStates()
         ActionId::ViewZoom8,
         ActionId::ViewZoom12,
         ActionId::PaletteTransparent,
+        ActionId::PaletteMaskMode,
+        ActionId::PaletteClearMask,
+        ActionId::PaletteInvertMask,
+        ActionId::PaletteAutoMask,
         ActionId::WindowReverseCanvas,
         ActionId::HelpAbout,
     };
@@ -367,6 +409,10 @@ void MainWindow::updateActionStates()
         ActionId::FileSaveAs,
         ActionId::FileClose,
         ActionId::CanvasGetAll,
+        ActionId::PaletteLoad,
+        ActionId::PaletteSave,
+        ActionId::PaletteEdit,
+        ActionId::PaletteGradation,
         ActionId::WindowCascade,
         ActionId::WindowTileHorizontal,
         ActionId::WindowTileVertical,
@@ -584,6 +630,9 @@ CanvasWindow* MainWindow::addDocumentWindow(Document* document)
 
     window->show();
     subWindow->adjustSize(); // janela do tamanho do canvas (limitada pela área MDI)
+    // Ativa explicitamente: sem isso a ativação depende do foco da janela
+    // principal, e o documento novo poderia não virar o documento ativo.
+    m_mdiArea->setActiveSubWindow(subWindow);
     return window;
 }
 
@@ -686,6 +735,109 @@ void MainWindow::drawText()
     TextInputDialog dialog(this);
     if (dialog.exec() == QDialog::Accepted) {
         m_operations->drawText(dialog.text(), dialog.selectedFont());
+    }
+}
+
+// -----------------------------------------------------------------------------
+// Paleta
+// -----------------------------------------------------------------------------
+void MainWindow::commitDocumentState(Document* document, const core::IndexedImage& canvas,
+    const core::Palette& palette, const QString& undoText)
+{
+    if (canvas == document->canvas() && palette == document->palette()) {
+        return; // nada mudou
+    }
+    document->undoStack()->push(new DocumentStateCommand(
+        document, document->canvas(), document->palette(), canvas, palette, undoText));
+}
+
+void MainWindow::loadPalette()
+{
+    Document* document = activeDocument();
+    if (document == nullptr) {
+        return;
+    }
+    LoadPaletteDialog dialog(document->palette(), m_settings.lastDirectory(), this);
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
+    }
+    const core::Palette oldPalette = document->palette();
+    const core::Palette newPalette = dialog.resultPalette();
+    const core::PaletteApplyOptions options = dialog.applyOptions();
+
+    // O buffer da área de desenho usa a mesma paleta: converte-o também.
+    DrawBuffer* buffer = m_session->buffer();
+    const core::IndexedImage convertedBuffer
+        = core::applyPalette(buffer->image(), oldPalette, newPalette, options);
+    commitDocumentState(document,
+        core::applyPalette(document->canvas(), oldPalette, newPalette, options), newPalette,
+        tr("Load Palette"));
+    if (convertedBuffer != buffer->image()) {
+        buffer->replace(convertedBuffer, tr("Load Palette"));
+    }
+    m_settings.setLastDirectory(QFileInfo(dialog.filePath()).absolutePath());
+}
+
+void MainWindow::savePalette()
+{
+    const Document* document = activeDocument();
+    if (document == nullptr) {
+        return;
+    }
+    const QStringList filters = io::PaletteFile::saveFilters();
+    QString selectedFilter;
+    QString path = QFileDialog::getSaveFileName(this, tr("Save Palette"),
+        QDir(m_settings.lastDirectory()).filePath(QFileInfo(document->displayName()).baseName()),
+        filters.join(QStringLiteral(";;")), &selectedFilter);
+    if (path.isEmpty()) {
+        return;
+    }
+    const int filterIndex = static_cast<int>(filters.indexOf(selectedFilter));
+    const io::PaletteFormat format = io::PaletteFile::formatFromFilterIndex(filterIndex);
+    if (QFileInfo(path).suffix().isEmpty()) {
+        path += format == io::PaletteFormat::Act ? QStringLiteral(".act") : QStringLiteral(".pal");
+    }
+    try {
+        io::PaletteFile::save(path, document->palette(), format);
+    } catch (const io::IoError& error) {
+        showError(error.message());
+        return;
+    }
+    m_settings.setLastDirectory(QFileInfo(path).absolutePath());
+    statusBar()->showMessage(tr("Palette saved to %1").arg(QFileInfo(path).fileName()), 3000);
+}
+
+void MainWindow::editPalette()
+{
+    Document* document = activeDocument();
+    if (document == nullptr) {
+        return;
+    }
+    PaletteEditDialog dialog(document->palette(), document->canvas(), this);
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
+    }
+    commitDocumentState(document, dialog.canvas(), dialog.palette(), tr("Edit Palette"));
+
+    // Se as cores foram reorganizadas, o buffer acompanha o remapeamento.
+    if (dialog.remap() != core::identityRemap()) {
+        core::IndexedImage remapped = m_session->buffer()->image();
+        remapped.remap(dialog.remap());
+        m_session->buffer()->replace(remapped, tr("Edit Palette"));
+    }
+}
+
+void MainWindow::applyGradation()
+{
+    Document* document = activeDocument();
+    if (document == nullptr) {
+        return;
+    }
+    core::Palette palette = document->palette();
+    palette.interpolate(m_session->drawColor(), m_session->backgroundColor());
+    if (palette != document->palette()) {
+        document->undoStack()->push(
+            new PaletteCommand(document, document->palette(), palette, tr("Gradation")));
     }
 }
 

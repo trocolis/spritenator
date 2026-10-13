@@ -32,6 +32,11 @@ PaletteView::PaletteView(EditorSession* session, QWidget* parent)
         update();
     });
     connect(m_session, &EditorSession::colorsChanged, this, qOverload<>(&QWidget::update));
+    connect(m_session, &EditorSession::maskChanged, this, qOverload<>(&QWidget::update));
+    connect(m_session, &EditorSession::maskModeChanged, this, [this](bool enabled) {
+        setCursor(enabled ? Qt::PointingHandCursor : Qt::ArrowCursor);
+        update();
+    });
 }
 
 int PaletteView::rows() const
@@ -84,6 +89,26 @@ void PaletteView::paintEvent(QPaintEvent* /*event*/)
         painter.drawRect(cell);
     }
 
+    // Cores protegidas pela máscara: um "X" em cor contrastante.
+    const core::ColorSet& mask = m_session->mask();
+    for (int index = 0; index < palette.size(); ++index) {
+        if (!mask.test(static_cast<std::size_t>(index))) {
+            continue;
+        }
+        const QRect cell = cellRect(index).adjusted(2, 2, -2, -2);
+        const QColor color = toQColor(palette.color(index));
+        painter.setPen(QPen(color.lightness() > 128 ? Qt::black : Qt::white, 1));
+        painter.drawLine(cell.topLeft(), cell.bottomRight());
+        painter.drawLine(cell.topRight(), cell.bottomLeft());
+    }
+
+    // No modo máscara, uma borda colorida avisa que os cliques mudaram de função.
+    if (m_session->maskMode()) {
+        painter.setPen(QPen(QColor(255, 128, 0), 2));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawRect(rect().adjusted(1, 1, -1, -1));
+    }
+
     painter.setBrush(Qt::NoBrush);
     // Cor de fundo: moldura tracejada.
     const QRect background = cellRect(m_session->backgroundColor()).adjusted(1, 1, -1, -1);
@@ -106,12 +131,29 @@ void PaletteView::mousePressEvent(QMouseEvent* event)
     if (index < 0) {
         return;
     }
-    if (event->button() == Qt::LeftButton) {
+    if (m_session->maskMode()) {
+        if (event->button() == Qt::LeftButton) {
+            m_session->toggleMasked(index);
+        } else if (event->button() == Qt::RightButton) {
+            m_session->invertMask();
+        }
+    } else if (event->button() == Qt::LeftButton) {
         m_session->setDrawColor(index);
     } else if (event->button() == Qt::RightButton) {
         m_session->setBackgroundColor(index);
     }
     emit colorClicked(index, event->button());
+}
+
+void PaletteView::mouseDoubleClickEvent(QMouseEvent* event)
+{
+    // Duplo clique direito no modo máscara: limpa a máscara. O primeiro
+    // clique do duplo clique já inverteu a máscara; limpar é o resultado final.
+    if (m_session->maskMode() && event->button() == Qt::RightButton) {
+        m_session->clearMask();
+        return;
+    }
+    mousePressEvent(event); // nos demais casos, conta como um clique comum
 }
 
 bool PaletteView::event(QEvent* event)

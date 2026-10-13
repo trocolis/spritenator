@@ -209,7 +209,77 @@ void EditorSession::setTransparentEffect(bool enabled)
 
 core::WriteRules EditorSession::drawingRules() const
 {
-    return { };
+    core::WriteRules rules;
+    if (m_mask.any()) {
+        rules.protectedColors = &m_mask; // válido enquanto a sessão existir
+    }
+    return rules;
+}
+
+// -----------------------------------------------------------------------------
+// Máscara
+// -----------------------------------------------------------------------------
+void EditorSession::setMask(const core::ColorSet& mask)
+{
+    if (mask != m_mask) {
+        m_mask = mask;
+        emit maskChanged();
+    }
+}
+
+void EditorSession::toggleMasked(int index)
+{
+    if (!palette().isValidIndex(index)) {
+        return;
+    }
+    core::ColorSet mask = m_mask;
+    mask.flip(static_cast<std::size_t>(index));
+    setMask(mask);
+}
+
+void EditorSession::clearMask()
+{
+    setAutoMask(false);
+    setMask({ });
+}
+
+void EditorSession::invertMask()
+{
+    // Inverte apenas as cores existentes na paleta atual.
+    core::ColorSet valid;
+    for (int index = 0; index < palette().size(); ++index) {
+        valid.set(static_cast<std::size_t>(index));
+    }
+    setMask(~m_mask & valid);
+}
+
+void EditorSession::setMaskMode(bool enabled)
+{
+    if (enabled != m_maskMode) {
+        m_maskMode = enabled;
+        emit maskModeChanged(enabled);
+    }
+}
+
+void EditorSession::setAutoMask(bool enabled)
+{
+    if (enabled == m_autoMask) {
+        return;
+    }
+    m_autoMask = enabled;
+    if (enabled) {
+        // Protege todas as cores, exceto a de fundo.
+        m_maskBeforeAuto = m_mask;
+        core::ColorSet mask;
+        for (int index = 0; index < palette().size(); ++index) {
+            mask.set(static_cast<std::size_t>(index));
+        }
+        mask.reset(m_backgroundColor);
+        setMask(mask);
+    } else {
+        setMask(m_maskBeforeAuto);
+    }
+    emit autoMaskChanged(enabled);
 }
 
 core::WriteRules EditorSession::transferRules() const
