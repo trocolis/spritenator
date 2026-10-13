@@ -108,6 +108,14 @@ private slots:
         QCOMPARE(data.palette.size(), 256);
     }
 
+    /// Imagens maiores que o limite do editor geram IoError (e não outra
+    /// exceção que derrubaria a aplicação).
+    void oversizedImageThrowsIoError()
+    {
+        const QImage huge(core::IndexedImage::kMaxDimension + 1, 1, QImage::Format_Indexed8);
+        QVERIFY_THROWS_EXCEPTION(io::IoError, std::ignore = ImageFile::fromQImage(huge));
+    }
+
     void missingFileThrows()
     {
         QVERIFY_THROWS_EXCEPTION(

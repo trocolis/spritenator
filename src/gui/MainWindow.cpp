@@ -55,6 +55,7 @@
 #include <QUndoStack>
 
 #include <algorithm>
+#include <exception>
 
 namespace spritenator::gui {
 
@@ -516,6 +517,10 @@ bool MainWindow::openFile(const QString& path)
         m_settings.removeRecentFile(QFileInfo(path).absoluteFilePath());
         updateRecentFilesMenu();
         showError(error.message());
+        return false;
+    } catch (const std::exception& error) {
+        // Rede de segurança: nenhum arquivo malformado deve derrubar o programa.
+        showError(tr("Cannot open \"%1\": %2").arg(path, QString::fromLocal8Bit(error.what())));
         return false;
     }
 

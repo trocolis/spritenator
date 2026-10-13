@@ -145,6 +145,15 @@ ImageData ImageFile::fromQImage(const QImage& source)
     if (source.isNull()) {
         throw IoError(translate("The image is empty."));
     }
+    // O editor limita as dimensões (ver IndexedImage::kMaxDimension); sem esta
+    // verificação o construtor da imagem lançaria std::invalid_argument.
+    constexpr int kLimit = core::IndexedImage::kMaxDimension;
+    if (source.width() > kLimit || source.height() > kLimit) {
+        throw IoError(translate("The image is too large (%1 x %2). The maximum is %3 x %3 pixels.")
+                .arg(source.width())
+                .arg(source.height())
+                .arg(kLimit));
+    }
     switch (source.format()) {
     case QImage::Format_Indexed8: return fromIndexed(source);
     case QImage::Format_Mono:
