@@ -5,6 +5,30 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [1.0.0] - 2026-10-13
+
+Primeira versão estável. Reúne todas as funcionalidades do Character Maker 1999
+planejadas para a recriação (exceto o controle de licença shareware, os
+plugins Susie e os hooks específicos do Windows, propositalmente omitidos).
+
+### Adicionado
+- Empacotamento:
+  - regras de instalação (executável, atalho `.desktop` e ícone no Linux);
+  - CPack: `.tar.gz`/`.deb` no Linux, `.zip` no Windows e `.dmg` no macOS;
+  - implantação das bibliotecas do Qt no Windows e no macOS (`qt_generate_deploy_app_script`).
+- Ícone e informações de versão no executável do Windows (`spritenator.rc`).
+- Integração contínua (GitHub Actions) em Linux, Windows e macOS, com avisos tratados como erros, testes e pacotes como artefatos.
+- `docs/ARCHITECTURE.md` (camadas, padrões de projeto, fluxo de dados e pontos de extensão) e README completo.
+- O script de ícones também gera `resources/app_icon.ico`.
+
+### Corrigido
+- Abrir uma imagem maior que 8192 px encerrava a aplicação; agora mostra uma mensagem de erro.
+- Fechar a aplicação depois de gravar uma célula no canvas podia chamar código de uma janela já destruída (abort em builds de depuração).
+
+### Verificado
+- Compilação sem avisos com GCC e Clang (`-Werror`).
+- 16 suítes de teste passando, inclusive com AddressSanitizer e UndefinedBehaviorSanitizer.
+
 ## [0.10.0] - 2026-10-13
 
 ### Adicionado

@@ -143,10 +143,12 @@ def main(argv: list[str]) -> int:
         extract_glyph(assets, output, file_name, name)
         total += 2
 
-    # Ícone da aplicação (janela "Sobre" do original).
-    icon = Image.open(assets / "TFormAbout.Image1.Picture.Data.ico")
-    icon.save(output / "app_icon.png")
-    total += 1
+    # Ícone da aplicação (janela "Sobre" do original): PNG para a interface e
+    # .ico (cópia do original, com 16x16 e 32x32) para o executável do Windows.
+    icon_path = assets / "TFormAbout.Image1.Picture.Data.ico"
+    Image.open(icon_path).save(output / "app_icon.png")
+    (output.parent / "app_icon.ico").write_bytes(icon_path.read_bytes())
+    total += 2
 
     print(f"{total} ícones gravados em {output}")
     return 0
