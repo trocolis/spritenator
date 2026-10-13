@@ -5,6 +5,19 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.4.0] - 2026-10-13
+
+### Adicionado
+- `Document`, que reúne canvas, paleta, caminho e histórico próprio (`QUndoStack`), com cache de exibição atualizado só nas regiões alteradas.
+- Janelas de canvas MDI (`CanvasWindow`/`CanvasView`), com ampliação sem suavização e cursor de célula do tamanho do personagem.
+- Arquivo: Novo (com predefinições de tamanho do RPG Maker e cópia da paleta atual), Abrir (vários arquivos ou arrastar e soltar), Salvar, Salvar como, Reverter e Fechar.
+- Confirmação ao fechar documentos modificados e ao sair da aplicação.
+- Lista com os 4 arquivos recentes.
+- Janela: Cascata, Empilhar, Lado a lado e Ajustar ao canvas.
+- `AppSettings`, que dá acesso tipado ao `QSettings`; geometria da janela persistente.
+- Posição do mouse no canvas exibida na barra de status.
+- Testes do ciclo de vida do documento (modificação, desfazer, salvar, reverter).
+
 ## [0.3.0] - 2026-10-13
 
 ### Adicionado

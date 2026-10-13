@@ -8,10 +8,22 @@
 add_library(spritenator_gui STATIC
     ActionCatalog.cpp
     ActionCatalog.h
+    AppSettings.cpp
+    AppSettings.h
+    CanvasView.cpp
+    CanvasView.h
+    CanvasWindow.cpp
+    CanvasWindow.h
+    Document.cpp
+    Document.h
     IconProvider.cpp
     IconProvider.h
+    ImageRendering.cpp
+    ImageRendering.h
     MainWindow.cpp
     MainWindow.h
+    dialogs/NewImageDialog.cpp
+    dialogs/NewImageDialog.h
 )
 add_library(Spritenator::Gui ALIAS spritenator_gui)
 

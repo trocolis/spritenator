@@ -5,3 +5,7 @@
 spritenator_add_test(test_action_catalog
     SOURCES ActionCatalogTest.cpp
     LIBRARIES Spritenator::Gui)
+
+spritenator_add_test(test_document
+    SOURCES DocumentTest.cpp
+    LIBRARIES Spritenator::Gui)
