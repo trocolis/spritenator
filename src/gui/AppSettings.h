@@ -14,6 +14,16 @@
 
 namespace spritenator::gui {
 
+/// Preferências de exibição restauradas ao abrir a aplicação.
+struct ViewSettings {
+    int zoom = 8;
+    bool mainGridVisible = true;
+    bool subGridVisible = false;
+    bool transparentEffect = false;
+    bool canvasReversed = false;
+    QByteArray splitterState; ///< proporção Integrator | área MDI
+};
+
 /// Leitura e gravação das preferências da aplicação.
 class AppSettings final {
 public:
@@ -37,6 +47,10 @@ public:
     // --- Grade de personagens ---
     [[nodiscard]] core::CharacterLayout characterLayout() const;
     void setCharacterLayout(const core::CharacterLayout& layout);
+
+    // --- Preferências de exibição ---
+    [[nodiscard]] ViewSettings viewSettings() const;
+    void setViewSettings(const ViewSettings& settings);
 
     // --- Geometria e estado da janela principal ---
     [[nodiscard]] QByteArray mainWindowGeometry() const;

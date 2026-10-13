@@ -21,3 +21,7 @@ spritenator_add_test(test_edit_operations
 spritenator_add_test(test_main_window
     SOURCES MainWindowTest.cpp
     LIBRARIES Spritenator::Gui)
+
+spritenator_add_test(test_app_settings
+    SOURCES AppSettingsTest.cpp
+    LIBRARIES Spritenator::Gui)

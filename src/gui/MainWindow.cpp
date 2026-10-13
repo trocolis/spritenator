@@ -11,17 +11,20 @@
 #include "DrawBuffer.h"
 #include "EditOperations.h"
 #include "EditorSession.h"
+#include "HelpWindow.h"
 #include "IconProvider.h"
 #include "IntegratorPanel.h"
 #include "commands/ImageCommands.h"
 #include "core/PaletteOps.h"
 #include "core/Transform.h"
+#include "dialogs/BackupFolderDialog.h"
 #include "dialogs/CanvasSizeDialog.h"
 #include "dialogs/CharacterSizeDialog.h"
 #include "dialogs/LoadPaletteDialog.h"
 #include "dialogs/NewImageDialog.h"
 #include "dialogs/PaletteEditDialog.h"
 #include "dialogs/TextInputDialog.h"
+#include "io/Backup.h"
 #include "io/ImageFile.h"
 #include "io/IoError.h"
 #include "io/PaletteFile.h"
@@ -121,6 +124,7 @@ MainWindow::MainWindow(QWidget* parent)
     resize(1024, 720);
     restoreGeometry(m_settings.mainWindowGeometry());
     restoreState(m_settings.mainWindowState());
+    restoreViewSettings();
 }
 
 MainWindow::~MainWindow() = default;
@@ -278,6 +282,8 @@ void MainWindow::connectActions()
     connect(action(ActionId::FileClose), &QAction::triggered, m_mdiArea,
         &QMdiArea::closeActiveSubWindow);
     connect(action(ActionId::FileExit), &QAction::triggered, this, &QWidget::close);
+    connect(action(ActionId::FileSetBackupFolder), &QAction::triggered, this,
+        &MainWindow::setBackupFolder);
 
     // --- Editar: desfazer/refazer roteados pelo grupo de pilhas ---
     QUndoGroup* undoGroup = m_session->undoGroup();
@@ -377,6 +383,7 @@ void MainWindow::connectActions()
     connect(action(ActionId::WindowFit), &QAction::triggered, this, &MainWindow::fitActiveWindow);
 
     // --- Ajuda ---
+    connect(action(ActionId::HelpContents), &QAction::triggered, this, &MainWindow::showHelp);
     connect(action(ActionId::HelpAbout), &QAction::triggered, this, &MainWindow::showAbout);
 }
 
@@ -387,6 +394,8 @@ void MainWindow::updateActionStates()
         ActionId::FileNew,
         ActionId::FileOpen,
         ActionId::FileExit,
+        ActionId::FileSetBackupFolder,
+        ActionId::HelpContents,
         ActionId::EditCut,
         ActionId::EditCopy,
         ActionId::EditClear,
@@ -529,6 +538,9 @@ bool MainWindow::saveDocument(Document* document)
     if (!document->hasFilePath()) {
         return saveDocumentAs(document);
     }
+    if (!backupBeforeSaving(document->filePath())) {
+        return false;
+    }
     try {
         document->save();
     } catch (const io::IoError& error) {
@@ -556,6 +568,9 @@ bool MainWindow::saveDocumentAs(Document* document)
         return false; // usuário cancelou
     }
     path = ensureExtension(path, selectedFilter);
+    if (!backupBeforeSaving(path)) {
+        return false;
+    }
 
     try {
         document->saveAs(path);
@@ -595,6 +610,34 @@ void MainWindow::revertDocument()
     } catch (const io::IoError& error) {
         showError(error.message());
     }
+}
+
+// -----------------------------------------------------------------------------
+// Arquivo > Pasta de backup
+// -----------------------------------------------------------------------------
+void MainWindow::setBackupFolder()
+{
+    BackupFolderDialog dialog(m_settings.backupFolder(), this);
+    if (dialog.exec() == QDialog::Accepted) {
+        m_settings.setBackupFolder(dialog.folder());
+    }
+}
+
+bool MainWindow::backupBeforeSaving(const QString& path)
+{
+    const QString folder = m_settings.backupFolder();
+    if (folder.isEmpty()) {
+        return true; // backup desativado
+    }
+    try {
+        io::createBackup(path, folder);
+    } catch (const io::IoError& error) {
+        // Falha no backup não deve impedir o usuário de salvar: ele decide.
+        const auto answer = QMessageBox::warning(this, toQString(version::kApplicationName),
+            tr("%1\n\nSave anyway?").arg(error.message()), QMessageBox::Save | QMessageBox::Cancel);
+        return answer == QMessageBox::Save;
+    }
+    return true;
 }
 
 bool MainWindow::maybeSave(Document* document)
@@ -960,6 +1003,7 @@ void MainWindow::closeEvent(QCloseEvent* event)
     }
     m_settings.setMainWindowGeometry(saveGeometry());
     m_settings.setMainWindowState(saveState());
+    saveViewSettings();
     event->accept();
 }
 
@@ -993,6 +1037,45 @@ void MainWindow::showAbout()
                              .arg(toQString(version::kApplicationName), toQString(version::kString),
                                  toQString(version::kDescription), QString::fromLatin1(qVersion()));
     QMessageBox::about(this, tr("About %1").arg(toQString(version::kApplicationName)), text);
+}
+
+void MainWindow::showHelp()
+{
+    if (m_helpWindow == nullptr) {
+        m_helpWindow = new HelpWindow(m_actions, this);
+    }
+    m_helpWindow->show();
+    m_helpWindow->raise();
+    m_helpWindow->activateWindow();
+}
+
+// -----------------------------------------------------------------------------
+// Preferências de exibição (restauradas ao abrir, gravadas ao sair)
+// -----------------------------------------------------------------------------
+void MainWindow::restoreViewSettings()
+{
+    const ViewSettings view = m_settings.viewSettings();
+    // As ações propagam o estado para a sessão pelos sinais já conectados.
+    action(ActionId::ViewMainGrid)->setChecked(view.mainGridVisible);
+    action(ActionId::ViewSubGrid)->setChecked(view.subGridVisible);
+    action(ActionId::PaletteTransparent)->setChecked(view.transparentEffect);
+    action(ActionId::WindowReverseCanvas)->setChecked(view.canvasReversed);
+    m_session->setZoom(view.zoom);
+    if (!view.splitterState.isEmpty()) {
+        m_mainSplitter->restoreState(view.splitterState);
+    }
+}
+
+void MainWindow::saveViewSettings()
+{
+    ViewSettings view;
+    view.zoom = m_session->zoom();
+    view.mainGridVisible = m_session->mainGridVisible();
+    view.subGridVisible = m_session->subGridVisible();
+    view.transparentEffect = m_session->transparentEffect();
+    view.canvasReversed = action(ActionId::WindowReverseCanvas)->isChecked();
+    view.splitterState = m_mainSplitter->saveState();
+    m_settings.setViewSettings(view);
 }
 
 void MainWindow::showError(const QString& message)

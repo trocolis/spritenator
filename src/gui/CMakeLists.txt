@@ -24,6 +24,8 @@ add_library(spritenator_gui STATIC
     EditOperations.h
     EditorSession.cpp
     EditorSession.h
+    HelpWindow.cpp
+    HelpWindow.h
     IconProvider.cpp
     IconProvider.h
     ImageRendering.cpp
@@ -35,6 +37,8 @@ add_library(spritenator_gui STATIC
     MainWindow.h
     commands/ImageCommands.cpp
     commands/ImageCommands.h
+    dialogs/BackupFolderDialog.cpp
+    dialogs/BackupFolderDialog.h
     dialogs/CanvasSizeDialog.cpp
     dialogs/CanvasSizeDialog.h
     dialogs/CharacterSizeDialog.cpp
@@ -96,4 +100,11 @@ qt_add_resources(spritenator_gui "spritenator_icons"
     PREFIX "/icons"
     BASE "${PROJECT_SOURCE_DIR}/resources/icons"
     FILES ${SPRITENATOR_ICON_FILES}
+)
+
+# Manual do usuário exibido pela HelpWindow (F1).
+qt_add_resources(spritenator_gui "spritenator_help"
+    PREFIX "/help"
+    BASE "${PROJECT_SOURCE_DIR}/resources/help"
+    FILES "${PROJECT_SOURCE_DIR}/resources/help/manual.html"
 )

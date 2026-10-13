@@ -6,6 +6,8 @@
 # =============================================================================
 
 add_library(spritenator_io STATIC
+    Backup.cpp
+    Backup.h
     BmpWriter.cpp
     BmpWriter.h
     ImageFile.cpp

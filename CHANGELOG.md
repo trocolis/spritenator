@@ -5,6 +5,15 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.10.0] - 2026-10-13
+
+### Adicionado
+- Arquivo > Pasta de backup: antes de sobrescrever um arquivo, a versão anterior é copiada para a pasta escolhida, com data e hora no nome. Uma falha no backup pergunta se a gravação deve continuar.
+- `io/Backup`: nomes de backup com carimbo de tempo, sem sobrescrever backups do mesmo segundo.
+- Ajuda (F1): manual embutido com ícones e uma tabela de atalhos gerada a partir das ações reais, que por isso nunca fica desatualizada.
+- As preferências de exibição (zoom, grades, efeito transparente, lado do Integrator e divisão da tela) agora são restauradas ao abrir a aplicação.
+- Testes das configurações, do backup e do conteúdo da ajuda.
+
 ## [0.9.0] - 2026-10-13
 
 ### Adicionado

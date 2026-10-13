@@ -9,3 +9,7 @@ spritenator_add_test(test_image_file
 spritenator_add_test(test_palette_file
     SOURCES PaletteFileTest.cpp
     LIBRARIES Spritenator::Io)
+
+spritenator_add_test(test_backup
+    SOURCES BackupTest.cpp
+    LIBRARIES Spritenator::Io)

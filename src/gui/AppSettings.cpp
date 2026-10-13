@@ -118,6 +118,39 @@ void AppSettings::setCharacterLayout(const core::CharacterLayout& layout)
 }
 
 // -----------------------------------------------------------------------------
+// Preferências de exibição
+// -----------------------------------------------------------------------------
+ViewSettings AppSettings::viewSettings() const
+{
+    QSettings settings;
+    settings.beginGroup(QStringLiteral("view"));
+    const ViewSettings defaults;
+    ViewSettings view;
+    view.zoom = settings.value("zoom", defaults.zoom).toInt();
+    view.mainGridVisible = settings.value("mainGrid", defaults.mainGridVisible).toBool();
+    view.subGridVisible = settings.value("subGrid", defaults.subGridVisible).toBool();
+    view.transparentEffect
+        = settings.value("transparentEffect", defaults.transparentEffect).toBool();
+    view.canvasReversed = settings.value("canvasReversed", defaults.canvasReversed).toBool();
+    view.splitterState = settings.value("splitter").toByteArray();
+    settings.endGroup();
+    return view;
+}
+
+void AppSettings::setViewSettings(const ViewSettings& view)
+{
+    QSettings settings;
+    settings.beginGroup(QStringLiteral("view"));
+    settings.setValue("zoom", view.zoom);
+    settings.setValue("mainGrid", view.mainGridVisible);
+    settings.setValue("subGrid", view.subGridVisible);
+    settings.setValue("transparentEffect", view.transparentEffect);
+    settings.setValue("canvasReversed", view.canvasReversed);
+    settings.setValue("splitter", view.splitterState);
+    settings.endGroup();
+}
+
+// -----------------------------------------------------------------------------
 // Janela principal
 // -----------------------------------------------------------------------------
 QByteArray AppSettings::mainWindowGeometry() const

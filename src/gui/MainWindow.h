@@ -29,6 +29,7 @@ class ActionCatalog;
 class AnimationWindow;
 class CanvasWindow;
 class Document;
+class HelpWindow;
 class EditOperations;
 class EditorSession;
 class IntegratorPanel;
@@ -78,6 +79,10 @@ private:
     bool saveDocument(Document* document);
     bool saveDocumentAs(Document* document);
     void revertDocument();
+    void setBackupFolder();
+    /// Guarda a versão anterior do arquivo na pasta de backup (se definida).
+    /// Devolve false se o usuário preferir cancelar a gravação após um erro.
+    bool backupBeforeSaving(const QString& path);
 
     /// Pergunta se o usuário quer salvar um documento modificado. Devolve
     /// false se a operação em andamento (fechar/sair) deve ser cancelada.
@@ -127,7 +132,12 @@ private:
     void showPosition(const QString& area, const core::Point& pixel);
 
     // --- Ajuda ---
+    void showHelp();
     void showAbout();
+
+    // --- Preferências ---
+    void restoreViewSettings();
+    void saveViewSettings();
 
     /// Exibe uma mensagem de erro padronizada.
     void showError(const QString& message);
@@ -148,6 +158,7 @@ private:
     QList<QAction*> m_recentFileActions; ///< Entradas de arquivos recentes.
     QLabel* m_positionLabel = nullptr; ///< Posição do mouse no canvas.
     AnimationWindow* m_animationWindow = nullptr; ///< Criada sob demanda (F2).
+    HelpWindow* m_helpWindow = nullptr; ///< Criada sob demanda (F1).
 };
 
 } // namespace spritenator::gui

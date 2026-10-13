@@ -1,0 +1,146 @@
+<!--
+  Manual do usuário do Spritenator (exibido pela HelpWindow, tecla F1).
+  Os marcadores {{VERSION}} e {{SHORTCUTS}} são substituídos em tempo de
+  execução: a tabela de atalhos é gerada a partir das ações reais.
+  As imagens referenciam os ícones embutidos (":/icons/...").
+-->
+<html>
+<head><meta charset="utf-8"><title>Spritenator Help</title></head>
+<body>
+
+<h1><img src=":/icons/app_icon.png" width="32" height="32"> Spritenator {{VERSION}}</h1>
+<p>Spritenator is an indexed-color sprite editor, a cross-platform recreation of
+<i>Character Maker 1999</i> by Yoji Ojima. It was designed for RPG Maker character
+sets and chip sets, but it works for any 16 or 256 color pixel art.</p>
+
+<h2>Contents</h2>
+<ol>
+  <li><a href="#workflow">The basic workflow</a></li>
+  <li><a href="#screen">The screen</a></li>
+  <li><a href="#tools">Drawing tools and tones</a></li>
+  <li><a href="#transforms">Transformations</a></li>
+  <li><a href="#palette">Palette, mask and transparency</a></li>
+  <li><a href="#animation">Animation preview</a></li>
+  <li><a href="#files">Files and backups</a></li>
+  <li><a href="#sizes">Common RPG Maker sizes</a></li>
+  <li><a href="#shortcuts">Keyboard shortcuts</a></li>
+</ol>
+
+<h2 id="workflow">1. The basic workflow</h2>
+<p>The image (the <b>canvas</b>) is divided into <b>cells</b> the size of one character
+frame, 24&times;32 pixels by default (<i>View &gt; Character Size</i>). You edit
+one cell at a time in the magnified <b>drawing area</b>:</p>
+<ul>
+  <li><b>Right-click</b> a cell of the canvas to bring it into the drawing area.</li>
+  <li>Draw in the drawing area.</li>
+  <li><b>Left-click</b> a cell of the canvas to write the drawing area into it.</li>
+</ul>
+<p>With the canvas focused, the <b>arrow keys</b> move to the neighbouring cell and bring
+it into the drawing area. <b>Transfer All</b> (F3) brings the whole canvas into the
+drawing area. The drawing area is shared by all open images, so you can copy frames
+from one image to another.</p>
+
+<h2 id="screen">2. The screen</h2>
+<ul>
+  <li><b>Integrator</b> (the tool panel) contains the palette, the color
+      controls, the tools, the actual-size preview, the drawing area and the
+      transformation buttons. <i>Window &gt; Reverse Canvas</i> swaps it to the
+      other side.</li>
+  <li><b>Canvas windows</b> show each open image. A double frame follows the mouse
+      and shows the cell that a click will read or write.</li>
+  <li>The <b>status bar</b> shows the position of the mouse in the canvas or
+      in the drawing area.</li>
+</ul>
+<p>In the palette, the <b>left button</b> selects the drawing color and the
+<b>right button</b> selects the background color. The R, G, B sliders edit the
+drawing color. Dragging a slider creates a single undo step.</p>
+
+<h2 id="tools">3. Drawing tools and tones</h2>
+<table cellpadding="3">
+<tr><td><img src=":/icons/tool_select.png"></td><td>Select a rectangle. A simple click removes the selection.</td></tr>
+<tr><td><img src=":/icons/tool_zoom.png"></td><td>Zoom: the left button magnifies and the right button reduces.</td></tr>
+<tr><td><img src=":/icons/tool_fill.png"></td><td>Fill the adjacent area of the same color.</td></tr>
+<tr><td><img src=":/icons/tool_pen_thin.png"> <img src=":/icons/tool_pen_thick.png"></td><td>Thin (1 px) and thick (3 px) pens.</td></tr>
+<tr><td><img src=":/icons/tool_line.png"></td><td>Straight line.</td></tr>
+<tr><td><img src=":/icons/tool_rect.png"> <img src=":/icons/tool_round_rect.png"> <img src=":/icons/tool_ellipse.png"></td><td>Rectangle, rounded rectangle and ellipse outlines.</td></tr>
+<tr><td><img src=":/icons/tool_rect_filled.png"> <img src=":/icons/tool_round_rect_filled.png"> <img src=":/icons/tool_ellipse_filled.png"></td><td>The same shapes, filled.</td></tr>
+</table>
+<p>All tools draw with the drawing color using the left button and with the
+background color using the right button. Press <b>Esc</b> to cancel the shape
+being drawn.</p>
+<p><b>Tones</b> (A to H) are screen patterns. Only the pixels covered by the
+pattern receive the color, which simulates intermediate shades. Tone A is solid.
+The <img src=":/icons/tone_shift.png"> button shifts the origin of the pattern.</p>
+
+<h2 id="transforms">4. Transformations</h2>
+<p>The buttons below the drawing area act on the selection, or on the whole
+drawing area when there is no selection:</p>
+<ul>
+  <li>shift up, right, down or left by one pixel (what leaves one side enters on
+      the other);</li>
+  <li>flip vertically or horizontally;</li>
+  <li><b>symmetry</b>: copy the top or left half mirrored onto the other half;</li>
+  <li>rotate 90 degrees, rotate by any angle, and stretch or shrink.</li>
+</ul>
+<p>Also in the <i>Edit</i> menu:</p>
+<ul>
+  <li><b>Prepare Shadow</b> turns every non-background pixel into the drawing
+      color.</li>
+  <li><b>Text Input</b> renders text without anti-aliasing.</li>
+</ul>
+
+<h2 id="palette">5. Palette, mask and transparency</h2>
+<ul>
+  <li><b>Transparent Color Effect</b> (F8): when writing the drawing area into
+      the canvas, pixels of the background color are skipped.</li>
+  <li><b>Mask</b>: masked colors are protected, so pixels of those colors are
+      never changed. In <b>Mask Mode</b> (F5):
+      <ul>
+        <li>left-clicking a palette color masks or unmasks it;</li>
+        <li>right-clicking inverts the mask;</li>
+        <li>double right-clicking clears it.</li>
+      </ul>
+      <b>Automask</b> (F9) protects every color except the background color.</li>
+  <li><b>Gradation</b> (Ctrl+D) interpolates the palette between the drawing
+      and the background colors.</li>
+  <li><b>Edit Palette</b> lets you:
+      <ul>
+        <li>exchange colors, keeping the look of the image;</li>
+        <li>remove unused colors;</li>
+        <li>reduce the colors to 15 bits, as RPG Maker 2000 does internally.</li>
+      </ul></li>
+  <li><b>Load Palette</b> reads <code>.pal</code> (RIFF or JASC), <code>.act</code>,
+      or the palette of a BMP/PNG image. It can keep the pixel indices, move each
+      color to the nearest new color, or reproduce the colors by dithering.</li>
+</ul>
+
+<h2 id="animation">6. Animation preview</h2>
+<p>Open it with F2:</p>
+<ol>
+  <li>Right-click a cell of the canvas to bring it into the drawing area.</li>
+  <li>Press <b>Add Cell</b> to add that cell as a frame, or press <b>Walk Cycle</b>
+      to add the RPG Maker walking sequence (frames 1-2-3-2) of that cell's
+      direction.</li>
+</ol>
+<p>The preview shows the current canvas, so your edits appear immediately.</p>
+
+<h2 id="files">7. Files and backups</h2>
+<p>Images are opened and saved as indexed PNG or BMP files. Files with 16 colors
+are written as 4-bit BMP files. You can also drag files onto the window to open
+them.</p>
+<p>With a <b>backup folder</b> set (<i>File &gt; Set Backup Folder</i>), the previous
+version of a file is copied there each time the file is overwritten.</p>
+
+<h2 id="sizes">8. Common RPG Maker sizes</h2>
+<table border="1" cellspacing="0" cellpadding="4">
+<tr><th>Use</th><th>Canvas</th><th>Cell</th></tr>
+<tr><td>Single character</td><td>72 &times; 128</td><td>24 &times; 32</td></tr>
+<tr><td>Full character sheet</td><td>288 &times; 256</td><td>24 &times; 32</td></tr>
+<tr><td>Chip set</td><td>480 &times; 256</td><td>16 &times; 16</td></tr>
+</table>
+
+<h2 id="shortcuts">9. Keyboard shortcuts</h2>
+{{SHORTCUTS}}
+
+</body>
+</html>
