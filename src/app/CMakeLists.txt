@@ -10,6 +10,14 @@ if(WIN32)
     list(APPEND SPRITENATOR_APP_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/spritenator.rc")
 endif()
 
+# macOS: ícone do pacote (.app), copiado para Contents/Resources.
+if(APPLE)
+    set(SPRITENATOR_ICNS "${PROJECT_SOURCE_DIR}/resources/app_icon.icns")
+    set_source_files_properties("${SPRITENATOR_ICNS}" PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources")
+    list(APPEND SPRITENATOR_APP_SOURCES "${SPRITENATOR_ICNS}")
+endif()
+
 qt_add_executable(spritenator WIN32 MACOSX_BUNDLE ${SPRITENATOR_APP_SOURCES})
 
 target_link_libraries(spritenator PRIVATE Spritenator::Gui)
@@ -21,6 +29,7 @@ set_target_properties(spritenator PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER "io.github.spritenator"
     MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
     MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+    MACOSX_BUNDLE_ICON_FILE "app_icon.icns"
 )
 
 # -----------------------------------------------------------------------------
@@ -33,13 +42,15 @@ install(TARGETS spritenator
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-# Linux: atalho no menu de aplicativos e ícone.
+# Linux: atalho no menu de aplicativos e ícone em vários tamanhos (hicolor).
 if(UNIX AND NOT APPLE)
     install(FILES "${PROJECT_SOURCE_DIR}/resources/linux/spritenator.desktop"
         DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
-    install(FILES "${PROJECT_SOURCE_DIR}/resources/icons/app_icon.png"
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/32x32/apps
-        RENAME spritenator.png)
+    foreach(size 16 32 48 64 128 256)
+        install(FILES "${PROJECT_SOURCE_DIR}/resources/linux/icons/${size}.png"
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/${size}x${size}/apps
+            RENAME spritenator.png)
+    endforeach()
 endif()
 
 # Windows/macOS: copia as bibliotecas e plugins do Qt para junto do

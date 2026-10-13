@@ -109,7 +109,7 @@ const std::vector<ActionSpec>& actionSpecs()
         { ActionId::ViewGrids, QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Grids..."),
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
                 "Change the spacing of the main grid and of the sub grid (character size)"),
-            "view_chara_size", Seq() },
+            "view_grids", Seq() },
         { ActionId::ViewMainGrid,
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Main Grid"),
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Show or hide the main grid"),

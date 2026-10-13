@@ -5,6 +5,23 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [2.1.0] - 2026-10-13
+
+### Adicionado
+- **Ícones próprios** em pixel art, no lugar dos extraídos do Character Maker 1999:
+  - gerados por `tools/make_icons.py`, em que cada ícone é um mapa ASCII ou uma figura desenhada por código, com uma paleta única;
+  - os tons são desenhados a partir dos padrões reais de `core/Tone.h`;
+  - variantes desabilitadas geradas automaticamente;
+  - opção `--preview` para gerar uma prancha ampliada de revisão.
+- **Ícone do aplicativo** novo (um "S" sobre uma grade de pixels, com um lápis), desenhado em 16 e 32 px e ampliado sem suavização até 1024 px:
+  - `app_icon.ico` (Windows);
+  - `app_icon.icns`, agora incluído no pacote do macOS;
+  - ícones hicolor de 16 a 256 px, instalados no Linux.
+
+### Removido
+- `tools/extract_icons.py` e os ícones extraídos do programa original, também do histórico do git.
+- Os ícones sem uso (`zoom_1` a `zoom_12`). `view_chara_size` passou a se chamar `view_grids`.
+
 ## [2.0.0] - 2026-10-13
 
 A partir desta versão o Spritenator passa de recriação a editor **levemente

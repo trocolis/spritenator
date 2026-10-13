@@ -64,7 +64,7 @@ private slots:
             QStringLiteral("file_new"),
             QStringLiteral("file_open"),
             QStringLiteral("file_save"),
-            QStringLiteral("zoom_12"),
+            QStringLiteral("view_grids"),
             QStringLiteral("tool_select"),
             QStringLiteral("tone_a"),
             QStringLiteral("stretch"),

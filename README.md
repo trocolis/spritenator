@@ -107,19 +107,27 @@ idioma.
 
 ## Ícones
 
-Os ícones atuais foram extraídos do programa original por
-[`tools/extract_icons.py`](tools/extract_icons.py) e são **provisórios**. Para
-substituí-los, sobrescreva os arquivos em `resources/icons/` mantendo os
-mesmos nomes:
+Os ícones são pixel art própria, descrita como texto em
+[`tools/make_icons.py`](tools/make_icons.py): cada ícone é um mapa ASCII (um
+caractere por pixel, numa paleta única) ou uma figura gerada por código. Os
+tons são desenhados a partir dos próprios padrões de `src/core/Tone.h`. Para
+mudar um ícone, edite o script e rode:
 
-- `<nome>.png`: imagem normal;
-- `<nome>_disabled.png`: imagem do estado desabilitado (opcional).
+```sh
+python3 tools/make_icons.py                      # requer Pillow
+python3 tools/make_icons.py --preview prancha.png  # + prancha ampliada para revisão
+```
+
+O script gera:
+
+- `resources/icons/<nome>.png` e `<nome>_disabled.png` (variante desabilitada automática);
+- `resources/app_icon.ico` (Windows), `resources/app_icon.icns` (macOS) e `resources/linux/icons/<tamanho>.png` (Linux).
 
 O código acessa os ícones apenas pelo nome lógico, por meio de
-`gui/IconProvider`. Por isso não é preciso alterar nenhum código ou CMake. O
-ícone do executável do Windows fica em `resources/app_icon.ico`.
+`gui/IconProvider`, então não é preciso alterar nenhum código ou CMake.
 
 ## Créditos
 
-*Character Maker 1999*: Copyright © 1998-2000 Yoji Ojima. Este projeto é uma
-recriação independente, para fins de estudo e preservação.
+*Character Maker 1999*: Copyright © 1998-2000 Yoji Ojima. O Spritenator é um
+projeto independente, inspirado nele; nenhum recurso do programa original
+(ícones, textos ou imagens) faz parte deste repositório.

@@ -101,7 +101,7 @@ documento da aba ativa. Trocar de aba no meio de um traço cancela o traço
 | Nova transformação | Função pura em `core/Transform` e entrada em `EditOperations::transform`. |
 | Novo formato de paleta | `io/PaletteFile` (`parse`/`encode`). |
 | Novo comando de menu | `ActionId` + `ActionCatalog` + conexão na `MainWindow`. |
-| Trocar ícones | Substituir os PNGs em `resources/icons` (mesmos nomes). |
+| Novo ícone ou ajuste de ícone | Descrever/editar o mapa em `tools/make_icons.py` (entrada em `ICONS`) e rodar o script; usar o nome lógico via `IconProvider`. |
 | Novo idioma | `translations/spritenator_<idioma>.ts` em `TS_FILES` (`src/CMakeLists.txt`), `update_translations`, traduzir; opcionalmente `resources/help/manual_<idioma>.html`. |
 | Novo texto na interface | Sempre via `tr()` (ou `QCoreApplication::translate` com contexto literal fora de QObject). Em widgets que ficam abertos, defina-o em `retranslate()`. Depois rode `update_translations`. |
 | Nova operação desfazível | Acrescente-a a `UndoOperation` e a `kSources` (`commands/UndoLabel.cpp`); o `static_assert` impede esquecer o nome. |

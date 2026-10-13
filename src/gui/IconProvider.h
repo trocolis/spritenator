@@ -4,9 +4,8 @@
 // Ponto ÚNICO de acesso aos ícones da aplicação. Todo o código da GUI pede
 // ícones por NOME LÓGICO (ex.: "file_open"), nunca por caminho de arquivo.
 //
-// Os ícones atuais foram extraídos do Character Maker 1999 (ver
-// tools/extract_icons.py) e são provisórios. Para trocá-los por arte própria
-// basta substituir os PNGs em resources/icons mantendo os mesmos nomes:
+// Os ícones são pixel art própria, gerada por tools/make_icons.py (cada ícone
+// é descrito ali como texto). Os PNGs ficam em resources/icons:
 //   - <nome>.png           -> imagem normal (obrigatória)
 //   - <nome>_disabled.png  -> imagem para o estado desabilitado (opcional;
 //                             se ausente, o Qt gera uma versão acinzentada)
