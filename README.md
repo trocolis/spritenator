@@ -9,7 +9,7 @@ Maker.
 
 ## Funcionalidades
 
-- Imagens **RGBA** (32 bits, cores reais com transparência), salvas em PNG e exibidas sobre um fundo xadrez.
+- Imagens **RGBA** (32 bits, cores reais com transparência), salvas em PNG e exibidas sobre um fundo xadrez, com **seletor de cor circular** (anel de matizes + triângulo HSV) e barra de opacidade.
 - Imagens indexadas de **2, 16 ou 256 cores**, em PNG e BMP. Os BMPs são gravados em 1, 4 ou 8 bits, conforme o número de cores.
 - Fluxo do original: o canvas é dividido em **células de personagem**:
   - o botão direito traz a célula para a **área de desenho** ampliada;

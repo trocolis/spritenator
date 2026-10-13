@@ -67,6 +67,10 @@ add_library(spritenator_gui STATIC
     tools/Tool.h
     widgets/ColorEditor.cpp
     widgets/ColorEditor.h
+    widgets/ColorSwatch.cpp
+    widgets/ColorSwatch.h
+    widgets/ColorWheel.cpp
+    widgets/ColorWheel.h
     widgets/DrawAreaView.cpp
     widgets/DrawAreaView.h
     widgets/OrgAreaView.cpp

@@ -5,6 +5,20 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [1.6.0] - 2026-10-13
+
+### Adicionado
+- **Seletor de cor circular** (`ColorWheel`), que aparece no lugar da paleta em imagens RGBA:
+  - o anel escolhe o matiz;
+  - o triângulo interno vai da cor pura ao branco e ao preto e gira com o matiz;
+  - botão esquerdo define a primária e o direito a secundária, e a cor escolhida vira o mostrador ativo;
+  - escolher uma cor para um destino totalmente transparente a torna opaca.
+- Barra **A** (opacidade) no painel de cores, no modo RGBA.
+- **Mostradores** de cor primária e secundária (`ColorSwatch`), com fundo xadrez para o alfa. Clicar num mostrador o torna **ativo**, e as barras editam o mostrador ativo (também no modo indexado, onde editam a entrada da paleta da cor ativa).
+- Sincronização nos dois sentidos entre seletor, barras e mostradores.
+- O manual explica os mostradores, o seletor e a barra A (nos dois idiomas).
+- Testes da geometria do triângulo, dos cliques no seletor, da integração com a sessão e das barras.
+
 ## [1.5.0] - 2026-10-13
 
 ### Adicionado

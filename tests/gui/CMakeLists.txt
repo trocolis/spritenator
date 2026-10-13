@@ -36,3 +36,7 @@ target_compile_definitions(test_translation PRIVATE
 spritenator_add_test(test_rgba_editing
     SOURCES RgbaEditingTest.cpp
     LIBRARIES Spritenator::Gui)
+
+spritenator_add_test(test_color_picker
+    SOURCES ColorPickerTest.cpp
+    LIBRARIES Spritenator::Gui)

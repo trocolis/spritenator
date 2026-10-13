@@ -91,6 +91,11 @@ public:
     [[nodiscard]] const core::Rgba& rgbaFor(ColorRole role) const;
     void setRgbaFor(ColorRole role, const core::Rgba& color);
 
+    // --- Mostrador ativo ---
+    /// Qual cor (primária ou secundária) as barras R, G, B, A editam.
+    [[nodiscard]] ColorRole activeColorRole() const { return m_activeColorRole; }
+    void setActiveColorRole(ColorRole role);
+
     // --- Visualização ---
     [[nodiscard]] int zoom() const { return m_zoom; }
     void setZoom(int factor);
@@ -189,6 +194,8 @@ signals:
     void lastCellChanged(const core::Rect& cell);
     /// O modo de cor em uso mudou (troca de documento ou "Reverter").
     void colorModeChanged(core::ColorMode mode);
+    /// O mostrador ativo mudou.
+    void activeColorRoleChanged(gui::ColorRole role);
 
 private:
     /// Ajusta as cores ao tamanho da paleta e repassa a paleta ao buffer.
@@ -209,6 +216,7 @@ private:
     core::Rgba m_primaryRgba { 0, 0, 0, 255 }; ///< preto opaco
     core::Rgba m_secondaryRgba { }; ///< transparente: o botão direito apaga
     core::ColorMode m_colorMode = core::ColorMode::Indexed;
+    ColorRole m_activeColorRole = ColorRole::Primary;
     int m_zoom = 8;
     bool m_mainGridVisible = true;
     bool m_subGridVisible = false;

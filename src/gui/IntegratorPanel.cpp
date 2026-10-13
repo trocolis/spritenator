@@ -8,8 +8,10 @@
 #include "EditOperations.h"
 #include "EditorSession.h"
 #include "IconProvider.h"
+#include "ImageRendering.h"
 #include "dialogs/StretchDialog.h"
 #include "widgets/ColorEditor.h"
+#include "widgets/ColorWheel.h"
 #include "widgets/DrawAreaView.h"
 #include "widgets/OrgAreaView.h"
 #include "widgets/PaletteView.h"
@@ -111,12 +113,40 @@ QWidget* IntegratorPanel::createLeftColumn(ActionCatalog* actions)
     paletteLayout->addLayout(paletteButtons);
     layout->addWidget(paletteSection);
 
-    // Em RGBA não há paleta: a seção é ocultada.
-    const auto updatePaletteSection = [this, paletteSection] {
-        paletteSection->setVisible(m_session->colorMode() == core::ColorMode::Indexed);
+    // --- 3'. Seletor circular (modo RGBA), no lugar da paleta ---
+    m_colorWheel = new ColorWheel(column);
+    layout->addWidget(m_colorWheel);
+
+    // Clique no seletor: esquerdo = primária, direito = secundária; a cor
+    // escolhida também se torna o mostrador ativo (as barras a mostram).
+    connect(m_colorWheel, &ColorWheel::colorPicked, this,
+        [this](const QColor& picked, Qt::MouseButton button) {
+            const ColorRole role = colorRoleFor(button);
+            core::Rgba color = toRgba(picked);
+            // Mantém a opacidade da cor de destino — exceto se ela era
+            // totalmente transparente (ex.: secundária padrão): aí fica opaca,
+            // senão a cor escolhida seria invisível.
+            const std::uint8_t alpha = m_session->rgbaFor(role).alpha;
+            color.alpha = alpha == 0 ? 255 : alpha;
+            m_session->setActiveColorRole(role);
+            m_session->setRgbaFor(role, color);
+        });
+    // Cores alteradas por outros meios (barras, troca de mostrador) -> seletor.
+    const auto syncWheel = [this] {
+        m_colorWheel->setColor(toQColor(m_session->rgbaFor(m_session->activeColorRole())));
     };
-    connect(m_session, &EditorSession::colorModeChanged, paletteSection, updatePaletteSection);
-    updatePaletteSection();
+    connect(m_session, &EditorSession::colorsChanged, m_colorWheel, syncWheel);
+    connect(m_session, &EditorSession::activeColorRoleChanged, m_colorWheel, syncWheel);
+    syncWheel();
+
+    // Paleta no modo indexado; seletor circular no modo RGBA.
+    const auto updateColorSection = [this, paletteSection] {
+        const bool indexed = m_session->colorMode() == core::ColorMode::Indexed;
+        paletteSection->setVisible(indexed);
+        m_colorWheel->setVisible(!indexed);
+    };
+    connect(m_session, &EditorSession::colorModeChanged, this, updateColorSection);
+    updateColorSection();
     layout->addStretch(1);
 
     column->setMinimumWidth(m_paletteView->minimumSizeHint().width() + 8);

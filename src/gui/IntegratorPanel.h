@@ -3,7 +3,8 @@
 //
 // Painel lateral de edição (TIntegrator no original). Reúne:
 //   - coluna esquerda, de cima para baixo: ferramentas e tons, ajuste das
-//     cores (amostras e R, G, B) e a paleta com seus botões;
+//     cores (mostradores e barras R, G, B, A) e, conforme o modo de cor, a
+//     paleta com seus botões (indexado) ou o seletor circular (RGBA);
 //   - coluna direita: prévia em tamanho real e a área de desenho ampliada.
 //
 // Apenas organiza widgets; o estado vive na EditorSession.
@@ -21,6 +22,7 @@ class QVBoxLayout;
 namespace spritenator::gui {
 
 class ActionCatalog;
+class ColorWheel;
 class DrawAreaView;
 class EditOperations;
 class EditorSession;
@@ -36,6 +38,7 @@ public:
 
     [[nodiscard]] DrawAreaView* drawArea() const { return m_drawArea; }
     [[nodiscard]] PaletteView* paletteView() const { return m_paletteView; }
+    [[nodiscard]] ColorWheel* colorWheel() const { return m_colorWheel; }
 
 protected:
     void changeEvent(QEvent* event) override;
@@ -59,6 +62,7 @@ private:
     EditorSession* m_session;
     EditOperations* m_operations;
     PaletteView* m_paletteView = nullptr;
+    ColorWheel* m_colorWheel = nullptr;
     DrawAreaView* m_drawArea = nullptr;
     QScrollArea* m_drawScroll = nullptr;
     QList<QPair<QToolButton*, const char*>> m_transformButtons; ///< botão e dica-fonte

@@ -506,12 +506,12 @@
 <context>
     <name>spritenator::gui::ColorEditor</name>
     <message>
-        <source>Drawing color (select with the left button)</source>
-        <translation>Cor de desenho (escolha com o botão esquerdo)</translation>
+        <source>Primary color (left button). Click to edit it with the sliders.</source>
+        <translation>Cor primária (botão esquerdo). Clique para editá-la com as barras.</translation>
     </message>
     <message>
-        <source>Background color (select with the right button)</source>
-        <translation>Cor de fundo (escolha com o botão direito)</translation>
+        <source>Secondary color (right button). Click to edit it with the sliders.</source>
+        <translation>Cor secundária (botão direito). Clique para editá-la com as barras.</translation>
     </message>
     <message>
         <source>R</source>
@@ -524,6 +524,23 @@
     <message>
         <source>B</source>
         <translation>B</translation>
+    </message>
+    <message>
+        <source>A</source>
+        <translation>A</translation>
+    </message>
+    <message>
+        <source>Opacity: 0 = transparent, 255 = opaque</source>
+        <translation>Opacidade: 0 = transparente, 255 = opaca</translation>
+    </message>
+</context>
+<context>
+    <name>spritenator::gui::ColorWheel</name>
+    <message>
+        <source>Ring: hue. Triangle: saturation and brightness.
+Left button: primary color. Right button: secondary color.</source>
+        <translation>Anel: matiz. Triângulo: saturação e brilho.
+Botão esquerdo: cor primária. Botão direito: cor secundária.</translation>
     </message>
 </context>
 <context>

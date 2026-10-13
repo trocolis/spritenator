@@ -360,6 +360,14 @@ const core::Rgba& EditorSession::rgbaFor(ColorRole role) const
     return role == ColorRole::Primary ? m_primaryRgba : m_secondaryRgba;
 }
 
+void EditorSession::setActiveColorRole(ColorRole role)
+{
+    if (role != m_activeColorRole) {
+        m_activeColorRole = role;
+        emit activeColorRoleChanged(role);
+    }
+}
+
 void EditorSession::setRgbaFor(ColorRole role, const core::Rgba& color)
 {
     core::Rgba& target = role == ColorRole::Primary ? m_primaryRgba : m_secondaryRgba;

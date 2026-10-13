@@ -51,9 +51,21 @@ from one image to another.</p>
   <li>The <b>status bar</b> shows the position of the mouse in the canvas or
       in the drawing area.</li>
 </ul>
-<p>In the palette, the <b>left button</b> selects the drawing color and the
-<b>right button</b> selects the background color. The R, G, B sliders edit the
-drawing color. Dragging a slider creates a single undo step.</p>
+<p>Two swatches show the <b>primary</b> color (left button) and the
+<b>secondary</b> color (right button). Click a swatch to make it the
+<b>active</b> one, which is the color the sliders edit.</p>
+<ul>
+  <li><b>Indexed images</b>: in the palette, the left button selects the primary
+      color and the right button the secondary color. The R, G, B sliders edit
+      the palette entry of the active color; dragging a slider creates a single
+      undo step.</li>
+  <li><b>RGBA images</b>: the palette is replaced by a <b>color wheel</b>. The
+      ring chooses the hue; the triangle inside it goes from the pure color to
+      white and black. The left button sets the primary color and the right
+      button the secondary one; the picked color also becomes the active one.
+      The R, G, B and <b>A</b> (opacity) sliders edit the active color, and the
+      wheel follows them.</li>
+</ul>
 
 <h2 id="tools">3. Drawing tools and tones</h2>
 <table cellpadding="3">
