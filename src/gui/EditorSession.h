@@ -13,6 +13,7 @@
 // =============================================================================
 #pragma once
 
+#include "core/AnyImage.h"
 #include "core/CharacterLayout.h"
 #include "core/Image.h"
 #include "core/Palette.h"
@@ -33,6 +34,17 @@ namespace spritenator::gui {
 
 class Document;
 class DrawBuffer;
+
+/// Papel de uma cor: primária (desenho, botão esquerdo) ou secundária
+/// (fundo, botão direito). As ferramentas pedem um papel, e a sessão decide o
+/// pixel conforme o modo de cor (índice da paleta ou RGBA).
+enum class ColorRole { Primary, Secondary };
+
+/// Papel correspondente ao botão do mouse (esquerdo = primária).
+[[nodiscard]] constexpr ColorRole colorRoleFor(Qt::MouseButton button)
+{
+    return button == Qt::RightButton ? ColorRole::Secondary : ColorRole::Primary;
+}
 
 /// Estado compartilhado do editor.
 class EditorSession final : public QObject {
@@ -56,16 +68,28 @@ public:
     /// Paleta em uso: a do documento ativo ou a padrão, se não houver.
     [[nodiscard]] const core::Palette& palette() const;
 
+    /// Modo de cor em uso: o do documento ativo (indexado, se não houver).
+    [[nodiscard]] core::ColorMode colorMode() const;
+
     // --- Desfazer/refazer ---
     /// Grupo com a pilha do buffer e as pilhas de cada documento. A pilha
     /// ativa é sempre a da edição mais recente ("desfazer a última coisa").
     [[nodiscard]] QUndoGroup* undoGroup() const { return m_undoGroup; }
 
-    // --- Cores ---
+    // --- Cores do modo indexado (índices da paleta) ---
     [[nodiscard]] core::ColorIndex drawColor() const { return m_drawColor; }
     [[nodiscard]] core::ColorIndex backgroundColor() const { return m_backgroundColor; }
     void setDrawColor(int index);
     void setBackgroundColor(int index);
+
+    // --- Cores do modo RGBA ---
+    [[nodiscard]] const core::Rgba& primaryRgba() const { return m_primaryRgba; }
+    [[nodiscard]] const core::Rgba& secondaryRgba() const { return m_secondaryRgba; }
+    void setPrimaryRgba(const core::Rgba& color);
+    void setSecondaryRgba(const core::Rgba& color);
+    /// Cor RGBA do papel informado.
+    [[nodiscard]] const core::Rgba& rgbaFor(ColorRole role) const;
+    void setRgbaFor(ColorRole role, const core::Rgba& color);
 
     // --- Visualização ---
     [[nodiscard]] int zoom() const { return m_zoom; }
@@ -107,6 +131,9 @@ public:
     [[nodiscard]] core::WriteRules drawingRules() const;
     /// Regras usadas ao gravar o buffer no canvas (transparência + máscara).
     [[nodiscard]] core::WriteRules transferRules() const;
+    /// Regras RGBA ao gravar no canvas: com o efeito transparente ligado,
+    /// pixels totalmente transparentes (alfa 0) não são gravados.
+    [[nodiscard]] core::RgbaWriteRules rgbaTransferRules() const;
 
     // --- Tom (retícula) ---
     [[nodiscard]] core::Tone tone() const { return m_tone; }
@@ -116,9 +143,15 @@ public:
     /// Avança para o próximo deslocamento (botão "tone shift").
     void cycleToneShift();
 
-    /// Pinta um pixel respeitando o tom e as regras de desenho. Ponto central
-    /// por onde TODAS as ferramentas desenham. Devolve true se o pixel mudou.
-    bool plot(core::IndexedImage& image, core::Point point, core::ColorIndex color) const;
+    /// Pinta um pixel com a cor do papel informado, respeitando o tom e as
+    /// regras de desenho. Ponto central por onde TODAS as ferramentas
+    /// desenham, em qualquer modo de cor. Devolve true se o pixel mudou.
+    bool plot(core::AnyImage& image, core::Point point, ColorRole role) const;
+
+    /// Pixel "de fundo" do modo da imagem: o índice da cor de fundo
+    /// (indexada) ou transparente (RGBA). Usado para limpar e preencher
+    /// áreas novas.
+    [[nodiscard]] core::AnyImage blankLike(const core::AnyImage& image, core::Size size) const;
 
     // --- Ferramentas ---
     [[nodiscard]] ToolKind toolKind() const { return m_toolKind; }
@@ -154,10 +187,14 @@ signals:
     void maskModeChanged(bool enabled);
     void autoMaskChanged(bool enabled);
     void lastCellChanged(const core::Rect& cell);
+    /// O modo de cor em uso mudou (troca de documento ou "Reverter").
+    void colorModeChanged(core::ColorMode mode);
 
 private:
     /// Ajusta as cores ao tamanho da paleta e repassa a paleta ao buffer.
     void syncPalette();
+    /// Converte o buffer para o modo do documento ativo e avisa as views.
+    void syncColorMode();
 
     /// Inclui a pilha no grupo e a torna ativa sempre que for alterada.
     void trackUndoStack(QUndoStack* stack);
@@ -169,6 +206,9 @@ private:
 
     core::ColorIndex m_drawColor = 15;
     core::ColorIndex m_backgroundColor = 0;
+    core::Rgba m_primaryRgba { 0, 0, 0, 255 }; ///< preto opaco
+    core::Rgba m_secondaryRgba { }; ///< transparente: o botão direito apaga
+    core::ColorMode m_colorMode = core::ColorMode::Indexed;
     int m_zoom = 8;
     bool m_mainGridVisible = true;
     bool m_subGridVisible = false;

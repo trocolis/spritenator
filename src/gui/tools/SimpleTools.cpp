@@ -7,6 +7,8 @@
 #include "gui/DrawBuffer.h"
 #include "gui/EditorSession.h"
 
+#include <variant>
+
 namespace spritenator::gui {
 
 // -----------------------------------------------------------------------------
@@ -17,22 +19,22 @@ void FillTool::press(EditorSession& session, core::Point point, Qt::MouseButton 
     if (button != Qt::LeftButton && button != Qt::RightButton) {
         return;
     }
-    const core::ColorIndex color
-        = button == Qt::LeftButton ? session.drawColor() : session.backgroundColor();
+    const ColorRole role = colorRoleFor(button);
     DrawBuffer* buffer = session.buffer();
 
     // A região é calculada ANTES de pintar, sobre a imagem original: com tons
     // (retícula) a região pintada não é uniforme e não serve de referência.
-    const std::vector<core::Point> region = core::floodRegion(buffer->image(), point);
+    const std::vector<core::Point> region = std::visit(
+        [&](const auto& image) { return core::floodRegion(image, point); }, buffer->image());
     if (region.empty()) {
         return;
     }
 
     buffer->beginEdit();
-    buffer->editLive([&](core::IndexedImage& image) {
+    buffer->editLive([&](core::AnyImage& image) {
         core::Rect bounds;
         for (const core::Point pixel : region) {
-            session.plot(image, pixel, color);
+            session.plot(image, pixel, role);
             bounds = bounds.united({ pixel.x, pixel.y, 1, 1 });
         }
         return bounds;

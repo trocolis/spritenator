@@ -1,12 +1,13 @@
 // =============================================================================
 // NewImageDialog.h
 //
-// Diálogo "Novo" (TFormFileNew no original): largura, altura, número de
-// cores e a opção de copiar a paleta da imagem ativa. Acrescenta predefinições
+// Diálogo "Novo" (TFormFileNew no original): largura, altura, modo de cor
+// (RGBA, 256, 16 ou 2 cores) e a opção de copiar a paleta da imagem ativa. Acrescenta predefinições
 // de tamanho do RPG Maker 2000 citadas no manual original.
 // =============================================================================
 #pragma once
 
+#include "core/AnyImage.h"
 #include "core/Geometry.h"
 #include "core/Palette.h"
 
@@ -28,6 +29,9 @@ public:
     NewImageDialog(bool canCopyPalette, QWidget* parent = nullptr);
 
     [[nodiscard]] core::Size imageSize() const;
+    /// Modo de cor escolhido (RGBA é o padrão).
+    [[nodiscard]] core::ColorMode colorMode() const;
+    /// Profundidade escolhida (só tem sentido no modo indexado).
     [[nodiscard]] core::ColorDepth colorDepth() const;
     [[nodiscard]] bool copyCurrentPalette() const;
 
@@ -38,6 +42,7 @@ private:
     QComboBox* m_presets = nullptr;
     QSpinBox* m_width = nullptr;
     QSpinBox* m_height = nullptr;
+    QRadioButton* m_colorsRgba = nullptr;
     QRadioButton* m_colors256 = nullptr;
     QRadioButton* m_colors16 = nullptr;
     QRadioButton* m_colors2 = nullptr;

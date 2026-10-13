@@ -9,7 +9,9 @@
 #include <QFileInfo>
 #include <QUndoStack>
 
+#include <cassert>
 #include <stdexcept>
+#include <variant>
 
 namespace spritenator::gui {
 
@@ -20,7 +22,7 @@ int g_untitledCounter = 0;
 
 } // namespace
 
-Document::Document(core::IndexedImage canvas, core::Palette palette, QObject* parent)
+Document::Document(core::AnyImage canvas, core::Palette palette, QObject* parent)
     : QObject(parent)
     , m_canvas(std::move(canvas))
     , m_palette(std::move(palette))
@@ -50,6 +52,12 @@ QString Document::displayName() const
         return tr("Untitled%1").arg(m_untitledNumber);
     }
     return QFileInfo(m_filePath).fileName();
+}
+
+const core::IndexedImage& Document::indexedCanvas() const
+{
+    assert(colorMode() == core::ColorMode::Indexed);
+    return std::get<core::IndexedImage>(m_canvas);
 }
 
 bool Document::isModified() const
@@ -97,36 +105,42 @@ void Document::revert()
 // -----------------------------------------------------------------------------
 // Aplicação de alterações
 // -----------------------------------------------------------------------------
-void Document::applyCanvasRegion(core::Point origin, const core::IndexedImage& pixels)
+void Document::applyCanvasRegion(core::Point origin, const core::AnyImage& pixels)
 {
-    m_canvas.paste(pixels, origin);
-    const core::Rect area
-        = core::Rect::fromPointAndSize(origin, pixels.size()).intersected(m_canvas.bounds());
+    core::pasteImage(m_canvas, pixels, origin);
+    const core::Rect area = core::Rect::fromPointAndSize(origin, core::sizeOf(pixels))
+                                .intersected(core::boundsOf(m_canvas));
     updateRenderedRegion(m_rendered, m_canvas, area);
     emit canvasChanged(area);
 }
 
-void Document::applyCanvas(const core::IndexedImage& canvas)
+void Document::applyCanvas(const core::AnyImage& canvas)
 {
-    const bool resized = canvas.size() != m_canvas.size();
+    const bool resized = core::sizeOf(canvas) != core::sizeOf(m_canvas);
+    const bool modeChanged = canvas.index() != m_canvas.index();
     m_canvas = canvas;
     rebuildRendered();
     if (resized) {
-        emit canvasResized(m_canvas.size());
+        emit canvasResized(core::sizeOf(m_canvas));
     }
-    emit canvasChanged(m_canvas.bounds());
+    if (modeChanged) {
+        emit colorModeChanged(colorMode());
+    }
+    emit canvasChanged(core::boundsOf(m_canvas));
 }
 
 void Document::applyPalette(const core::Palette& palette)
 {
     m_palette = palette;
-    m_rendered.setColorTable(colorTableOf(m_palette));
+    if (colorMode() == core::ColorMode::Indexed) { // RGBA não usa tabela de cores
+        m_rendered.setColorTable(colorTableOf(m_palette));
+    }
     emit paletteChanged();
 }
 
 void Document::rebuildRendered()
 {
-    m_rendered = renderIndexed(m_canvas, m_palette);
+    m_rendered = renderImage(m_canvas, m_palette);
 }
 
 } // namespace spritenator::gui

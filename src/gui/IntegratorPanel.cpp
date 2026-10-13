@@ -82,9 +82,12 @@ QWidget* IntegratorPanel::createLeftColumn(ActionCatalog* actions)
     layout->addSpacing(kSectionSpacing);
 
     // --- 3. Paleta: grade de cores e seus botões (os mesmos do original,
-    //        ligados às ações do catálogo) ---
-    m_paletteView = new PaletteView(m_session, column);
-    layout->addWidget(m_paletteView);
+    //        ligados às ações do catálogo). Só existe no modo indexado. ---
+    auto* paletteSection = new QWidget(column);
+    auto* paletteLayout = new QVBoxLayout(paletteSection);
+    paletteLayout->setContentsMargins(0, 0, 0, 0);
+    m_paletteView = new PaletteView(m_session, paletteSection);
+    paletteLayout->addWidget(m_paletteView);
 
     auto* paletteButtons = new QGridLayout;
     paletteButtons->setSpacing(1);
@@ -101,10 +104,19 @@ QWidget* IntegratorPanel::createLeftColumn(ActionCatalog* actions)
     };
     int position = 0;
     for (const ActionId id : buttonIds) {
-        paletteButtons->addWidget(makeActionButton(actions->action(id), column), 0, position++);
+        paletteButtons->addWidget(
+            makeActionButton(actions->action(id), paletteSection), 0, position++);
     }
     paletteButtons->setColumnStretch(position, 1);
-    layout->addLayout(paletteButtons);
+    paletteLayout->addLayout(paletteButtons);
+    layout->addWidget(paletteSection);
+
+    // Em RGBA não há paleta: a seção é ocultada.
+    const auto updatePaletteSection = [this, paletteSection] {
+        paletteSection->setVisible(m_session->colorMode() == core::ColorMode::Indexed);
+    };
+    connect(m_session, &EditorSession::colorModeChanged, paletteSection, updatePaletteSection);
+    updatePaletteSection();
     layout->addStretch(1);
 
     column->setMinimumWidth(m_paletteView->minimumSizeHint().width() + 8);

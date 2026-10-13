@@ -173,7 +173,7 @@ std::vector<core::Rgb> PaletteFile::load(const QString& path)
 
     // Imagens (BMP/PNG) também servem como fonte de paleta.
     if (contents.startsWith("BM") || contents.startsWith("\x89PNG")) {
-        const ImageData data = ImageFile::load(path);
+        const ImageData data = ImageFile::loadIndexed(path); // cores reais -> paleta
         std::vector<core::Rgb> colors;
         for (int index = 0; index < data.palette.size(); ++index) {
             colors.push_back(data.palette.color(index));

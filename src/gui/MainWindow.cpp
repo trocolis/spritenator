@@ -57,6 +57,7 @@
 
 #include <algorithm>
 #include <exception>
+#include <variant>
 
 namespace spritenator::gui {
 
@@ -116,6 +117,9 @@ MainWindow::MainWindow(QWidget* parent)
     connectActions();
     retranslateUi(); // textos iniciais (e a cada troca de idioma)
     updateRecentFilesMenu();
+
+    // Modo de cor mudou (ex.: "Reverter" trocou um PNG indexado por RGBA).
+    connect(m_session, &EditorSession::colorModeChanged, this, &MainWindow::updateActionStates);
 
     // Janela ativa -> documento ativo da sessão.
     connect(m_mdiArea, &QMdiArea::subWindowActivated, this, [this] {
@@ -429,12 +433,22 @@ void MainWindow::updateActionStates()
         ActionId::ViewZoom12,
         ActionId::ViewAnimation,
         ActionId::PaletteTransparent,
+        ActionId::WindowReverseCanvas,
+        ActionId::HelpAbout,
+    };
+    // Ações de paleta: só existem em imagens indexadas (sem documento, a
+    // máscara continua disponível, como antes).
+    const ActionId needPalette[] = {
         ActionId::PaletteMaskMode,
         ActionId::PaletteClearMask,
         ActionId::PaletteInvertMask,
         ActionId::PaletteAutoMask,
-        ActionId::WindowReverseCanvas,
-        ActionId::HelpAbout,
+    };
+    const ActionId needIndexedDocument[] = {
+        ActionId::PaletteLoad,
+        ActionId::PaletteSave,
+        ActionId::PaletteEdit,
+        ActionId::PaletteGradation,
     };
     // Ações que exigem um documento ativo.
     const ActionId needDocument[] = {
@@ -444,10 +458,6 @@ void MainWindow::updateActionStates()
         ActionId::CanvasGetAll,
         ActionId::CanvasResize,
         ActionId::CanvasClearAll,
-        ActionId::PaletteLoad,
-        ActionId::PaletteSave,
-        ActionId::PaletteEdit,
-        ActionId::PaletteGradation,
         ActionId::WindowCascade,
         ActionId::WindowTileHorizontal,
         ActionId::WindowTileVertical,
@@ -464,6 +474,13 @@ void MainWindow::updateActionStates()
     const Document* document = activeDocument();
     for (const ActionId id : needDocument) {
         action(id)->setEnabled(document != nullptr);
+    }
+    const bool indexed = m_session->colorMode() == core::ColorMode::Indexed;
+    for (const ActionId id : needPalette) {
+        action(id)->setEnabled(indexed);
+    }
+    for (const ActionId id : needIndexedDocument) {
+        action(id)->setEnabled(document != nullptr && indexed);
     }
     // Reverter só faz sentido para documentos que já existem em disco.
     action(ActionId::FileRevert)->setEnabled(document != nullptr && document->hasFilePath());
@@ -494,6 +511,13 @@ void MainWindow::newImage()
         return;
     }
 
+    if (dialog.colorMode() == core::ColorMode::Rgba) {
+        // RGBA: canvas totalmente transparente; a paleta padrão serve apenas
+        // para converter conteúdo vindo de documentos indexados.
+        addDocumentWindow(new Document(core::RgbaImage(dialog.imageSize()),
+            core::Palette::makeDefault(core::ColorDepth::Bits8)));
+        return;
+    }
     const core::ColorDepth depth = dialog.colorDepth();
     core::Palette palette = core::Palette::makeDefault(depth);
     if (dialog.copyCurrentPalette() && current != nullptr) {
@@ -501,8 +525,7 @@ void MainWindow::newImage()
         palette.setDepth(depth); // ajusta ao número de cores escolhido
     }
     // Canvas preenchido com o índice 0 (cor de fundo/transparente no RPG Maker).
-    auto* document = new Document(core::IndexedImage(dialog.imageSize(), 0), palette);
-    addDocumentWindow(document);
+    addDocumentWindow(new Document(core::IndexedImage(dialog.imageSize(), 0), palette));
 }
 
 // -----------------------------------------------------------------------------
@@ -583,7 +606,8 @@ bool MainWindow::saveDocumentAs(Document* document)
 
     QString selectedFilter;
     QString path = QFileDialog::getSaveFileName(this, tr("Save Image As"), suggested,
-        io::ImageFile::saveFilters().join(QStringLiteral(";;")), &selectedFilter);
+        io::ImageFile::saveFilters(document->colorMode()).join(QStringLiteral(";;")),
+        &selectedFilter);
     if (path.isEmpty()) {
         return false; // usuário cancelou
     }
@@ -814,7 +838,7 @@ void MainWindow::drawText()
 // -----------------------------------------------------------------------------
 // Paleta
 // -----------------------------------------------------------------------------
-void MainWindow::commitDocumentState(Document* document, const core::IndexedImage& canvas,
+void MainWindow::commitDocumentState(Document* document, const core::AnyImage& canvas,
     const core::Palette& palette, const UndoLabel& undoLabel)
 {
     if (canvas == document->canvas() && palette == document->palette()) {
@@ -827,8 +851,8 @@ void MainWindow::commitDocumentState(Document* document, const core::IndexedImag
 void MainWindow::loadPalette()
 {
     Document* document = activeDocument();
-    if (document == nullptr) {
-        return;
+    if (document == nullptr || document->colorMode() != core::ColorMode::Indexed) {
+        return; // paletas só existem em imagens indexadas
     }
     LoadPaletteDialog dialog(document->palette(), m_settings.lastDirectory(), this);
     if (dialog.exec() != QDialog::Accepted) {
@@ -840,13 +864,15 @@ void MainWindow::loadPalette()
 
     // O buffer da área de desenho usa a mesma paleta: converte-o também.
     DrawBuffer* buffer = m_session->buffer();
-    const core::IndexedImage convertedBuffer
-        = core::applyPalette(buffer->image(), oldPalette, newPalette, options);
     commitDocumentState(document,
-        core::applyPalette(document->canvas(), oldPalette, newPalette, options), newPalette,
+        core::applyPalette(document->indexedCanvas(), oldPalette, newPalette, options), newPalette,
         UndoLabel { UndoOperation::LoadPalette });
-    if (convertedBuffer != buffer->image()) {
-        buffer->replace(convertedBuffer, UndoLabel { UndoOperation::LoadPalette });
+    if (buffer->colorMode() == core::ColorMode::Indexed) {
+        const core::IndexedImage convertedBuffer
+            = core::applyPalette(buffer->indexedImage(), oldPalette, newPalette, options);
+        if (convertedBuffer != buffer->indexedImage()) {
+            buffer->replace(convertedBuffer, UndoLabel { UndoOperation::LoadPalette });
+        }
     }
     m_settings.setLastDirectory(QFileInfo(dialog.filePath()).absolutePath());
 }
@@ -883,10 +909,10 @@ void MainWindow::savePalette()
 void MainWindow::editPalette()
 {
     Document* document = activeDocument();
-    if (document == nullptr) {
-        return;
+    if (document == nullptr || document->colorMode() != core::ColorMode::Indexed) {
+        return; // paletas só existem em imagens indexadas
     }
-    PaletteEditDialog dialog(document->palette(), document->canvas(), this);
+    PaletteEditDialog dialog(document->palette(), document->indexedCanvas(), this);
     if (dialog.exec() != QDialog::Accepted) {
         return;
     }
@@ -894,8 +920,9 @@ void MainWindow::editPalette()
         document, dialog.canvas(), dialog.palette(), UndoLabel { UndoOperation::EditPalette });
 
     // Se as cores foram reorganizadas, o buffer acompanha o remapeamento.
-    if (dialog.remap() != core::identityRemap()) {
-        core::IndexedImage remapped = m_session->buffer()->image();
+    if (dialog.remap() != core::identityRemap()
+        && m_session->buffer()->colorMode() == core::ColorMode::Indexed) {
+        core::IndexedImage remapped = m_session->buffer()->indexedImage();
         remapped.remap(dialog.remap());
         m_session->buffer()->replace(remapped, UndoLabel { UndoOperation::EditPalette });
     }
@@ -924,13 +951,23 @@ void MainWindow::resizeCanvas()
     if (document == nullptr) {
         return;
     }
-    CanvasSizeDialog dialog(document->canvas().size(), this);
-    if (dialog.exec() != QDialog::Accepted || dialog.newSize() == document->canvas().size()) {
+    const core::Size oldSize = core::sizeOf(document->canvas());
+    CanvasSizeDialog dialog(oldSize, this);
+    if (dialog.exec() != QDialog::Accepted || dialog.newSize() == oldSize) {
         return;
     }
-    const core::IndexedImage resized = dialog.scaleContents()
-        ? core::scaled(document->canvas(), dialog.newSize())
-        : document->canvas().resizedCanvas(dialog.newSize(), m_session->backgroundColor());
+    core::AnyImage resized;
+    if (dialog.scaleContents()) {
+        resized = std::visit(
+            [&](const auto& image) -> core::AnyImage {
+                return core::scaled(image, dialog.newSize());
+            },
+            document->canvas());
+    } else {
+        // Conteúdo ancorado no canto; áreas novas com o pixel de fundo do modo.
+        resized = m_session->blankLike(document->canvas(), dialog.newSize());
+        core::pasteImage(resized, document->canvas(), { 0, 0 });
+    }
     document->undoStack()->push(new ReplaceImageCommand(
         document, document->canvas(), resized, UndoLabel { UndoOperation::CanvasSize }));
 }
@@ -941,7 +978,9 @@ void MainWindow::clearCanvas()
     if (document == nullptr) {
         return;
     }
-    const core::IndexedImage cleared(document->canvas().size(), m_session->backgroundColor());
+    // Indexada: cor de fundo; RGBA: transparente.
+    const core::AnyImage cleared
+        = m_session->blankLike(document->canvas(), core::sizeOf(document->canvas()));
     if (cleared != document->canvas()) {
         document->undoStack()->push(new ReplaceImageCommand(
             document, document->canvas(), cleared, UndoLabel { UndoOperation::ClearAll }));

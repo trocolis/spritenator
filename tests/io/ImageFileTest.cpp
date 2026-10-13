@@ -103,24 +103,38 @@ private slots:
         QCOMPARE(loaded.palette.depth(), core::ColorDepth::Bits1);
         QCOMPARE(loaded.palette.color(0), palette.color(0));
         QCOMPARE(loaded.palette.color(1), palette.color(1));
-        QCOMPARE(loaded.image, image);
+        QCOMPARE(loaded.image, core::AnyImage(image));
         QCOMPARE(bmpBitCount(path), 1);
     }
 
-    /// Imagem em cores reais com poucas cores vira paleta exata.
-    void trueColorWithFewColorsIsExact()
+    /// Cores reais abrem como RGBA, sem perdas (inclusive o alfa).
+    void trueColorOpensAsRgba()
+    {
+        QImage argb(4, 2, QImage::Format_ARGB32);
+        argb.fill(qRgba(10, 20, 30, 255));
+        argb.setPixel(3, 1, qRgba(200, 100, 0, 77));
+        const ImageData data = ImageFile::fromQImage(argb);
+        QCOMPARE(data.colorMode(), core::ColorMode::Rgba);
+        const auto& image = std::get<core::RgbaImage>(data.image);
+        QCOMPARE(image.pixel(0, 0), (core::Rgba { 10, 20, 30, 255 }));
+        QCOMPARE(image.pixel(3, 1), (core::Rgba { 200, 100, 0, 77 }));
+    }
+
+    /// Leitura forçada como indexada: poucas cores viram paleta exata.
+    void trueColorAsIndexedWithFewColorsIsExact()
     {
         QImage rgb(4, 2, QImage::Format_RGB32);
         rgb.fill(qRgb(10, 20, 30));
         rgb.setPixel(3, 1, qRgb(200, 100, 0));
-        const ImageData data = ImageFile::fromQImage(rgb);
+        const ImageData data = ImageFile::fromQImageIndexed(rgb);
         QCOMPARE(data.palette.depth(), core::ColorDepth::Bits8);
-        QCOMPARE(data.palette.color(data.image.pixel(0, 0)), (core::Rgb { 10, 20, 30 }));
-        QCOMPARE(data.palette.color(data.image.pixel(3, 1)), (core::Rgb { 200, 100, 0 }));
+        const auto& image = std::get<core::IndexedImage>(data.image);
+        QCOMPARE(data.palette.color(image.pixel(0, 0)), (core::Rgb { 10, 20, 30 }));
+        QCOMPARE(data.palette.color(image.pixel(3, 1)), (core::Rgb { 200, 100, 0 }));
     }
 
-    /// Mais de 256 cores: a imagem é reduzida, mas mantém o tamanho.
-    void trueColorWithManyColorsIsReduced()
+    /// Leitura forçada como indexada com mais de 256 cores: reduzida.
+    void trueColorAsIndexedWithManyColorsIsReduced()
     {
         QImage rgb(32, 32, QImage::Format_RGB32);
         for (int y = 0; y < 32; ++y) {
@@ -128,9 +142,31 @@ private slots:
                 rgb.setPixel(x, y, qRgb(x * 8, y * 8, (x + y) * 4));
             }
         }
-        const ImageData data = ImageFile::fromQImage(rgb);
-        QCOMPARE(data.image.size(), (core::Size { 32, 32 }));
+        const ImageData data = ImageFile::fromQImageIndexed(rgb);
+        QCOMPARE(data.colorMode(), core::ColorMode::Indexed);
+        QCOMPARE(core::sizeOf(data.image), (core::Size { 32, 32 }));
         QCOMPARE(data.palette.size(), 256);
+    }
+
+    /// RGBA: ida e volta em PNG preserva cores e alfa; BMP é recusado.
+    void rgbaRoundTripAndBmpRejection()
+    {
+        QTemporaryDir directory;
+        core::RgbaImage image({ 5, 3 });
+        image.setPixel({ 1, 1 }, core::Rgba { 255, 0, 0, 255 });
+        image.setPixel({ 2, 1 }, core::Rgba { 0, 128, 255, 100 });
+        const ImageData original { image, core::Palette::makeDefault(core::ColorDepth::Bits8) };
+
+        const QString png = directory.filePath(QStringLiteral("rgba.png"));
+        ImageFile::save(png, original);
+        const ImageData loaded = ImageFile::load(png);
+        QCOMPARE(loaded.colorMode(), core::ColorMode::Rgba);
+        QCOMPARE(loaded.image, original.image);
+
+        QVERIFY_THROWS_EXCEPTION(
+            io::IoError, ImageFile::save(directory.filePath(QStringLiteral("rgba.bmp")), original));
+        QCOMPARE(ImageFile::saveFilters(core::ColorMode::Rgba).size(), 1);
+        QCOMPARE(ImageFile::saveFilters(core::ColorMode::Indexed).size(), 2);
     }
 
     /// Imagens maiores que o limite do editor geram IoError (e não outra

@@ -19,6 +19,7 @@
 
 #include "ImageTarget.h"
 #include "commands/UndoLabel.h"
+#include "core/AnyImage.h"
 #include "core/Image.h"
 #include "core/Palette.h"
 
@@ -38,7 +39,8 @@ class DrawBuffer final : public QObject, public ImageTarget {
 
 public:
     /// Função de edição ao vivo: altera a imagem e devolve o retângulo afetado.
-    using LiveEdit = std::function<core::Rect(core::IndexedImage&)>;
+    /// A imagem recebida é do modo atual do buffer (indexada ou RGBA).
+    using LiveEdit = std::function<core::Rect(core::AnyImage&)>;
 
     DrawBuffer(core::Size size, QObject* parent = nullptr);
     ~DrawBuffer() override;
@@ -46,15 +48,26 @@ public:
     DrawBuffer(const DrawBuffer&) = delete;
     DrawBuffer& operator=(const DrawBuffer&) = delete;
 
-    [[nodiscard]] const core::IndexedImage& image() const { return m_image; }
+    [[nodiscard]] const core::AnyImage& image() const { return m_image; }
+    [[nodiscard]] core::Size size() const { return core::sizeOf(m_image); }
+    [[nodiscard]] core::ColorMode colorMode() const { return core::modeOf(m_image); }
+
+    /// Imagem indexada (só no modo indexado; assert em debug).
+    [[nodiscard]] const core::IndexedImage& indexedImage() const;
     [[nodiscard]] const QImage& renderedImage() const { return m_rendered; }
     [[nodiscard]] QUndoStack* undoStack() const { return m_undoStack; }
 
     /// Paleta usada apenas para EXIBIR o buffer (a do documento ativo).
     void setPalette(const core::Palette& palette);
 
-    /// Substitui o conteúdo inteiro registrando um passo de desfazer.
-    void replace(const core::IndexedImage& image, const UndoLabel& undoLabel);
+    /// Substitui o conteúdo inteiro registrando um passo de desfazer. A
+    /// imagem precisa ser do modo atual do buffer.
+    void replace(const core::AnyImage& image, const UndoLabel& undoLabel);
+
+    /// Converte o buffer para outro modo de cor (o buffer acompanha o modo do
+    /// documento ativo). O histórico do buffer é descartado, pois os passos
+    /// antigos guardam pixels do outro modo. Nada acontece se o modo já bate.
+    void convertTo(core::ColorMode mode, const core::Palette& palette);
 
     // --- Edição ao vivo ---
     void beginEdit();
@@ -68,7 +81,7 @@ public:
     /// Desfaz a edição em andamento sem registrar nada.
     void cancelEdit();
     /// Imagem do início da edição em andamento (vazia se não houver edição).
-    [[nodiscard]] const core::IndexedImage& snapshot() const { return m_snapshot; }
+    [[nodiscard]] const core::AnyImage& snapshot() const { return m_snapshot; }
 
     // --- Seleção retangular (coordenadas do buffer) ---
     [[nodiscard]] const std::optional<core::Rect>& selection() const { return m_selection; }
@@ -78,9 +91,9 @@ public:
     [[nodiscard]] core::Rect workArea() const;
 
     // --- ImageTarget ---
-    [[nodiscard]] const core::IndexedImage& targetImage() const override { return m_image; }
-    void applyRegion(core::Point origin, const core::IndexedImage& pixels) override;
-    void applyImage(const core::IndexedImage& image) override;
+    [[nodiscard]] const core::AnyImage& targetImage() const override { return m_image; }
+    void applyRegion(core::Point origin, const core::AnyImage& pixels) override;
+    void applyImage(const core::AnyImage& image) override;
 
 signals:
     /// Região alterada (coordenadas do buffer).
@@ -89,18 +102,20 @@ signals:
     void resized(const core::Size& size);
     /// A seleção mudou.
     void selectionChanged();
+    /// O modo de cor mudou (ver convertTo).
+    void colorModeChanged(core::ColorMode mode);
 
 private:
     /// Atualiza o cache de exibição e notifica a região alterada.
     void notifyChanged(const core::Rect& area);
 
-    core::IndexedImage m_image;
+    core::AnyImage m_image;
     QImage m_rendered;
     core::Palette m_palette;
     QUndoStack* m_undoStack = nullptr;
 
     bool m_editing = false;
-    core::IndexedImage m_snapshot;
+    core::AnyImage m_snapshot;
     core::Rect m_dirty;
 
     std::optional<core::Rect> m_selection;

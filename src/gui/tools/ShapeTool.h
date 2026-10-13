@@ -12,6 +12,7 @@
 #include "Tool.h"
 
 #include "core/Color.h"
+#include "gui/EditorSession.h"
 #include "gui/commands/UndoLabel.h"
 
 namespace spritenator::gui {
@@ -41,7 +42,7 @@ private:
     bool m_active = false;
     core::Point m_start;
     core::Point m_last;
-    core::ColorIndex m_color = 0;
+    ColorRole m_role = ColorRole::Primary; ///< cor primária ou secundária
 };
 
 } // namespace spritenator::gui

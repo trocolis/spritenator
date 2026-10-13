@@ -850,6 +850,10 @@ Deseja salvar as alterações?</translation>
         <translation>Tela (320 x 240)</translation>
     </message>
     <message>
+        <source>RGBA (32 bit, true color with transparency)</source>
+        <translation>RGBA (32 bits, cores reais com transparência)</translation>
+    </message>
+    <message>
         <source>256 colors (8 bit)</source>
         <translation>256 cores (8 bits)</translation>
     </message>
@@ -1320,6 +1324,10 @@ R: %2  G: %3  B: %4</translation>
     <message>
         <source>Unsupported file extension: &quot;%1&quot;.</source>
         <translation>Extensão de arquivo não suportada: &quot;%1&quot;.</translation>
+    </message>
+    <message>
+        <source>BMP files cannot store transparency. Save RGBA images as PNG.</source>
+        <translation>Arquivos BMP não guardam transparência. Salve imagens RGBA em PNG.</translation>
     </message>
     <message>
         <source>Cannot encode PNG: %1</source>

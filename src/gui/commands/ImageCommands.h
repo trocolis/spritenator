@@ -10,6 +10,7 @@
 #pragma once
 
 #include "UndoLabel.h"
+#include "core/AnyImage.h"
 #include "core/Image.h"
 #include "core/Palette.h"
 
@@ -41,8 +42,8 @@ public:
     /// "before"/"after" devem ter o mesmo tamanho. Se "alreadyApplied" for
     /// verdadeiro, o primeiro redo() (chamado pelo QUndoStack::push) não faz
     /// nada — útil quando a edição já foi aplicada ao vivo (ex.: traço do lápis).
-    RegionCommand(ImageTarget* target, core::Point origin, core::IndexedImage before,
-        core::IndexedImage after, const UndoLabel& label, bool alreadyApplied = false);
+    RegionCommand(ImageTarget* target, core::Point origin, core::AnyImage before,
+        core::AnyImage after, const UndoLabel& label, bool alreadyApplied = false);
 
     void undo() override;
     void redo() override;
@@ -50,24 +51,24 @@ public:
 private:
     ImageTarget* m_target;
     core::Point m_origin;
-    core::IndexedImage m_before;
-    core::IndexedImage m_after;
+    core::AnyImage m_before;
+    core::AnyImage m_after;
     bool m_skipNextRedo;
 };
 
 /// Troca a imagem inteira de um ImageTarget (ex.: redimensionar, limpar tudo).
 class ReplaceImageCommand final : public LabeledCommand {
 public:
-    ReplaceImageCommand(ImageTarget* target, core::IndexedImage before, core::IndexedImage after,
-        const UndoLabel& label);
+    ReplaceImageCommand(
+        ImageTarget* target, core::AnyImage before, core::AnyImage after, const UndoLabel& label);
 
     void undo() override;
     void redo() override;
 
 private:
     ImageTarget* m_target;
-    core::IndexedImage m_before;
-    core::IndexedImage m_after;
+    core::AnyImage m_before;
+    core::AnyImage m_after;
 };
 
 /// Troca a paleta de um documento. Comandos consecutivos com o mesmo
@@ -97,8 +98,8 @@ private:
 /// paleta com remapeamento das cores da imagem).
 class DocumentStateCommand final : public LabeledCommand {
 public:
-    DocumentStateCommand(Document* document, core::IndexedImage beforeImage,
-        core::Palette beforePalette, core::IndexedImage afterImage, core::Palette afterPalette,
+    DocumentStateCommand(Document* document, core::AnyImage beforeImage,
+        core::Palette beforePalette, core::AnyImage afterImage, core::Palette afterPalette,
         const UndoLabel& label);
 
     void undo() override;
@@ -106,9 +107,9 @@ public:
 
 private:
     Document* m_document;
-    core::IndexedImage m_beforeImage;
+    core::AnyImage m_beforeImage;
     core::Palette m_beforePalette;
-    core::IndexedImage m_afterImage;
+    core::AnyImage m_afterImage;
     core::Palette m_afterPalette;
 };
 

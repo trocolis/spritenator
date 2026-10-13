@@ -4,6 +4,7 @@
 #include "CanvasView.h"
 
 #include "Document.h"
+#include "ImageRendering.h"
 
 #include <QKeyEvent>
 #include <QMouseEvent>
@@ -65,7 +66,7 @@ void CanvasView::setHoveredCell(const std::optional<core::Rect>& cell)
 
 QSize CanvasView::sizeHint() const
 {
-    const core::Size size = m_document->canvas().size();
+    const core::Size size = core::sizeOf(m_document->canvas());
     return { size.width * m_scale, size.height * m_scale };
 }
 
@@ -96,6 +97,10 @@ void CanvasView::paintEvent(QPaintEvent* event)
     // Ampliação por "vizinho mais próximo": sem suavização, como pixel art exige.
     painter.setRenderHint(QPainter::SmoothPixmapTransform, false);
     const QRect dirty = event->rect();
+    // Imagens RGBA: fundo xadrez para que a transparência fique visível.
+    if (m_document->colorMode() == core::ColorMode::Rgba) {
+        paintTransparencyGrid(painter, dirty);
+    }
     const QRectF source(dirty.x() / double(m_scale), dirty.y() / double(m_scale),
         dirty.width() / double(m_scale), dirty.height() / double(m_scale));
     painter.drawImage(QRectF(dirty), m_document->renderedImage(), source);
@@ -159,7 +164,7 @@ void CanvasView::keyPressEvent(QKeyEvent* event)
     const core::Rect current = m_hoveredCell.value_or(m_layout.cellAt({ 0, 0 }));
     const core::Rect next = m_layout.neighbour(current, columns, rows);
     // Só navega se a nova célula ainda tocar o canvas.
-    if (next.intersected(m_document->canvas().bounds()).isEmpty()) {
+    if (next.intersected(core::boundsOf(m_document->canvas())).isEmpty()) {
         return;
     }
     setHoveredCell(next);

@@ -17,6 +17,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <iterator>
+#include <variant>
 
 namespace spritenator::gui {
 
@@ -72,6 +73,7 @@ void EditorSession::setActiveDocument(Document* document)
     if (document != nullptr) {
         trackUndoStack(document->undoStack());
         connect(document, &Document::paletteChanged, this, &EditorSession::syncPalette);
+        connect(document, &Document::colorModeChanged, this, &EditorSession::syncColorMode);
         if (documentStackWasActive) {
             m_undoGroup->setActiveStack(document->undoStack());
         }
@@ -80,7 +82,24 @@ void EditorSession::setActiveDocument(Document* document)
     }
 
     syncPalette();
+    syncColorMode();
     emit activeDocumentChanged(document);
+}
+
+core::ColorMode EditorSession::colorMode() const
+{
+    return m_activeDocument ? m_activeDocument->colorMode() : core::ColorMode::Indexed;
+}
+
+void EditorSession::syncColorMode()
+{
+    // O buffer é compartilhado: passa a ter o modo do documento ativo (a
+    // conversão usa a paleta do documento quando um dos lados é indexado).
+    m_buffer->convertTo(colorMode(), palette());
+    if (colorMode() != m_colorMode) {
+        m_colorMode = colorMode();
+        emit colorModeChanged(m_colorMode);
+    }
 }
 
 const core::Palette& EditorSession::palette() const
@@ -188,10 +207,12 @@ void EditorSession::setCharacterLayout(const core::CharacterLayout& layout)
     }
     const bool cellSizeChanged = layout.cellSize != m_layout.cellSize;
     m_layout = layout;
-    if (cellSizeChanged && m_buffer->image().size() != layout.cellSize) {
-        // O buffer acompanha o tamanho da célula (conteúdo preservado no canto).
-        m_buffer->replace(m_buffer->image().resizedCanvas(layout.cellSize, m_backgroundColor),
-            UndoLabel { UndoOperation::CharacterSize });
+    if (cellSizeChanged && m_buffer->size() != layout.cellSize) {
+        // O buffer acompanha o tamanho da célula (conteúdo preservado no
+        // canto; a área nova recebe o pixel de fundo do modo).
+        core::AnyImage resized = blankLike(m_buffer->image(), layout.cellSize);
+        core::pasteImage(resized, m_buffer->image(), { 0, 0 });
+        m_buffer->replace(resized, UndoLabel { UndoOperation::CharacterSize });
     }
     emit characterLayoutChanged(m_layout);
 }
@@ -282,6 +303,13 @@ void EditorSession::setAutoMask(bool enabled)
     emit autoMaskChanged(enabled);
 }
 
+core::RgbaWriteRules EditorSession::rgbaTransferRules() const
+{
+    core::RgbaWriteRules rules;
+    rules.skipTransparent = m_transparentEffect; // alfa 0 não é gravado
+    return rules;
+}
+
 core::WriteRules EditorSession::transferRules() const
 {
     core::WriteRules rules = drawingRules();
@@ -292,13 +320,53 @@ core::WriteRules EditorSession::transferRules() const
     return rules;
 }
 
-bool EditorSession::plot(core::IndexedImage& image, core::Point point, core::ColorIndex color) const
+bool EditorSession::plot(core::AnyImage& image, core::Point point, ColorRole role) const
 {
-    // Pixels fora do padrão de tom ficam intactos.
+    // Pixels fora do padrão de tom ficam intactos (vale para os dois modos).
     if (!core::toneCovers(m_tone, point, m_toneShift)) {
         return false;
     }
-    return image.setPixel(point, color, drawingRules());
+    if (auto* indexed = std::get_if<core::IndexedImage>(&image)) {
+        const core::ColorIndex color = role == ColorRole::Primary ? m_drawColor : m_backgroundColor;
+        return indexed->setPixel(point, color, drawingRules());
+    }
+    // RGBA: substitui o pixel pela cor exata, inclusive o alfa (sem mistura).
+    return std::get<core::RgbaImage>(image).setPixel(point, rgbaFor(role));
+}
+
+core::AnyImage EditorSession::blankLike(const core::AnyImage& image, core::Size size) const
+{
+    if (core::modeOf(image) == core::ColorMode::Indexed) {
+        return core::IndexedImage(size, m_backgroundColor);
+    }
+    return core::RgbaImage(size); // transparente
+}
+
+// -----------------------------------------------------------------------------
+// Cores RGBA
+// -----------------------------------------------------------------------------
+void EditorSession::setPrimaryRgba(const core::Rgba& color)
+{
+    setRgbaFor(ColorRole::Primary, color);
+}
+
+void EditorSession::setSecondaryRgba(const core::Rgba& color)
+{
+    setRgbaFor(ColorRole::Secondary, color);
+}
+
+const core::Rgba& EditorSession::rgbaFor(ColorRole role) const
+{
+    return role == ColorRole::Primary ? m_primaryRgba : m_secondaryRgba;
+}
+
+void EditorSession::setRgbaFor(ColorRole role, const core::Rgba& color)
+{
+    core::Rgba& target = role == ColorRole::Primary ? m_primaryRgba : m_secondaryRgba;
+    if (target != color) {
+        target = color;
+        emit colorsChanged();
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -352,9 +420,12 @@ void EditorSession::getFromCanvas(Document* document, const core::Rect& cell)
         return;
     }
     cancelTool();
-    // Áreas da célula fora do canvas viram cor de fundo.
-    m_buffer->replace(
-        document->canvas().copy(cell, m_backgroundColor), UndoLabel { UndoOperation::GetCell });
+    // O buffer adota o modo do documento de origem (normalmente já é o ativo).
+    m_buffer->convertTo(document->colorMode(), document->palette());
+    // Áreas da célula fora do canvas viram o pixel de fundo do modo.
+    core::AnyImage region = blankLike(document->canvas(), cell.size());
+    core::pasteImage(region, document->canvas(), core::Point { } - cell.topLeft());
+    m_buffer->replace(region, UndoLabel { UndoOperation::GetCell });
     m_buffer->setSelection(std::nullopt);
     m_lastCell = cell;
     emit lastCellChanged(cell);
@@ -366,15 +437,26 @@ void EditorSession::putToCanvas(Document* document, const core::Rect& cell)
         return;
     }
     cancelTool();
-    const core::Rect target = core::Rect::fromPointAndSize(cell.topLeft(), m_buffer->image().size())
-                                  .intersected(document->canvas().bounds());
+    const core::Rect target = core::Rect::fromPointAndSize(cell.topLeft(), m_buffer->size())
+                                  .intersected(core::boundsOf(document->canvas()));
     if (target.isEmpty()) {
         return;
     }
-    // "Depois" = canvas atual com o buffer colado segundo as regras.
-    const core::IndexedImage before = document->canvas().copy(target);
-    core::IndexedImage after = before;
-    after.paste(m_buffer->image(), cell.topLeft() - target.topLeft(), transferRules());
+    // Se o documento for de outro modo, o conteúdo é convertido só para esta
+    // gravação (o buffer em si não muda).
+    const core::AnyImage source
+        = core::convertImage(m_buffer->image(), document->colorMode(), document->palette());
+    const core::Point offset = cell.topLeft() - target.topLeft();
+
+    // "Depois" = canvas atual com o buffer colado segundo as regras do modo.
+    const core::AnyImage before = core::copyRegion(document->canvas(), target);
+    core::AnyImage after = before;
+    if (auto* indexed = std::get_if<core::IndexedImage>(&after)) {
+        indexed->paste(std::get<core::IndexedImage>(source), offset, transferRules());
+    } else {
+        std::get<core::RgbaImage>(after).paste(
+            std::get<core::RgbaImage>(source), offset, rgbaTransferRules());
+    }
     if (after == before) {
         return;
     }
@@ -386,6 +468,7 @@ void EditorSession::transferAll()
 {
     if (m_activeDocument) {
         cancelTool();
+        m_buffer->convertTo(m_activeDocument->colorMode(), m_activeDocument->palette());
         m_buffer->replace(m_activeDocument->canvas(), UndoLabel { UndoOperation::TransferAll });
     }
 }

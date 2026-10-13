@@ -17,6 +17,8 @@
 #include <QtEndian>
 
 #include <array>
+#include <utility>
+#include <variant>
 #include <vector>
 
 namespace spritenator::io {
@@ -195,18 +197,17 @@ void restoreFilePaletteOrder(ImageData& data, const QList<core::Rgb>& fileTable)
     if (identity) {
         return;
     }
-    data.image.remap(remap);
+    std::get<core::IndexedImage>(data.image).remap(remap);
     for (int index = 0; index < count; ++index) {
         data.palette.setColor(index, fileTable.at(index));
     }
 }
 
-} // namespace
-
 // -----------------------------------------------------------------------------
 // Conversões QImage <-> ImageData
 // -----------------------------------------------------------------------------
-ImageData ImageFile::fromQImage(const QImage& source)
+/// Verifica se o QImage pode ser carregado (não vazio, dentro do limite).
+void validateSource(const QImage& source)
 {
     if (source.isNull()) {
         throw IoError(
@@ -222,20 +223,74 @@ ImageData ImageFile::fromQImage(const QImage& source)
                 .arg(source.height())
                 .arg(kLimit));
     }
+}
+
+/// Formatos do Qt que têm paleta (ou equivalem a uma, como tons de cinza).
+bool isIndexedFormat(QImage::Format format)
+{
+    return format == QImage::Format_Indexed8 || format == QImage::Format_Mono
+        || format == QImage::Format_MonoLSB || format == QImage::Format_Grayscale8;
+}
+
+/// Imagem indexada/cinza do Qt -> dados indexados.
+ImageData fromIndexedFormat(const QImage& source)
+{
     switch (source.format()) {
-    case QImage::Format_Indexed8: return fromIndexed(source);
     case QImage::Format_Mono:
     case QImage::Format_MonoLSB:
         // 1 bit: expande para 8 bits preservando a tabela de cores.
         return fromIndexed(source.convertToFormat(QImage::Format_Indexed8));
     case QImage::Format_Grayscale8: return fromGrayscale(source);
-    default: return fromTrueColor(source);
+    default: return fromIndexed(source);
     }
+}
+
+/// Imagem em cores reais -> RGBA, pixel a pixel e sem perdas.
+ImageData fromRgbaFormat(const QImage& source)
+{
+    // ARGB32 (não pré-multiplicado): 0xAARRGGBB por pixel, como core::Rgba.
+    const QImage argb = source.convertToFormat(QImage::Format_ARGB32);
+    core::RgbaImage image({ argb.width(), argb.height() });
+    auto pixels = image.data();
+    const auto width = static_cast<std::size_t>(argb.width());
+    for (int y = 0; y < argb.height(); ++y) {
+        const auto* line = reinterpret_cast<const QRgb*>(argb.constScanLine(y));
+        for (std::size_t x = 0; x < width; ++x) {
+            pixels[static_cast<std::size_t>(y) * width + x] = core::Rgba::fromArgb32(line[x]);
+        }
+    }
+    return { std::move(image), core::Palette::makeDefault(core::ColorDepth::Bits8) };
+}
+
+} // namespace
+
+ImageData ImageFile::fromQImage(const QImage& source)
+{
+    validateSource(source);
+    return isIndexedFormat(source.format()) ? fromIndexedFormat(source) : fromRgbaFormat(source);
+}
+
+ImageData ImageFile::fromQImageIndexed(const QImage& source)
+{
+    validateSource(source);
+    return isIndexedFormat(source.format()) ? fromIndexedFormat(source) : fromTrueColor(source);
 }
 
 QImage ImageFile::toQImage(const ImageData& data)
 {
-    const core::IndexedImage& image = data.image;
+    // RGBA: Format_ARGB32 (0xAARRGGBB por pixel, igual a core::Rgba).
+    if (const auto* rgba = std::get_if<core::RgbaImage>(&data.image)) {
+        QImage result(rgba->width(), rgba->height(), QImage::Format_ARGB32);
+        for (int y = 0; y < rgba->height(); ++y) {
+            auto* line = reinterpret_cast<QRgb*>(result.scanLine(y));
+            for (int x = 0; x < rgba->width(); ++x) {
+                line[x] = rgba->pixel(x, y).toArgb32();
+            }
+        }
+        return result;
+    }
+
+    const auto& image = std::get<core::IndexedImage>(data.image);
     QImage result(image.width(), image.height(), QImage::Format_Indexed8);
 
     QList<QRgb> table;
@@ -260,7 +315,10 @@ QImage ImageFile::toQImage(const ImageData& data)
 // -----------------------------------------------------------------------------
 // Leitura
 // -----------------------------------------------------------------------------
-ImageData ImageFile::load(const QString& path)
+namespace {
+
+/// Lê o arquivo e o decodifica com o Qt (conteúdo bruto + imagem).
+std::pair<QByteArray, QImage> readAndDecode(const QString& path)
 {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
@@ -268,16 +326,39 @@ ImageData ImageFile::load(const QString& path)
             QCoreApplication::translate("spritenator::io::ImageFile", "Cannot open \"%1\": %2")
                 .arg(path, file.errorString()));
     }
-    const QByteArray contents = file.readAll();
-
+    QByteArray contents = file.readAll();
     QImage decoded;
     if (!decoded.loadFromData(contents)) {
         throw IoError(QCoreApplication::translate(
             "spritenator::io::ImageFile", "\"%1\" is not a supported image file.")
                 .arg(path));
     }
+    return { std::move(contents), std::move(decoded) };
+}
+
+/// Ajustes finais de imagens indexadas lidas de BMP (ordem da paleta).
+void fixIndexedBmp(ImageData& data, const QByteArray& contents)
+{
+    if (data.colorMode() == core::ColorMode::Indexed) {
+        restoreFilePaletteOrder(data, bmpColorTable(contents));
+    }
+}
+
+} // namespace
+
+ImageData ImageFile::load(const QString& path)
+{
+    const auto [contents, decoded] = readAndDecode(path);
     ImageData data = fromQImage(decoded);
-    restoreFilePaletteOrder(data, bmpColorTable(contents));
+    fixIndexedBmp(data, contents);
+    return data;
+}
+
+ImageData ImageFile::loadIndexed(const QString& path)
+{
+    const auto [contents, decoded] = readAndDecode(path);
+    ImageData data = fromQImageIndexed(decoded);
+    fixIndexedBmp(data, contents);
     return data;
 }
 
@@ -308,7 +389,12 @@ void ImageFile::save(const QString& path, const ImageData& data, ImageFormat for
     // Codifica primeiro em memória: se algo falhar, o arquivo antigo fica intacto.
     QByteArray encoded;
     if (format == ImageFormat::Bmp) {
-        encoded = detail::encodeBmp(data.image, data.palette);
+        const auto* indexed = std::get_if<core::IndexedImage>(&data.image);
+        if (indexed == nullptr) {
+            throw IoError(QCoreApplication::translate("spritenator::io::ImageFile",
+                "BMP files cannot store transparency. Save RGBA images as PNG."));
+        }
+        encoded = detail::encodeBmp(*indexed, data.palette);
     } else {
         QBuffer buffer(&encoded);
         buffer.open(QIODevice::WriteOnly);
@@ -343,10 +429,16 @@ QStringList ImageFile::openFilters()
         QCoreApplication::translate("spritenator::io::ImageFile", "All files (*)") };
 }
 
-QStringList ImageFile::saveFilters()
+QStringList ImageFile::saveFilters(core::ColorMode mode)
 {
-    return { QCoreApplication::translate("spritenator::io::ImageFile", "PNG image (*.png)"),
-        QCoreApplication::translate("spritenator::io::ImageFile", "Bitmap image (*.bmp)") };
+    QStringList filters {
+        QCoreApplication::translate("spritenator::io::ImageFile", "PNG image (*.png)"),
+    };
+    if (mode == core::ColorMode::Indexed) { // BMP não guarda transparência
+        filters.append(
+            QCoreApplication::translate("spritenator::io::ImageFile", "Bitmap image (*.bmp)"));
+    }
+    return filters;
 }
 
 } // namespace spritenator::io

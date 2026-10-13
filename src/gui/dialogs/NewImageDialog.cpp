@@ -47,6 +47,7 @@ NewImageDialog::NewImageDialog(bool canCopyPalette, QWidget* parent)
     , m_presets(new QComboBox(this))
     , m_width(new QSpinBox(this))
     , m_height(new QSpinBox(this))
+    , m_colorsRgba(new QRadioButton(tr("RGBA (32 bit, true color with transparency)"), this))
     , m_colors256(new QRadioButton(tr("256 colors (8 bit)"), this))
     , m_colors16(new QRadioButton(tr("16 colors (4 bit)"), this))
     , m_colors2(new QRadioButton(tr("2 colors (1 bit)"), this))
@@ -74,16 +75,22 @@ NewImageDialog::NewImageDialog(bool canCopyPalette, QWidget* parent)
     // --- Cores ---
     auto* colorBox = new QGroupBox(tr("Colors"), this);
     auto* colorLayout = new QVBoxLayout(colorBox);
+    colorLayout->addWidget(m_colorsRgba);
     colorLayout->addWidget(m_colors256);
     colorLayout->addWidget(m_colors16);
     colorLayout->addWidget(m_colors2);
-    m_colors256->setChecked(true);
+    m_colorsRgba->setChecked(true); // RGBA é a primeira opção e o padrão
 
     // --- Opções ---
     auto* optionBox = new QGroupBox(tr("Options"), this);
     auto* optionLayout = new QVBoxLayout(optionBox);
     optionLayout->addWidget(m_copyPalette);
-    m_copyPalette->setEnabled(canCopyPalette);
+    // Copiar a paleta só faz sentido para imagens indexadas.
+    const auto updatePaletteOption = [this, canCopyPalette] {
+        m_copyPalette->setEnabled(canCopyPalette && !m_colorsRgba->isChecked());
+    };
+    connect(m_colorsRgba, &QRadioButton::toggled, this, updatePaletteOption);
+    updatePaletteOption();
     m_copyPalette->setToolTip(tr("Use the palette of the active image in the new image"));
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
@@ -124,6 +131,11 @@ void NewImageDialog::applyPreset(int index)
 core::Size NewImageDialog::imageSize() const
 {
     return { m_width->value(), m_height->value() };
+}
+
+core::ColorMode NewImageDialog::colorMode() const
+{
+    return m_colorsRgba->isChecked() ? core::ColorMode::Rgba : core::ColorMode::Indexed;
 }
 
 core::ColorDepth NewImageDialog::colorDepth() const

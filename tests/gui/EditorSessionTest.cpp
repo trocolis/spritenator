@@ -35,7 +35,7 @@ private slots:
     void bufferStartsWithCellSize()
     {
         EditorSession session;
-        QCOMPARE(session.buffer()->image().size(), (core::Size { 24, 32 }));
+        QCOMPARE(session.buffer()->size(), (core::Size { 24, 32 }));
     }
 
     /// Botão direito: a célula do canvas vai para o buffer.
@@ -45,10 +45,10 @@ private slots:
         auto document = makeTwoCellDocument();
         session.setActiveDocument(document.get());
         session.getFromCanvas(document.get(), { 24, 0, 24, 32 });
-        QCOMPARE(int(session.buffer()->image().pixel(0, 0)), 4);
+        QCOMPARE(int(session.buffer()->indexedImage().pixel(0, 0)), 4);
         // Desfazer devolve o buffer anterior.
         session.undoGroup()->undo();
-        QCOMPARE(int(session.buffer()->image().pixel(0, 0)), 0);
+        QCOMPARE(int(session.buffer()->indexedImage().pixel(0, 0)), 0);
     }
 
     /// Botão esquerdo: o buffer é gravado no canvas, com desfazer no documento.
@@ -59,13 +59,13 @@ private slots:
         session.setActiveDocument(document.get());
         session.getFromCanvas(document.get(), { 0, 0, 24, 32 }); // buffer = cor 3
         session.putToCanvas(document.get(), { 24, 0, 24, 32 });
-        QCOMPARE(int(document->canvas().pixel(30, 5)), 3);
+        QCOMPARE(int(document->indexedCanvas().pixel(30, 5)), 3);
         QVERIFY(document->isModified());
 
         // A pilha ativa passou a ser a do documento: desfazer reverte o "put".
         QCOMPARE(session.undoGroup()->activeStack(), document->undoStack());
         session.undoGroup()->undo();
-        QCOMPARE(int(document->canvas().pixel(30, 5)), 4);
+        QCOMPARE(int(document->indexedCanvas().pixel(30, 5)), 4);
     }
 
     /// Efeito de cor transparente: a cor de fundo do buffer não é gravada.
@@ -82,8 +82,8 @@ private slots:
         session.buffer()->replace(frame, gui::UndoLabel { gui::UndoOperation::Paste });
 
         session.putToCanvas(document.get(), { 0, 0, 24, 32 });
-        QCOMPARE(int(document->canvas().pixel(0, 0)), 3); // preservado
-        QCOMPARE(int(document->canvas().pixel(1, 1)), 9); // gravado
+        QCOMPARE(int(document->indexedCanvas().pixel(0, 0)), 3); // preservado
+        QCOMPARE(int(document->indexedCanvas().pixel(1, 1)), 9); // gravado
     }
 
     /// O lápis desenha um traço contínuo e gera UM passo de desfazer.
@@ -98,11 +98,11 @@ private slots:
         pen.release(session, { 5, 0 });
 
         for (int x = 0; x <= 5; ++x) {
-            QCOMPARE(int(session.buffer()->image().pixel(x, 0)), 7);
+            QCOMPARE(int(session.buffer()->indexedImage().pixel(x, 0)), 7);
         }
         QCOMPARE(session.buffer()->undoStack()->count(), 1);
         session.undoGroup()->undo();
-        QCOMPARE(int(session.buffer()->image().pixel(3, 0)), 0);
+        QCOMPARE(int(session.buffer()->indexedImage().pixel(3, 0)), 0);
     }
 
     /// Botão direito desenha com a cor de fundo; Esc (cancel) descarta o traço.
@@ -112,9 +112,9 @@ private slots:
         session.setBackgroundColor(2);
         gui::Tool& pen = session.tool();
         pen.press(session, { 3, 3 }, Qt::RightButton);
-        QCOMPARE(int(session.buffer()->image().pixel(3, 3)), 2);
+        QCOMPARE(int(session.buffer()->indexedImage().pixel(3, 3)), 2);
         session.cancelTool();
-        QCOMPARE(int(session.buffer()->image().pixel(3, 3)), 0);
+        QCOMPARE(int(session.buffer()->indexedImage().pixel(3, 3)), 0);
         QCOMPARE(session.buffer()->undoStack()->count(), 0);
     }
 
@@ -129,9 +129,9 @@ private slots:
         tool.move(session, { 10, 10 }); // retângulo grande (temporário)
         tool.move(session, { 4, 4 }); // retângulo final, menor
         tool.release(session, { 4, 4 });
-        QCOMPARE(int(session.buffer()->image().pixel(10, 10)), 0); // apagado
-        QCOMPARE(int(session.buffer()->image().pixel(4, 4)), 5);
-        QCOMPARE(int(session.buffer()->image().pixel(2, 2)), 0); // contorno: interior vazio
+        QCOMPARE(int(session.buffer()->indexedImage().pixel(10, 10)), 0); // apagado
+        QCOMPARE(int(session.buffer()->indexedImage().pixel(4, 4)), 5);
+        QCOMPARE(int(session.buffer()->indexedImage().pixel(2, 2)), 0); // contorno: interior vazio
         QCOMPARE(session.buffer()->undoStack()->count(), 1);
     }
 
@@ -144,9 +144,9 @@ private slots:
         session.setDrawColor(9);
         session.tool().press(session, { 0, 0 }, Qt::LeftButton);
         session.tool().release(session, { 0, 0 });
-        QCOMPARE(int(session.buffer()->image().pixel(0, 0)), 9);
-        QCOMPARE(int(session.buffer()->image().pixel(1, 0)), 0);
-        QCOMPARE(int(session.buffer()->image().pixel(1, 1)), 9);
+        QCOMPARE(int(session.buffer()->indexedImage().pixel(0, 0)), 9);
+        QCOMPARE(int(session.buffer()->indexedImage().pixel(1, 0)), 0);
+        QCOMPARE(int(session.buffer()->indexedImage().pixel(1, 1)), 9);
     }
 
     /// Seleção: arrastar seleciona; clique simples limpa.
@@ -171,7 +171,7 @@ private slots:
         core::CharacterLayout layout = session.characterLayout();
         layout.cellSize = { 16, 16 };
         session.setCharacterLayout(layout);
-        QCOMPARE(session.buffer()->image().size(), (core::Size { 16, 16 }));
+        QCOMPARE(session.buffer()->size(), (core::Size { 16, 16 }));
     }
 
     /// Cores são limitadas ao tamanho da paleta do documento ativo.

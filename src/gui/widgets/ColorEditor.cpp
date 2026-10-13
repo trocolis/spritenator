@@ -21,14 +21,20 @@ namespace spritenator::gui {
 
 namespace {
 
-/// Monta o texto/estilo de uma amostra de cor.
+/// Monta o texto/estilo de uma amostra de cor. "index" < 0 omite o número
+/// (cores RGBA não têm índice). Cores translúcidas aparecem com o alfa.
 void paintSwatch(QLabel* swatch, const QColor& color, int index)
 {
     // Texto em preto ou branco conforme a luminosidade, para manter contraste.
-    const QColor text = color.lightness() > 128 ? Qt::black : Qt::white;
-    swatch->setStyleSheet(QStringLiteral("background-color: %1; color: %2; border: 1px solid gray;")
-            .arg(color.name(), text.name()));
-    swatch->setText(QString::number(index));
+    const QColor text = color.alpha() < 128 || color.lightness() > 128 ? Qt::black : Qt::white;
+    swatch->setStyleSheet(
+        QStringLiteral("background-color: rgba(%1, %2, %3, %4); color: %5; border: 1px solid gray;")
+            .arg(color.red())
+            .arg(color.green())
+            .arg(color.blue())
+            .arg(color.alpha())
+            .arg(text.name()));
+    swatch->setText(index >= 0 ? QString::number(index) : QString());
 }
 
 } // namespace
@@ -80,6 +86,7 @@ ColorEditor::ColorEditor(EditorSession* session, QWidget* parent)
     connect(m_session, &EditorSession::colorsChanged, this, &ColorEditor::refresh);
     connect(m_session, &EditorSession::paletteChanged, this, &ColorEditor::refresh);
     connect(m_session, &EditorSession::activeDocumentChanged, this, &ColorEditor::refresh);
+    connect(m_session, &EditorSession::colorModeChanged, this, &ColorEditor::refresh);
     retranslate();
     refresh();
 }
@@ -105,18 +112,28 @@ void ColorEditor::retranslate()
 void ColorEditor::refresh()
 {
     m_updating = true;
-    const core::Palette& palette = m_session->palette();
-    const core::Rgb draw = palette.color(m_session->drawColor());
-    paintSwatch(m_drawSwatch, toQColor(draw), m_session->drawColor());
-    paintSwatch(m_backgroundSwatch, toQColor(palette.color(m_session->backgroundColor())),
-        m_session->backgroundColor());
+    core::Rgb draw;
+    if (m_session->colorMode() == core::ColorMode::Rgba) {
+        // RGBA: as amostras mostram as cores reais (o índice não existe).
+        const core::Rgba primary = m_session->primaryRgba();
+        draw = primary.rgb();
+        paintSwatch(m_drawSwatch, toQColor(primary), -1);
+        paintSwatch(m_backgroundSwatch, toQColor(m_session->secondaryRgba()), -1);
+    } else {
+        const core::Palette& palette = m_session->palette();
+        draw = palette.color(m_session->drawColor());
+        paintSwatch(m_drawSwatch, toQColor(draw), m_session->drawColor());
+        paintSwatch(m_backgroundSwatch, toQColor(palette.color(m_session->backgroundColor())),
+            m_session->backgroundColor());
+    }
 
     const int values[] = { draw.red, draw.green, draw.blue };
     for (std::size_t channel = 0; channel < 3; ++channel) {
         m_sliders.at(channel)->setValue(values[channel]);
     }
-    // Sem documento não há paleta editável.
-    const bool editable = m_session->activeDocument() != nullptr;
+    // Sem documento não há paleta editável (cores RGBA sempre são).
+    const bool editable
+        = m_session->activeDocument() != nullptr || m_session->colorMode() == core::ColorMode::Rgba;
     for (std::size_t channel = 0; channel < 3; ++channel) {
         m_sliders.at(channel)->setEnabled(editable);
         m_spins.at(channel)->setEnabled(editable);
@@ -126,14 +143,28 @@ void ColorEditor::refresh()
 
 void ColorEditor::applyChannel(int channel, int value)
 {
+    if (m_updating) {
+        return;
+    }
+    const auto channelValue = static_cast<std::uint8_t>(value);
+    if (m_session->colorMode() == core::ColorMode::Rgba) {
+        // RGBA: edita a cor primária diretamente (não há paleta).
+        core::Rgba color = m_session->primaryRgba();
+        switch (channel) {
+        case 0: color.red = channelValue; break;
+        case 1: color.green = channelValue; break;
+        default: color.blue = channelValue; break;
+        }
+        m_session->setPrimaryRgba(color);
+        return;
+    }
     Document* document = m_session->activeDocument();
-    if (m_updating || document == nullptr) {
+    if (document == nullptr) {
         return;
     }
     const int index = m_session->drawColor();
     core::Palette after = document->palette();
     core::Rgb color = after.color(index);
-    const auto channelValue = static_cast<std::uint8_t>(value);
     switch (channel) {
     case 0: color.red = channelValue; break;
     case 1: color.green = channelValue; break;

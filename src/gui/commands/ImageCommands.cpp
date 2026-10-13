@@ -27,8 +27,8 @@ void LabeledCommand::retranslate()
 // -----------------------------------------------------------------------------
 // RegionCommand
 // -----------------------------------------------------------------------------
-RegionCommand::RegionCommand(ImageTarget* target, core::Point origin, core::IndexedImage before,
-    core::IndexedImage after, const UndoLabel& label, bool alreadyApplied)
+RegionCommand::RegionCommand(ImageTarget* target, core::Point origin, core::AnyImage before,
+    core::AnyImage after, const UndoLabel& label, bool alreadyApplied)
     : LabeledCommand(label)
     , m_target(target)
     , m_origin(origin)
@@ -36,7 +36,8 @@ RegionCommand::RegionCommand(ImageTarget* target, core::Point origin, core::Inde
     , m_after(std::move(after))
     , m_skipNextRedo(alreadyApplied)
 {
-    assert(m_before.size() == m_after.size());
+    assert(core::sizeOf(m_before) == core::sizeOf(m_after));
+    assert(m_before.index() == m_after.index()); // mesmo modo de cor
 }
 
 void RegionCommand::undo()
@@ -56,8 +57,8 @@ void RegionCommand::redo()
 // -----------------------------------------------------------------------------
 // ReplaceImageCommand
 // -----------------------------------------------------------------------------
-ReplaceImageCommand::ReplaceImageCommand(ImageTarget* target, core::IndexedImage before,
-    core::IndexedImage after, const UndoLabel& label)
+ReplaceImageCommand::ReplaceImageCommand(
+    ImageTarget* target, core::AnyImage before, core::AnyImage after, const UndoLabel& label)
     : LabeledCommand(label)
     , m_target(target)
     , m_before(std::move(before))
@@ -118,8 +119,8 @@ bool PaletteCommand::mergeWith(const QUndoCommand* other)
 // -----------------------------------------------------------------------------
 // DocumentStateCommand
 // -----------------------------------------------------------------------------
-DocumentStateCommand::DocumentStateCommand(Document* document, core::IndexedImage beforeImage,
-    core::Palette beforePalette, core::IndexedImage afterImage, core::Palette afterPalette,
+DocumentStateCommand::DocumentStateCommand(Document* document, core::AnyImage beforeImage,
+    core::Palette beforePalette, core::AnyImage afterImage, core::Palette afterPalette,
     const UndoLabel& label)
     : LabeledCommand(label)
     , m_document(document)

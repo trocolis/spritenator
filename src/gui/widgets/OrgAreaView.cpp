@@ -5,6 +5,7 @@
 
 #include "gui/DrawBuffer.h"
 #include "gui/EditorSession.h"
+#include "gui/ImageRendering.h"
 
 #include <QEvent>
 #include <QPainter>
@@ -45,7 +46,7 @@ int OrgAreaView::scale() const
 
 QSize OrgAreaView::sizeHint() const
 {
-    const core::Size size = m_session->buffer()->image().size();
+    const core::Size size = m_session->buffer()->size();
     return QSize(size.width, size.height) * scale() + QSize(8, 8);
 }
 
@@ -63,6 +64,9 @@ void OrgAreaView::paintEvent(QPaintEvent* /*event*/)
     const QImage& image = m_session->buffer()->renderedImage();
     const QSize scaled = image.size() * scale();
     const QPoint origin((width() - scaled.width()) / 2, (height() - scaled.height()) / 2);
+    if (m_session->buffer()->colorMode() == core::ColorMode::Rgba) {
+        paintTransparencyGrid(painter, QRect(origin, scaled), 4);
+    }
     painter.drawImage(QRect(origin, scaled), image);
 }
 

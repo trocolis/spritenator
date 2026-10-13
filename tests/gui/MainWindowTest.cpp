@@ -55,12 +55,12 @@ private slots:
 
         // F3: transfere o canvas inteiro para a área de desenho.
         window.actions()->action(ActionId::CanvasGetAll)->trigger();
-        QCOMPARE(window.session()->buffer()->image().size(), (core::Size { 48, 32 }));
-        QCOMPARE(int(window.session()->buffer()->image().pixel(0, 0)), 2);
+        QCOMPARE(window.session()->buffer()->size(), (core::Size { 48, 32 }));
+        QCOMPARE(int(window.session()->buffer()->indexedImage().pixel(0, 0)), 2);
 
         // Desfazer pelo menu.
         window.actions()->action(ActionId::EditUndo)->trigger();
-        QCOMPARE(window.session()->buffer()->image().size(), (core::Size { 24, 32 }));
+        QCOMPARE(window.session()->buffer()->size(), (core::Size { 24, 32 }));
     }
 
     /// Regressão: destruir a janela com um documento aberto, depois de uma
@@ -91,15 +91,15 @@ private slots:
         MainWindow window;
         gui::DrawBuffer* buffer = window.session()->buffer();
         window.actions()->action(ActionId::EditSelectAll)->trigger();
-        QCOMPARE(buffer->selection().value(), buffer->image().bounds());
+        QCOMPARE(buffer->selection().value(), buffer->indexedImage().bounds());
 
         window.session()->setBackgroundColor(5);
         window.actions()->action(ActionId::EditClear)->trigger();
-        QCOMPARE(int(buffer->image().pixel(3, 3)), 5);
+        QCOMPARE(int(buffer->indexedImage().pixel(3, 3)), 5);
 
         window.session()->setDrawColor(9);
         window.actions()->action(ActionId::EditShadow)->trigger(); // fundo 5: nada muda
-        QCOMPARE(int(buffer->image().pixel(3, 3)), 5);
+        QCOMPARE(int(buffer->indexedImage().pixel(3, 3)), 5);
 
         window.actions()->action(ActionId::EditCopy)->trigger();
         QVERIFY(window.actions()->action(ActionId::EditPaste)->isEnabled());
@@ -147,9 +147,9 @@ private slots:
         QVERIFY(window.openFile(path));
         window.session()->setBackgroundColor(3);
         window.actions()->action(ActionId::CanvasClearAll)->trigger();
-        QCOMPARE(int(window.activeDocument()->canvas().pixel(5, 5)), 3);
+        QCOMPARE(int(window.activeDocument()->indexedCanvas().pixel(5, 5)), 3);
         window.actions()->action(ActionId::EditUndo)->trigger();
-        QCOMPARE(int(window.activeDocument()->canvas().pixel(5, 5)), 7);
+        QCOMPARE(int(window.activeDocument()->indexedCanvas().pixel(5, 5)), 7);
     }
 
     /// F2 abre a janela de animação; o ciclo de caminhada usa a última célula.

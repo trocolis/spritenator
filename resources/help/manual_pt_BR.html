@@ -130,7 +130,23 @@ seleção, sobre a área de desenho inteira:</p>
 <p>A prévia mostra o canvas atual, então as suas edições aparecem na hora.</p>
 
 <h2 id="files">7. Arquivos e backups</h2>
-<p>As imagens são abertas e salvas como PNG ou BMP indexados. Os BMPs são gravados
+<p><b>Modos de cor.</b> Uma imagem nova pode ser <b>RGBA</b> (cores reais com
+transparência, o padrão) ou indexada com 256, 16 ou 2 cores. Imagens RGBA:</p>
+<ul>
+  <li>mostram um fundo xadrez atrás dos pixels transparentes;</li>
+  <li>são desenhadas com a cor primária (botão esquerdo) e a cor secundária
+      (botão direito, transparente por padrão, então apaga);</li>
+  <li>não têm paleta, então os comandos de paleta e a máscara ficam
+      desabilitados;</li>
+  <li>com o <i>Efeito de cor transparente</i>, ignoram os pixels totalmente
+      transparentes ao gravar a área de desenho no canvas;</li>
+  <li>só podem ser salvas em PNG, porque arquivos BMP não guardam
+      transparência.</li>
+</ul>
+<p>A área de desenho acompanha o modo da imagem ativa e converte o conteúdo
+quando você alterna entre imagens de modos diferentes.</p>
+<p>Imagens indexadas são abertas e salvas como PNG ou BMP; arquivos em cores
+reais abrem como RGBA. Os BMPs são gravados
 com 1, 4 ou 8 bits por pixel, conforme o número de cores. Também é possível arrastar arquivos para a
 janela para abri-los.</p>
 <p>Com uma <b>pasta de backup</b> definida (<i>Arquivo &gt; Definir pasta de

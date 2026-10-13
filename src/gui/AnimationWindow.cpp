@@ -5,6 +5,7 @@
 
 #include "Document.h"
 #include "EditorSession.h"
+#include "ImageRendering.h"
 
 #include <QComboBox>
 #include <QEvent>
@@ -71,6 +72,9 @@ void AnimationPreview::paintEvent(QPaintEvent* /*event*/)
     const QRect source(frame.x, frame.y, frame.width, frame.height);
     const QSize scaled = source.size() * m_scale;
     const QPoint origin((width() - scaled.width()) / 2, (height() - scaled.height()) / 2);
+    if (document->colorMode() == core::ColorMode::Rgba) {
+        paintTransparencyGrid(painter, QRect(origin, scaled), 4);
+    }
     // Partes do quadro fora do canvas simplesmente não aparecem.
     painter.drawImage(QRect(origin, scaled), document->renderedImage(), source);
 }

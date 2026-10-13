@@ -12,6 +12,7 @@
 #pragma once
 
 #include "commands/UndoLabel.h"
+#include "core/AnyImage.h"
 #include "core/Image.h"
 
 #include <QFont>
@@ -43,9 +44,10 @@ class EditOperations final : public QObject {
     Q_OBJECT
 
 public:
-    /// Tipo MIME privado: preserva os ÍNDICES de cor ao copiar e colar dentro
-    /// do Spritenator (a imagem comum também é publicada para outros apps).
-    static constexpr auto kIndexedMimeType = "application/x-spritenator-indexed";
+    /// Tipo MIME privado: preserva os pixels exatos (índices ou RGBA) ao
+    /// copiar e colar dentro do Spritenator (a imagem comum também é
+    /// publicada para outros programas).
+    static constexpr auto kImageMimeType = "application/x-spritenator-image";
 
     explicit EditOperations(EditorSession* session, QObject* parent = nullptr);
 
@@ -81,7 +83,11 @@ public:
 private:
     /// Aplica "function" à região de trabalho, registrando um passo de desfazer.
     void applyToWorkArea(const UndoLabel& undoLabel,
-        const std::function<core::IndexedImage(const core::IndexedImage&)>& function);
+        const std::function<core::AnyImage(const core::AnyImage&)>& function);
+
+    /// Pixel de preenchimento de lacunas no modo do tipo "Pixel": o índice
+    /// da cor de fundo (indexada) ou transparente (RGBA).
+    template <typename Pixel> [[nodiscard]] Pixel fillPixel() const;
 
     EditorSession* m_session;
 };

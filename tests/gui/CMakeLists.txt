@@ -32,3 +32,7 @@ spritenator_add_test(test_translation
 # Pasta dos .ts, para o teste verificar a integridade das traduções.
 target_compile_definitions(test_translation PRIVATE
     SPRITENATOR_TRANSLATIONS_DIR="${PROJECT_SOURCE_DIR}/translations")
+
+spritenator_add_test(test_rgba_editing
+    SOURCES RgbaEditingTest.cpp
+    LIBRARIES Spritenator::Gui)

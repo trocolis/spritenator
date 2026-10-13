@@ -5,11 +5,13 @@
 
 #include "gui/DrawBuffer.h"
 #include "gui/EditorSession.h"
+#include "gui/ImageRendering.h"
 
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPainter>
 
+#include <algorithm>
 #include <cmath>
 
 namespace spritenator::gui {
@@ -51,7 +53,7 @@ DrawAreaView::DrawAreaView(EditorSession* session, QWidget* parent)
 
 QSize DrawAreaView::sizeHint() const
 {
-    const core::Size size = m_session->buffer()->image().size();
+    const core::Size size = m_session->buffer()->size();
     const int zoom = m_session->zoom();
     return { size.width * zoom + 1, size.height * zoom + 1 }; // +1: última linha da grade
 }
@@ -82,9 +84,14 @@ void DrawAreaView::paintEvent(QPaintEvent* event)
     // Fundo (a coluna/linha extra da grade fica fora da imagem).
     painter.fillRect(dirty, palette().color(QPalette::Dark));
 
-    // Imagem ampliada, sem suavização.
+    // Imagem ampliada, sem suavização. Em RGBA, um xadrez por baixo mostra a
+    // transparência (casas do tamanho de um pixel ampliado, no mínimo 4 px).
     const QImage& image = buffer->renderedImage();
-    painter.drawImage(QRect(0, 0, image.width() * zoom, image.height() * zoom), image);
+    const QRect imageArea(0, 0, image.width() * zoom, image.height() * zoom);
+    if (buffer->colorMode() == core::ColorMode::Rgba) {
+        paintTransparencyGrid(painter, imageArea.intersected(dirty), std::max(4, zoom));
+    }
+    painter.drawImage(imageArea, image);
 
     paintGrids(painter, dirty);
 
@@ -106,7 +113,7 @@ void DrawAreaView::paintEvent(QPaintEvent* event)
 void DrawAreaView::paintGrids(QPainter& painter, const QRect& dirty) const
 {
     const int zoom = m_session->zoom();
-    const core::Size size = m_session->buffer()->image().size();
+    const core::Size size = m_session->buffer()->size();
     const core::CharacterLayout& layout = m_session->characterLayout();
     const int widthPx = size.width * zoom;
     const int heightPx = size.height * zoom;

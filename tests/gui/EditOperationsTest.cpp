@@ -23,7 +23,7 @@ private slots:
         EditorSession session;
         EditOperations operations(&session);
         gui::DrawBuffer* buffer = session.buffer();
-        core::IndexedImage frame = buffer->image();
+        core::IndexedImage frame = buffer->indexedImage();
         frame.setPixel({ 1, 1 }, 200);
         buffer->replace(frame, gui::UndoLabel { gui::UndoOperation::Paste });
 
@@ -33,7 +33,7 @@ private slots:
 
         buffer->setSelection(core::Rect { 10, 10, 1, 1 });
         operations.paste();
-        QCOMPARE(int(buffer->image().pixel(10, 10)), 200);
+        QCOMPARE(int(buffer->indexedImage().pixel(10, 10)), 200);
         QCOMPARE(buffer->selection().value(), (core::Rect { 10, 10, 2, 2 }));
     }
 
@@ -45,7 +45,7 @@ private slots:
         session.setBackgroundColor(3);
         operations.selectAll();
         operations.cut();
-        QCOMPARE(int(session.buffer()->image().pixel(0, 0)), 3);
+        QCOMPARE(int(session.buffer()->indexedImage().pixel(0, 0)), 3);
         QCOMPARE(session.buffer()->undoStack()->undoText(), QStringLiteral("Clear"));
     }
 
@@ -55,7 +55,7 @@ private slots:
         EditorSession session;
         EditOperations operations(&session);
         gui::DrawBuffer* buffer = session.buffer();
-        core::IndexedImage frame = buffer->image();
+        core::IndexedImage frame = buffer->indexedImage();
         frame.setPixel({ 0, 0 }, 5);
         frame.setPixel({ 10, 0 }, 6);
         buffer->replace(frame, gui::UndoLabel { gui::UndoOperation::Paste });
@@ -63,12 +63,12 @@ private slots:
 
         const int before = buffer->undoStack()->count();
         operations.transform(TransformKind::FlipHorizontal);
-        QCOMPARE(int(buffer->image().pixel(3, 0)), 5);
-        QCOMPARE(int(buffer->image().pixel(10, 0)), 6); // fora da seleção: intacto
+        QCOMPARE(int(buffer->indexedImage().pixel(3, 0)), 5);
+        QCOMPARE(int(buffer->indexedImage().pixel(10, 0)), 6); // fora da seleção: intacto
         QCOMPARE(buffer->undoStack()->count(), before + 1);
 
         buffer->undoStack()->undo();
-        QCOMPARE(int(buffer->image().pixel(0, 0)), 5);
+        QCOMPARE(int(buffer->indexedImage().pixel(0, 0)), 5);
     }
 
     /// Esticar amplia o conteúdo e seleciona a nova área.
@@ -77,12 +77,12 @@ private slots:
         EditorSession session;
         EditOperations operations(&session);
         gui::DrawBuffer* buffer = session.buffer();
-        core::IndexedImage frame = buffer->image();
+        core::IndexedImage frame = buffer->indexedImage();
         frame.setPixel({ 0, 0 }, 4);
         buffer->replace(frame, gui::UndoLabel { gui::UndoOperation::Paste });
         buffer->setSelection(core::Rect { 0, 0, 2, 2 });
         operations.stretch({ 4, 4 });
-        QCOMPARE(int(buffer->image().pixel(1, 1)), 4);
+        QCOMPARE(int(buffer->indexedImage().pixel(1, 1)), 4);
         QCOMPARE(buffer->selection().value(), (core::Rect { 0, 0, 4, 4 }));
     }
 
@@ -91,14 +91,14 @@ private slots:
     {
         EditorSession session;
         EditOperations operations(&session);
-        core::IndexedImage frame = session.buffer()->image();
+        core::IndexedImage frame = session.buffer()->indexedImage();
         frame.setPixel({ 2, 2 }, 8);
         session.buffer()->replace(frame, gui::UndoLabel { gui::UndoOperation::Paste });
         session.setBackgroundColor(0);
         session.setDrawColor(1);
         operations.prepareShadow();
-        QCOMPARE(int(session.buffer()->image().pixel(2, 2)), 1);
-        QCOMPARE(int(session.buffer()->image().pixel(3, 3)), 0);
+        QCOMPARE(int(session.buffer()->indexedImage().pixel(2, 2)), 1);
+        QCOMPARE(int(session.buffer()->indexedImage().pixel(3, 3)), 0);
     }
 
     /// Texto: rasterizado sem suavização e desenhado com a cor de desenho.
@@ -116,7 +116,7 @@ private slots:
         EditOperations operations(&session);
         session.setDrawColor(9);
         operations.drawText(QStringLiteral("H"), font);
-        QVERIFY(session.buffer()->image().usedColors().test(9));
+        QVERIFY(session.buffer()->indexedImage().usedColors().test(9));
         QVERIFY(EditOperations::renderText(QString(), font).isEmpty());
     }
 };

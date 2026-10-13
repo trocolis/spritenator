@@ -20,7 +20,7 @@ void ShapeTool::press(EditorSession& session, core::Point point, Qt::MouseButton
     if (button != Qt::LeftButton && button != Qt::RightButton) {
         return;
     }
-    m_color = button == Qt::LeftButton ? session.drawColor() : session.backgroundColor();
+    m_role = colorRoleFor(button); // esquerdo = primária; direito = secundária
     m_active = true;
     m_start = point;
     m_last = point;
@@ -56,8 +56,8 @@ void ShapeTool::cancel(EditorSession& session)
 
 void ShapeTool::drawShape(EditorSession& session, core::Point current) const
 {
-    session.buffer()->editLive([&](core::IndexedImage& image) {
-        const core::Plotter plot = [&](core::Point point) { session.plot(image, point, m_color); };
+    session.buffer()->editLive([&](core::AnyImage& image) {
+        const core::Plotter plot = [&](core::Point point) { session.plot(image, point, m_role); };
         const core::Rect bounds = core::Rect::fromCorners(m_start, current);
         switch (m_shape) {
         case Shape::Line: core::plotLine(m_start, current, plot); break;

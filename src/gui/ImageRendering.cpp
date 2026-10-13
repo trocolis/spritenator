@@ -3,7 +3,10 @@
 // =============================================================================
 #include "ImageRendering.h"
 
+#include <QPainter>
+
 #include <algorithm>
+#include <variant>
 
 namespace spritenator::gui {
 
@@ -44,6 +47,55 @@ void updateRenderedRegion(QImage& target, const core::IndexedImage& image, const
             = static_cast<std::size_t>(y) * width + static_cast<std::size_t>(clipped.x);
         std::copy_n(pixels.begin() + static_cast<std::ptrdiff_t>(rowStart), clipped.width,
             target.scanLine(y) + clipped.x);
+    }
+}
+
+QImage renderImage(const core::AnyImage& image, const core::Palette& palette)
+{
+    if (const auto* indexed = std::get_if<core::IndexedImage>(&image)) {
+        return renderIndexed(*indexed, palette);
+    }
+    const auto& rgba = std::get<core::RgbaImage>(image);
+    if (rgba.isEmpty()) {
+        return { };
+    }
+    QImage result(rgba.width(), rgba.height(), QImage::Format_ARGB32);
+    updateRenderedRegion(result, image, rgba.bounds());
+    return result;
+}
+
+void updateRenderedRegion(QImage& target, const core::AnyImage& image, const core::Rect& area)
+{
+    if (const auto* indexed = std::get_if<core::IndexedImage>(&image)) {
+        updateRenderedRegion(target, *indexed, area);
+        return;
+    }
+    const auto& rgba = std::get<core::RgbaImage>(image);
+    const core::Rect clipped = area.intersected(rgba.bounds());
+    for (int y = clipped.top(); y < clipped.bottom(); ++y) {
+        auto* line = reinterpret_cast<QRgb*>(target.scanLine(y));
+        for (int x = clipped.left(); x < clipped.right(); ++x) {
+            line[x] = rgba.pixel(x, y).toArgb32();
+        }
+    }
+}
+
+void paintTransparencyGrid(QPainter& painter, const QRect& area, int cellSize)
+{
+    // Casas alinhadas à origem do widget (não à área), para que repinturas
+    // parciais continuem o mesmo padrão sem "emendas".
+    static const QColor kLight(255, 255, 255);
+    static const QColor kDark(204, 204, 204);
+    painter.fillRect(area, kLight);
+    const int firstColumn = area.left() / cellSize;
+    const int firstRow = area.top() / cellSize;
+    for (int row = firstRow; row * cellSize <= area.bottom(); ++row) {
+        for (int column = firstColumn + ((firstColumn + row) % 2 == 0 ? 1 : 0);
+            column * cellSize <= area.right(); column += 2) {
+            painter.fillRect(
+                QRect(column * cellSize, row * cellSize, cellSize, cellSize).intersected(area),
+                kDark);
+        }
     }
 }
 

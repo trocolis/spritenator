@@ -5,6 +5,27 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [1.5.0] - 2026-10-13
+
+### Adicionado
+- **Documentos RGBA** (32 bits, cores reais com transparência):
+  - "RGBA" é a primeira opção, e o padrão, no diálogo "Nova imagem";
+  - fundo xadrez atrás dos pixels transparentes no canvas, na área de desenho, na prévia e na animação;
+  - cores primária e secundária RGBA; a secundária é transparente por padrão (botão direito apaga);
+  - desenhar substitui o pixel pela cor exata, inclusive o alfa;
+  - todas as ferramentas, transformações, sombra (mantém o alfa), texto, área de transferência (preserva o alfa) e animação funcionam em RGBA;
+  - efeito de cor transparente: ignora pixels com alfa 0 ao gravar no canvas;
+  - gravação somente em PNG (BMP não guarda transparência; o diálogo oferece apenas PNG);
+  - "RGBA" aparece no título da janela do documento.
+- Arquivos em cores reais (PNG/BMP sem paleta) abrem como RGBA, sem redução de cores.
+- A área de desenho acompanha o modo do documento ativo e converte o conteúdo automaticamente (o histórico dela é reiniciado nessa troca). Gravar o buffer num documento de outro modo converte só a cópia gravada.
+- `core::AnyImage`, `ColorRole` e `EditorSession::plot` por papel de cor.
+- Testes de edição RGBA (buffer, ferramentas, transparência, conversões, operações e janela principal) e de leitura/gravação RGBA.
+
+### Alterado
+- O menu Paleta, a máscara e a grade da paleta ficam desabilitados/ocultos em documentos RGBA. Até a 1.6.0, as barras R, G e B editam a cor primária nesse modo.
+- A área de transferência usa o formato privado `application/x-spritenator-image`, que guarda índices ou RGBA.
+
 ## [1.4.0] - 2026-10-13
 
 ### Adicionado

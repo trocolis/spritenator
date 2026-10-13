@@ -9,6 +9,7 @@
 
 #include "AppSettings.h"
 #include "commands/UndoLabel.h"
+#include "core/AnyImage.h"
 #include "core/Geometry.h"
 #include "core/Image.h"
 #include "core/Palette.h"
@@ -116,7 +117,7 @@ private:
     void applyGradation();
     /// Aplica imagem + paleta novas ao documento como um passo de desfazer e
     /// converte o buffer da área de desenho com a mesma tabela/opções.
-    void commitDocumentState(Document* document, const core::IndexedImage& canvas,
+    void commitDocumentState(Document* document, const core::AnyImage& canvas,
         const core::Palette& palette, const UndoLabel& undoLabel);
 
     // --- Canvas ---

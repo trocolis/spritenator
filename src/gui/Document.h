@@ -1,8 +1,9 @@
 // =============================================================================
 // Document.h
 //
-// Um documento aberto: o canvas (imagem indexada), sua paleta, o caminho do
-// arquivo e o histórico de desfazer/refazer.
+// Um documento aberto: o canvas (imagem indexada ou RGBA), sua paleta, o
+// caminho do arquivo e o histórico de desfazer/refazer. Em documentos RGBA
+// a paleta não descreve os pixels (fica a padrão, usada só em conversões).
 //
 // Regra de ouro: TODA alteração do canvas ou da paleta feita pelo usuário
 // passa por um comando de undo (ver gui/commands). Os métodos "apply*" abaixo
@@ -11,6 +12,7 @@
 #pragma once
 
 #include "ImageTarget.h"
+#include "core/AnyImage.h"
 #include "core/Image.h"
 #include "core/Palette.h"
 
@@ -22,13 +24,13 @@ class QUndoStack;
 
 namespace spritenator::gui {
 
-/// Documento de imagem indexada aberto no editor.
+/// Documento de imagem aberto no editor.
 class Document final : public QObject, public ImageTarget {
     Q_OBJECT
 
 public:
     /// Cria um documento novo (sem arquivo associado).
-    Document(core::IndexedImage canvas, core::Palette palette, QObject* parent = nullptr);
+    Document(core::AnyImage canvas, core::Palette palette, QObject* parent = nullptr);
     ~Document() override;
 
     Document(const Document&) = delete;
@@ -38,8 +40,14 @@ public:
     [[nodiscard]] static Document* load(const QString& path, QObject* parent = nullptr);
 
     // --- Acesso ao conteúdo ---
-    [[nodiscard]] const core::IndexedImage& canvas() const { return m_canvas; }
+    [[nodiscard]] const core::AnyImage& canvas() const { return m_canvas; }
     [[nodiscard]] const core::Palette& palette() const { return m_palette; }
+
+    /// Modo de cor do documento (indexado ou RGBA).
+    [[nodiscard]] core::ColorMode colorMode() const { return core::modeOf(m_canvas); }
+
+    /// Canvas indexado (só para documentos indexados; assert em debug).
+    [[nodiscard]] const core::IndexedImage& indexedCanvas() const;
 
     /// Imagem pronta para exibição (cache atualizado incrementalmente).
     [[nodiscard]] const QImage& renderedImage() const { return m_rendered; }
@@ -71,21 +79,21 @@ public:
     // --- Aplicação de alterações (usado pelos comandos de undo) ---
 
     /// Substitui uma região do canvas pelo conteúdo informado.
-    void applyCanvasRegion(core::Point origin, const core::IndexedImage& pixels);
+    void applyCanvasRegion(core::Point origin, const core::AnyImage& pixels);
 
     /// Substitui o canvas inteiro (pode mudar de tamanho).
-    void applyCanvas(const core::IndexedImage& canvas);
+    void applyCanvas(const core::AnyImage& canvas);
 
     /// Substitui a paleta inteira.
     void applyPalette(const core::Palette& palette);
 
     // --- ImageTarget (o alvo de edição de um documento é o seu canvas) ---
-    [[nodiscard]] const core::IndexedImage& targetImage() const override { return m_canvas; }
-    void applyRegion(core::Point origin, const core::IndexedImage& pixels) override
+    [[nodiscard]] const core::AnyImage& targetImage() const override { return m_canvas; }
+    void applyRegion(core::Point origin, const core::AnyImage& pixels) override
     {
         applyCanvasRegion(origin, pixels);
     }
-    void applyImage(const core::IndexedImage& image) override { applyCanvas(image); }
+    void applyImage(const core::AnyImage& image) override { applyCanvas(image); }
 
 signals:
     /// Uma região do canvas mudou (coordenadas do canvas).
@@ -98,12 +106,14 @@ signals:
     void filePathChanged(const QString& path);
     /// O estado "modificado" mudou.
     void modifiedChanged(bool modified);
+    /// O modo de cor mudou (ex.: "Reverter" para um arquivo de outro modo).
+    void colorModeChanged(core::ColorMode mode);
 
 private:
     /// Reconstrói todo o cache de exibição.
     void rebuildRendered();
 
-    core::IndexedImage m_canvas;
+    core::AnyImage m_canvas;
     core::Palette m_palette;
     QImage m_rendered;
     QString m_filePath;

@@ -125,7 +125,21 @@ drawing area when there is no selection:</p>
 <p>The preview shows the current canvas, so your edits appear immediately.</p>
 
 <h2 id="files">7. Files and backups</h2>
-<p>Images are opened and saved as indexed PNG or BMP files. BMP files are written
+<p><b>Color modes.</b> A new image can be <b>RGBA</b> (true color with
+transparency, the default), or indexed with 256, 16 or 2 colors. RGBA images:</p>
+<ul>
+  <li>show a checkerboard behind transparent pixels;</li>
+  <li>are drawn with the primary color (left button) and the secondary color
+      (right button, transparent by default, so it erases);</li>
+  <li>have no palette, so the palette commands and the mask are disabled;</li>
+  <li>with <i>Transparent Color Effect</i>, skip fully transparent pixels when
+      the drawing area is written to the canvas;</li>
+  <li>can only be saved as PNG, because BMP files cannot store transparency.</li>
+</ul>
+<p>The drawing area follows the mode of the active image and converts its
+contents when you switch between images of different modes.</p>
+<p>Indexed images are opened and saved as PNG or BMP files; files in true color
+open as RGBA. BMP files are written
 with 1, 4 or 8 bits per pixel, according to the number of colors. You can also drag files onto the window to open
 them.</p>
 <p>With a <b>backup folder</b> set (<i>File &gt; Set Backup Folder</i>), the previous

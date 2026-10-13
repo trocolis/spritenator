@@ -21,7 +21,7 @@ public:
     PaintPixelCommand(Document* document, core::Point point, core::ColorIndex color)
         : m_document(document)
         , m_point(point)
-        , m_before(document->canvas().copy({ point.x, point.y, 1, 1 }))
+        , m_before(document->indexedCanvas().copy({ point.x, point.y, 1, 1 }))
         , m_after(core::Size { 1, 1 }, color)
     {
     }
@@ -65,14 +65,14 @@ private slots:
 
         document->undoStack()->push(new PaintPixelCommand(document.get(), { 2, 1 }, 9));
         QVERIFY(document->isModified());
-        QCOMPARE(int(document->canvas().pixel(2, 1)), 9);
+        QCOMPARE(int(document->indexedCanvas().pixel(2, 1)), 9);
         QCOMPARE(document->renderedImage().pixelIndex(2, 1), 9); // cache atualizado
         QCOMPARE(changed.count(), 1);
         QCOMPARE(changed.first().first().value<core::Rect>(), (core::Rect { 2, 1, 1, 1 }));
 
         document->undoStack()->undo();
         QVERIFY(!document->isModified());
-        QCOMPARE(int(document->canvas().pixel(2, 1)), 0);
+        QCOMPARE(int(document->indexedCanvas().pixel(2, 1)), 0);
         QCOMPARE(modified.count(), 2);
     }
 
@@ -92,7 +92,7 @@ private slots:
         QVERIFY(document->isModified());
         document->revert();
         QVERIFY(!document->isModified());
-        QCOMPARE(int(document->canvas().pixel(0, 0)), 5);
+        QCOMPARE(int(document->indexedCanvas().pixel(0, 0)), 5);
         QCOMPARE(document->undoStack()->count(), 0);
 
         std::unique_ptr<Document> reopened(Document::load(path));

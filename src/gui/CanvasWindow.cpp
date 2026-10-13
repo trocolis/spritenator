@@ -27,6 +27,7 @@ CanvasWindow::CanvasWindow(Document* document, QWidget* parent)
     connect(m_document, &Document::modifiedChanged, this, &QWidget::setWindowModified);
     connect(m_document, &Document::filePathChanged, this, &CanvasWindow::updateTitle);
     connect(m_document, &Document::canvasResized, this, &CanvasWindow::updateTitle);
+    connect(m_document, &Document::colorModeChanged, this, &CanvasWindow::updateTitle);
     updateTitle();
 }
 
@@ -48,11 +49,15 @@ QSize CanvasWindow::sizeHint() const
 
 void CanvasWindow::updateTitle()
 {
-    const auto size = m_document->canvas().size();
-    setWindowTitle(QStringLiteral("%1[*] (%2x%3)")
+    const auto size = core::sizeOf(m_document->canvas());
+    // "RGBA" no título distingue os documentos em cores reais.
+    const QString mode
+        = m_document->colorMode() == core::ColorMode::Rgba ? QStringLiteral(", RGBA") : QString();
+    setWindowTitle(QStringLiteral("%1[*] (%2x%3%4)")
             .arg(m_document->displayName())
             .arg(size.width)
-            .arg(size.height));
+            .arg(size.height)
+            .arg(mode));
     setWindowModified(m_document->isModified());
 }
 

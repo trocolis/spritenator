@@ -27,8 +27,7 @@ void PenTool::press(EditorSession& session, core::Point point, Qt::MouseButton b
     if (button != Qt::LeftButton && button != Qt::RightButton) {
         return;
     }
-    // Esquerdo = cor de desenho; direito = cor de fundo.
-    m_color = button == Qt::LeftButton ? session.drawColor() : session.backgroundColor();
+    m_role = colorRoleFor(button); // esquerdo = primária; direito = secundária
     m_active = true;
     m_last = point;
     session.buffer()->beginEdit();
@@ -64,14 +63,14 @@ void PenTool::cancel(EditorSession& session)
 void PenTool::stroke(EditorSession& session, core::Point from, core::Point to) const
 {
     const int margin = m_thick ? 1 : 0;
-    session.buffer()->editLive([&](core::IndexedImage& image) {
+    session.buffer()->editLive([&](core::AnyImage& image) {
         core::plotLine(from, to, [&](core::Point center) {
             if (m_thick) {
                 for (const core::Point offset : kThickBrush) {
-                    session.plot(image, center + offset, m_color);
+                    session.plot(image, center + offset, m_role);
                 }
             } else {
-                session.plot(image, center, m_color);
+                session.plot(image, center, m_role);
             }
         });
         // Área suja: retângulo da reta, expandido pela espessura do pincel.
