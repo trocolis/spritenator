@@ -51,6 +51,8 @@ private slots:
         QTest::addColumn<QString>("extension");
         QTest::addColumn<int>("depth");
         QTest::newRow("bmp-8") << "bmp" << 8;
+        QTest::newRow("bmp-1") << "bmp" << 1;
+        QTest::newRow("png-1") << "png" << 1;
         QTest::newRow("bmp-4") << "bmp" << 4;
         QTest::newRow("png-8") << "png" << 8;
         QTest::newRow("png-4") << "png" << 4;
@@ -61,7 +63,9 @@ private slots:
     {
         QFETCH(QString, extension);
         QFETCH(int, depth);
-        const auto colorDepth = depth == 4 ? core::ColorDepth::Bits4 : core::ColorDepth::Bits8;
+        const auto colorDepth = depth == 1 ? core::ColorDepth::Bits1
+            : depth == 4                   ? core::ColorDepth::Bits4
+                                           : core::ColorDepth::Bits8;
 
         QTemporaryDir directory;
         QVERIFY(directory.isValid());
@@ -80,6 +84,27 @@ private slots:
         if (extension == QLatin1String("bmp")) {
             QCOMPARE(bmpBitCount(path), depth); // BMP de 16 cores gravado em 4 bits
         }
+    }
+
+    /// Regressão: o leitor de BMP do Qt reordena a paleta de imagens de 1 bit.
+    /// A ordem do arquivo (índices e cores) precisa ser preservada.
+    void oneBitBmpKeepsPaletteOrder()
+    {
+        QTemporaryDir directory;
+        const QString path = directory.filePath(QStringLiteral("mono.bmp"));
+        core::Palette palette(core::ColorDepth::Bits1);
+        palette.setColor(0, { 255, 255, 255 }); // ordem "invertida": branco = 0
+        palette.setColor(1, { 10, 20, 30 });
+        core::IndexedImage image({ 9, 3 }, 0);
+        image.setPixel({ 4, 1 }, 1);
+        ImageFile::save(path, { image, palette });
+
+        const ImageData loaded = ImageFile::load(path);
+        QCOMPARE(loaded.palette.depth(), core::ColorDepth::Bits1);
+        QCOMPARE(loaded.palette.color(0), palette.color(0));
+        QCOMPARE(loaded.palette.color(1), palette.color(1));
+        QCOMPARE(loaded.image, image);
+        QCOMPARE(bmpBitCount(path), 1);
     }
 
     /// Imagem em cores reais com poucas cores vira paleta exata.

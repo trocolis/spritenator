@@ -14,7 +14,9 @@
 #include <QImage>
 #include <QImageWriter>
 #include <QSaveFile>
+#include <QtEndian>
 
+#include <array>
 #include <vector>
 
 namespace spritenator::io {
@@ -47,10 +49,10 @@ int copyIndices(const QImage& source, core::IndexedImage& target)
 
 /// Converte uma imagem já indexada (com tabela de cores) em ImageData.
 ///
-/// A profundidade é deduzida pela tabela de cores: até 16 entradas => 16
-/// cores. Não usamos a profundidade declarada no arquivo porque o Qt grava
-/// PNG indexado sempre com 8 bits; e como PNG/BMP só podem referenciar
-/// índices existentes na tabela, a dedução é equivalente e sem perdas.
+/// A profundidade é deduzida pela tabela de cores: até 2 entradas => 2
+/// cores; até 16 entradas => 16 cores; senão, 256. Não usamos a profundidade declarada no arquivo
+/// porque o Qt grava PNG indexado sempre com 8 bits; e como PNG/BMP só podem referenciar índices
+/// existentes na tabela, a dedução é equivalente e sem perdas.
 ImageData fromIndexed(const QImage& indexed)
 {
     const QList<QRgb> table = indexed.colorTable();
@@ -58,8 +60,13 @@ ImageData fromIndexed(const QImage& indexed)
     const int highestIndex = copyIndices(indexed, image);
 
     // Verificamos também o maior índice, por segurança contra arquivos malformados.
-    const bool fitsIn4Bits = table.size() <= 16 && highestIndex < 16;
-    core::Palette palette(fitsIn4Bits ? core::ColorDepth::Bits4 : core::ColorDepth::Bits8);
+    core::ColorDepth depth = core::ColorDepth::Bits8;
+    if (table.size() <= 2 && highestIndex < 2) {
+        depth = core::ColorDepth::Bits1;
+    } else if (table.size() <= 16 && highestIndex < 16) {
+        depth = core::ColorDepth::Bits4;
+    }
+    core::Palette palette(depth);
     for (int index = 0; index < std::min<int>(static_cast<int>(table.size()), palette.size());
         ++index) {
         palette.setColor(index, toCoreRgb(table.at(index)));
@@ -127,6 +134,71 @@ ImageData fromTrueColor(const QImage& source)
     const QImage reduced = rgb.convertToFormat(
         QImage::Format_Indexed8, Qt::DiffuseDither | Qt::PreferDither | Qt::ColorOnly);
     return fromIndexed(reduced);
+}
+
+/// Tabela de cores declarada num arquivo BMP indexado (1, 4 ou 8 bits), na
+/// ordem do arquivo. Vazia se não for um BMP indexado reconhecível.
+QList<core::Rgb> bmpColorTable(const QByteArray& contents)
+{
+    QList<core::Rgb> table;
+    if (!contents.startsWith("BM") || contents.size() < 54) {
+        return table;
+    }
+    const auto* bytes = reinterpret_cast<const uchar*>(contents.constData());
+    const auto headerSize = qFromLittleEndian<quint32>(bytes + 14);
+    const auto bitCount = qFromLittleEndian<quint16>(bytes + 28);
+    const auto colorsUsed = qFromLittleEndian<quint32>(bytes + 46);
+    if (bitCount > 8 || headerSize < 40) {
+        return table;
+    }
+    const quint32 count = colorsUsed != 0 ? colorsUsed : (1U << bitCount);
+    const qsizetype offset = 14 + static_cast<qsizetype>(headerSize);
+    if (count > 256 || contents.size() < offset + static_cast<qsizetype>(count) * 4) {
+        return table;
+    }
+    for (quint32 index = 0; index < count; ++index) {
+        const uchar* entry = bytes + offset + static_cast<qsizetype>(index) * 4; // B, G, R, 0
+        table.append({ entry[2], entry[1], entry[0] });
+    }
+    return table;
+}
+
+/// O leitor de BMP do Qt reordena a paleta de imagens de 1 bit (e inverte os
+/// índices): a aparência é a mesma, mas o NÚMERO de cada cor muda — o que
+/// importa num editor indexado. Se a paleta lida for uma permutação da
+/// tabela do arquivo, restauramos a ordem original e remapeamos os pixels.
+void restoreFilePaletteOrder(ImageData& data, const QList<core::Rgb>& fileTable)
+{
+    const auto count = static_cast<int>(fileTable.size());
+    if (count == 0 || count > data.palette.size()) {
+        return;
+    }
+    // Com cores repetidas no arquivo a correspondência seria ambígua.
+    for (int a = 0; a < count; ++a) {
+        for (int b = a + 1; b < count; ++b) {
+            if (fileTable.at(a) == fileTable.at(b)) {
+                return;
+            }
+        }
+    }
+    // Para cada índice lido, o índice da mesma cor na tabela do arquivo.
+    std::array<core::ColorIndex, 256> remap { };
+    bool identity = true;
+    for (int index = 0; index < count; ++index) {
+        const auto found = fileTable.indexOf(data.palette.color(index));
+        if (found < 0) {
+            return; // não é uma permutação: mantém o que o Qt leu
+        }
+        remap.at(static_cast<std::size_t>(index)) = static_cast<core::ColorIndex>(found);
+        identity = identity && found == index;
+    }
+    if (identity) {
+        return;
+    }
+    data.image.remap(remap);
+    for (int index = 0; index < count; ++index) {
+        data.palette.setColor(index, fileTable.at(index));
+    }
 }
 
 } // namespace
@@ -204,7 +276,9 @@ ImageData ImageFile::load(const QString& path)
             "spritenator::io::ImageFile", "\"%1\" is not a supported image file.")
                 .arg(path));
     }
-    return fromQImage(decoded);
+    ImageData data = fromQImage(decoded);
+    restoreFilePaletteOrder(data, bmpColorTable(contents));
+    return data;
 }
 
 // -----------------------------------------------------------------------------

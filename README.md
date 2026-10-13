@@ -9,7 +9,7 @@ Maker.
 
 ## Funcionalidades
 
-- Imagens indexadas de **16 ou 256 cores**, em PNG e BMP. BMPs de 16 cores são gravados em 4 bits.
+- Imagens indexadas de **2, 16 ou 256 cores**, em PNG e BMP. Os BMPs são gravados em 1, 4 ou 8 bits, conforme o número de cores.
 - Fluxo do original: o canvas é dividido em **células de personagem**:
   - o botão direito traz a célula para a **área de desenho** ampliada;
   - o esquerdo grava a área de desenho de volta;

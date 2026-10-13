@@ -5,6 +5,15 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [1.3.0] - 2026-10-13
+
+### Adicionado
+- Imagens de **2 cores (1 bit)**: opção no diálogo "Nova imagem", paleta padrão preto/branco, gravação de BMP de 1 bit e leitura de BMP/PNG de 2 cores.
+- `core::bitsPerPixelOf` e o gravador de BMP genérico para 1, 4 e 8 bits por pixel.
+
+### Corrigido
+- O leitor de BMP do Qt invertia a ordem da paleta (e os índices) em imagens de 1 bit. O carregamento agora restaura a ordem de cores do arquivo, com teste de regressão.
+
 ## [1.2.1] - 2026-10-13
 
 ### Alterado

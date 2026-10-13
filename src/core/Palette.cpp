@@ -49,6 +49,13 @@ Palette Palette::makeDefault(ColorDepth depth)
 {
     Palette palette(depth);
 
+    // 2 cores: preto (fundo) e branco.
+    if (depth == ColorDepth::Bits1) {
+        palette.m_colors.at(0) = { 0, 0, 0 };
+        palette.m_colors.at(1) = { 255, 255, 255 };
+        return palette;
+    }
+
     // As 16 primeiras entradas são sempre as cores clássicas.
     for (std::size_t index = 0; index < kClassicColors.size(); ++index) {
         palette.m_colors.at(index) = kClassicColors.at(index);
@@ -102,9 +109,7 @@ void Palette::setDepth(ColorDepth depth)
     }
     // Entradas que deixam de existir são zeradas para que, se a paleta voltar
     // a crescer, as novas cores comecem pretas (comportamento previsível).
-    if (depth == ColorDepth::Bits4) {
-        std::fill(m_colors.begin() + 16, m_colors.end(), Rgb { });
-    }
+    std::fill(m_colors.begin() + colorCountOf(depth), m_colors.end(), Rgb { });
     m_depth = depth;
 }
 

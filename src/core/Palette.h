@@ -1,8 +1,8 @@
 // =============================================================================
 // Palette.h
 //
-// Paleta de cores de uma imagem indexada. Suporta os dois modos do original:
-// 16 cores (4 bits) e 256 cores (8 bits).
+// Paleta de cores de uma imagem indexada: 2 cores (1 bit), 16 cores (4 bits)
+// ou 256 cores (8 bits).
 // =============================================================================
 #pragma once
 
@@ -15,14 +15,26 @@ namespace spritenator::core {
 
 /// Profundidade de cor suportada pelas imagens indexadas.
 enum class ColorDepth {
+    Bits1, ///< 2 cores (monocromática)
     Bits4, ///< 16 cores
     Bits8, ///< 256 cores
 };
 
-/// Quantidade de cores correspondente a uma profundidade.
+/// Bits por pixel correspondentes a uma profundidade (1, 4 ou 8).
+[[nodiscard]] constexpr int bitsPerPixelOf(ColorDepth depth)
+{
+    switch (depth) {
+    case ColorDepth::Bits1: return 1;
+    case ColorDepth::Bits4: return 4;
+    case ColorDepth::Bits8: return 8;
+    }
+    return 8;
+}
+
+/// Quantidade de cores correspondente a uma profundidade (2, 16 ou 256).
 [[nodiscard]] constexpr int colorCountOf(ColorDepth depth)
 {
-    return depth == ColorDepth::Bits4 ? 16 : 256;
+    return 1 << bitsPerPixelOf(depth);
 }
 
 /// Conjunto de índices de paleta (um bit por cor). Usado para máscaras de

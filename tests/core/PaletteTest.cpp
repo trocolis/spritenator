@@ -33,6 +33,12 @@ private slots:
         QCOMPARE(small.size(), 16);
         QCOMPARE(small.color(15), (Rgb { 255, 255, 255 }));
 
+        const Palette mono = Palette::makeDefault(ColorDepth::Bits1);
+        QCOMPARE(mono.size(), 2);
+        QCOMPARE(mono.color(0), (Rgb { 0, 0, 0 }));
+        QCOMPARE(mono.color(1), (Rgb { 255, 255, 255 }));
+        QCOMPARE(bitsPerPixelOf(ColorDepth::Bits1), 1);
+
         const Palette large = Palette::makeDefault(ColorDepth::Bits8);
         QCOMPARE(large.size(), 256);
         QCOMPARE(large.color(16), (Rgb { 0, 0, 0 })); // início do cubo

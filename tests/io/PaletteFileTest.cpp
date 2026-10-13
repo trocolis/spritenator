@@ -22,6 +22,8 @@ private slots:
         QTest::addColumn<int>("depth");
         QTest::newRow("riff-256") << int(PaletteFormat::RiffPal) << 8;
         QTest::newRow("riff-16") << int(PaletteFormat::RiffPal) << 4;
+        QTest::newRow("riff-2") << int(PaletteFormat::RiffPal) << 1;
+        QTest::newRow("jasc-2") << int(PaletteFormat::JascPal) << 1;
         QTest::newRow("jasc-256") << int(PaletteFormat::JascPal) << 8;
         QTest::newRow("jasc-16") << int(PaletteFormat::JascPal) << 4;
         QTest::newRow("act-256") << int(PaletteFormat::Act) << 8;
@@ -33,8 +35,10 @@ private slots:
     {
         QFETCH(int, format);
         QFETCH(int, depth);
-        const core::Palette palette = core::Palette::makeDefault(
-            depth == 4 ? core::ColorDepth::Bits4 : core::ColorDepth::Bits8);
+        const core::Palette palette
+            = core::Palette::makeDefault(depth == 1 ? core::ColorDepth::Bits1
+                    : depth == 4                    ? core::ColorDepth::Bits4
+                                                    : core::ColorDepth::Bits8);
 
         const auto colors
             = PaletteFile::parse(PaletteFile::encode(palette, static_cast<PaletteFormat>(format)));

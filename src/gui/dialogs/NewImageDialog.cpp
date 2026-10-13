@@ -49,6 +49,7 @@ NewImageDialog::NewImageDialog(bool canCopyPalette, QWidget* parent)
     , m_height(new QSpinBox(this))
     , m_colors256(new QRadioButton(tr("256 colors (8 bit)"), this))
     , m_colors16(new QRadioButton(tr("16 colors (4 bit)"), this))
+    , m_colors2(new QRadioButton(tr("2 colors (1 bit)"), this))
     , m_copyPalette(new QCheckBox(tr("Copy current palette"), this))
 {
     setWindowTitle(tr("New Image"));
@@ -75,6 +76,7 @@ NewImageDialog::NewImageDialog(bool canCopyPalette, QWidget* parent)
     auto* colorLayout = new QVBoxLayout(colorBox);
     colorLayout->addWidget(m_colors256);
     colorLayout->addWidget(m_colors16);
+    colorLayout->addWidget(m_colors2);
     m_colors256->setChecked(true);
 
     // --- Opções ---
@@ -126,6 +128,9 @@ core::Size NewImageDialog::imageSize() const
 
 core::ColorDepth NewImageDialog::colorDepth() const
 {
+    if (m_colors2->isChecked()) {
+        return core::ColorDepth::Bits1;
+    }
     return m_colors16->isChecked() ? core::ColorDepth::Bits4 : core::ColorDepth::Bits8;
 }
 

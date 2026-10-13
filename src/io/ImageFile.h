@@ -2,7 +2,7 @@
 // ImageFile.h
 //
 // Leitura e gravação de imagens indexadas em disco. Formatos suportados:
-//   - BMP (1, 4, 8, 24 e 32 bits na leitura; 4 e 8 bits na gravação)
+//   - BMP (1, 4, 8, 24 e 32 bits na leitura; 1, 4 e 8 bits na gravação)
 //   - PNG (qualquer variante na leitura; indexada na gravação)
 //
 // Imagens em cores reais (sem paleta) são convertidas na leitura: se tiverem

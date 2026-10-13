@@ -858,6 +858,10 @@ Deseja salvar as alterações?</translation>
         <translation>16 cores (4 bits)</translation>
     </message>
     <message>
+        <source>2 colors (1 bit)</source>
+        <translation>2 cores (1 bit)</translation>
+    </message>
+    <message>
         <source>Copy current palette</source>
         <translation>Copiar a paleta atual</translation>
     </message>

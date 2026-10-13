@@ -40,6 +40,7 @@ private:
     QSpinBox* m_height = nullptr;
     QRadioButton* m_colors256 = nullptr;
     QRadioButton* m_colors16 = nullptr;
+    QRadioButton* m_colors2 = nullptr;
     QCheckBox* m_copyPalette = nullptr;
 };
 

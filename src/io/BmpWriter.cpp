@@ -52,7 +52,7 @@ std::uint32_t strideOf(int width, int bitsPerPixel)
 
 QByteArray encodeBmp(const core::IndexedImage& image, const core::Palette& palette)
 {
-    const int bitsPerPixel = palette.depth() == core::ColorDepth::Bits4 ? 4 : 8;
+    const int bitsPerPixel = core::bitsPerPixelOf(palette.depth());
     const auto colorCount = static_cast<std::uint32_t>(palette.size());
     const std::uint32_t stride = strideOf(image.width(), bitsPerPixel);
     const std::uint32_t pixelBytes = stride * static_cast<std::uint32_t>(image.height());
@@ -95,19 +95,16 @@ QByteArray encodeBmp(const core::IndexedImage& image, const core::Palette& palet
     QByteArray row(static_cast<qsizetype>(stride), '\0');
     for (int y = image.height() - 1; y >= 0; --y) {
         row.fill('\0');
+        // Pixels empacotados: com 1 ou 4 bits por pixel, vários pixels dividem
+        // o mesmo byte, e o da esquerda ocupa os bits mais altos.
+        const int pixelsPerByte = 8 / bitsPerPixel;
+        const unsigned valueMask = (1U << static_cast<unsigned>(bitsPerPixel)) - 1U;
         for (int x = 0; x < image.width(); ++x) {
-            const core::ColorIndex value = image.pixel(x, y);
-            if (bitsPerPixel == 8) {
-                row[x] = static_cast<char>(value);
-            } else {
-                // 4 bits: dois pixels por byte, o da esquerda no nibble alto.
-                const auto byteIndex = static_cast<qsizetype>(x / 2);
-                const unsigned nibble = static_cast<unsigned>(value) & 0x0FU;
-                const unsigned current = static_cast<unsigned char>(row[byteIndex]);
-                const unsigned merged
-                    = (x % 2 == 0) ? (current | (nibble << 4U)) : (current | nibble);
-                row[byteIndex] = static_cast<char>(merged);
-            }
+            const auto byteIndex = static_cast<qsizetype>(x / pixelsPerByte);
+            const auto shift = static_cast<unsigned>(8 - bitsPerPixel * (x % pixelsPerByte + 1));
+            const unsigned value = static_cast<unsigned>(image.pixel(x, y)) & valueMask;
+            const unsigned current = static_cast<unsigned char>(row[byteIndex]);
+            row[byteIndex] = static_cast<char>(current | (value << shift));
         }
         out.append(row);
     }
