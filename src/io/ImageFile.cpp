@@ -21,12 +21,6 @@ namespace spritenator::io {
 
 namespace {
 
-/// Tradução de mensagens fora de classes QObject.
-QString translate(const char* text)
-{
-    return QCoreApplication::translate("spritenator::io::ImageFile", text);
-}
-
 /// Converte QRgb (ARGB do Qt) em core::Rgb, descartando o alfa.
 core::Rgb toCoreRgb(QRgb color)
 {
@@ -143,13 +137,15 @@ ImageData fromTrueColor(const QImage& source)
 ImageData ImageFile::fromQImage(const QImage& source)
 {
     if (source.isNull()) {
-        throw IoError(translate("The image is empty."));
+        throw IoError(
+            QCoreApplication::translate("spritenator::io::ImageFile", "The image is empty."));
     }
     // O editor limita as dimensões (ver IndexedImage::kMaxDimension); sem esta
     // verificação o construtor da imagem lançaria std::invalid_argument.
     constexpr int kLimit = core::IndexedImage::kMaxDimension;
     if (source.width() > kLimit || source.height() > kLimit) {
-        throw IoError(translate("The image is too large (%1 x %2). The maximum is %3 x %3 pixels.")
+        throw IoError(QCoreApplication::translate("spritenator::io::ImageFile",
+            "The image is too large (%1 x %2). The maximum is %3 x %3 pixels.")
                 .arg(source.width())
                 .arg(source.height())
                 .arg(kLimit));
@@ -196,13 +192,17 @@ ImageData ImageFile::load(const QString& path)
 {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        throw IoError(translate("Cannot open \"%1\": %2").arg(path, file.errorString()));
+        throw IoError(
+            QCoreApplication::translate("spritenator::io::ImageFile", "Cannot open \"%1\": %2")
+                .arg(path, file.errorString()));
     }
     const QByteArray contents = file.readAll();
 
     QImage decoded;
     if (!decoded.loadFromData(contents)) {
-        throw IoError(translate("\"%1\" is not a supported image file.").arg(path));
+        throw IoError(QCoreApplication::translate(
+            "spritenator::io::ImageFile", "\"%1\" is not a supported image file.")
+                .arg(path));
     }
     return fromQImage(decoded);
 }
@@ -219,7 +219,9 @@ ImageFormat ImageFile::formatFromPath(const QString& path)
     if (suffix == QLatin1String("png")) {
         return ImageFormat::Png;
     }
-    throw IoError(translate("Unsupported file extension: \"%1\".").arg(suffix));
+    throw IoError(QCoreApplication::translate(
+        "spritenator::io::ImageFile", "Unsupported file extension: \"%1\".")
+            .arg(suffix));
 }
 
 void ImageFile::save(const QString& path, const ImageData& data)
@@ -238,7 +240,9 @@ void ImageFile::save(const QString& path, const ImageData& data, ImageFormat for
         buffer.open(QIODevice::WriteOnly);
         QImageWriter writer(&buffer, "png");
         if (!writer.write(toQImage(data))) {
-            throw IoError(translate("Cannot encode PNG: %1").arg(writer.errorString()));
+            throw IoError(
+                QCoreApplication::translate("spritenator::io::ImageFile", "Cannot encode PNG: %1")
+                    .arg(writer.errorString()));
         }
     }
 
@@ -247,7 +251,9 @@ void ImageFile::save(const QString& path, const ImageData& data, ImageFormat for
     QSaveFile file(path);
     if (!file.open(QIODevice::WriteOnly) || file.write(encoded) != encoded.size()
         || !file.commit()) {
-        throw IoError(translate("Cannot write \"%1\": %2").arg(path, file.errorString()));
+        throw IoError(
+            QCoreApplication::translate("spritenator::io::ImageFile", "Cannot write \"%1\": %2")
+                .arg(path, file.errorString()));
     }
 }
 
@@ -256,13 +262,17 @@ void ImageFile::save(const QString& path, const ImageData& data, ImageFormat for
 // -----------------------------------------------------------------------------
 QStringList ImageFile::openFilters()
 {
-    return { translate("Supported images (*.png *.bmp)"), translate("PNG image (*.png)"),
-        translate("Bitmap image (*.bmp)"), translate("All files (*)") };
+    return { QCoreApplication::translate(
+                 "spritenator::io::ImageFile", "Supported images (*.png *.bmp)"),
+        QCoreApplication::translate("spritenator::io::ImageFile", "PNG image (*.png)"),
+        QCoreApplication::translate("spritenator::io::ImageFile", "Bitmap image (*.bmp)"),
+        QCoreApplication::translate("spritenator::io::ImageFile", "All files (*)") };
 }
 
 QStringList ImageFile::saveFilters()
 {
-    return { translate("PNG image (*.png)"), translate("Bitmap image (*.bmp)") };
+    return { QCoreApplication::translate("spritenator::io::ImageFile", "PNG image (*.png)"),
+        QCoreApplication::translate("spritenator::io::ImageFile", "Bitmap image (*.bmp)") };
 }
 
 } // namespace spritenator::io

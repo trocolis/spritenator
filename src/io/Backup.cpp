@@ -12,15 +12,6 @@
 
 namespace spritenator::io {
 
-namespace {
-
-QString translate(const char* text)
-{
-    return QCoreApplication::translate("spritenator::io::Backup", text);
-}
-
-} // namespace
-
 QString backupFileName(const QString& filePath, const QDateTime& timestamp)
 {
     const QFileInfo info(filePath);
@@ -38,7 +29,9 @@ QString createBackup(
     }
     QDir folder(backupFolder);
     if (!folder.exists() && !folder.mkpath(QStringLiteral("."))) {
-        throw IoError(translate("Cannot create the backup folder \"%1\".").arg(backupFolder));
+        throw IoError(QCoreApplication::translate(
+            "spritenator::io::Backup", "Cannot create the backup folder \"%1\".")
+                .arg(backupFolder));
     }
     // Dois backups no mesmo segundo: acrescenta "-2", "-3"... em vez de sobrescrever.
     const QFileInfo name(backupFileName(filePath, timestamp));
@@ -50,7 +43,9 @@ QString createBackup(
             QStringLiteral("%1-%2%3").arg(name.completeBaseName()).arg(counter).arg(suffix));
     }
     if (!QFile::copy(filePath, target)) {
-        throw IoError(translate("Cannot write the backup \"%1\".").arg(target));
+        throw IoError(QCoreApplication::translate(
+            "spritenator::io::Backup", "Cannot write the backup \"%1\".")
+                .arg(target));
     }
     return target;
 }

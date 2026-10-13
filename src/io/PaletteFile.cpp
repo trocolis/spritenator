@@ -34,11 +34,6 @@ constexpr int kActExtendedSize = 772; ///< + quantidade + índice transparente
 constexpr quint16 kRiffPaletteVersion = 0x0300;
 const QByteArray kJascSignature = QByteArrayLiteral("JASC-PAL");
 
-QString translate(const char* text)
-{
-    return QCoreApplication::translate("spritenator::io::PaletteFile", text);
-}
-
 /// Lê 1 byte sem sinal de uma posição (já validada).
 std::uint8_t byteAt(const QByteArray& data, qsizetype offset)
 {
@@ -51,14 +46,16 @@ std::vector<core::Rgb> parseRiff(const QByteArray& contents)
     // Procura o chunk "data" (normalmente logo após "RIFF....PAL ").
     const qsizetype dataChunk = contents.indexOf("data", 12);
     if (dataChunk < 0 || contents.size() < dataChunk + 12) {
-        throw IoError(translate("Invalid RIFF palette: missing data chunk."));
+        throw IoError(QCoreApplication::translate(
+            "spritenator::io::PaletteFile", "Invalid RIFF palette: missing data chunk."));
     }
     const auto* bytes = reinterpret_cast<const uchar*>(contents.constData());
     const int count = qFromLittleEndian<quint16>(bytes + dataChunk + 10);
     const qsizetype entries = dataChunk + 12;
     if (count <= 0 || count > core::Palette::kMaxColors
         || contents.size() < entries + static_cast<qsizetype>(count) * 4) {
-        throw IoError(translate("Invalid RIFF palette: bad color count."));
+        throw IoError(QCoreApplication::translate(
+            "spritenator::io::PaletteFile", "Invalid RIFF palette: bad color count."));
     }
 
     std::vector<core::Rgb> colors;
@@ -81,7 +78,8 @@ std::vector<core::Rgb> parseJasc(const QByteArray& contents)
     const int count = stream.readLine().trimmed().toInt(&countOk);
     if (signature != QLatin1String(kJascSignature) || version.isEmpty() || !countOk || count <= 0
         || count > core::Palette::kMaxColors) {
-        throw IoError(translate("Invalid JASC palette header."));
+        throw IoError(QCoreApplication::translate(
+            "spritenator::io::PaletteFile", "Invalid JASC palette header."));
     }
 
     std::vector<core::Rgb> colors;
@@ -96,14 +94,16 @@ std::vector<core::Rgb> parseJasc(const QByteArray& contents)
             bool ok = false;
             channels[channel] = parts.at(channel).toInt(&ok);
             if (!ok || channels[channel] < 0 || channels[channel] > 255) {
-                throw IoError(translate("Invalid color value in JASC palette."));
+                throw IoError(QCoreApplication::translate(
+                    "spritenator::io::PaletteFile", "Invalid color value in JASC palette."));
             }
         }
         colors.push_back({ static_cast<std::uint8_t>(channels[0]),
             static_cast<std::uint8_t>(channels[1]), static_cast<std::uint8_t>(channels[2]) });
     }
     if (static_cast<int>(colors.size()) != count) {
-        throw IoError(translate("JASC palette ended before all colors were read."));
+        throw IoError(QCoreApplication::translate(
+            "spritenator::io::PaletteFile", "JASC palette ended before all colors were read."));
     }
     return colors;
 }
@@ -156,14 +156,17 @@ std::vector<core::Rgb> PaletteFile::parse(const QByteArray& contents)
     if (contents.size() == kActBaseSize || contents.size() == kActExtendedSize) {
         return parseAct(contents);
     }
-    throw IoError(translate("Unrecognized palette format."));
+    throw IoError(QCoreApplication::translate(
+        "spritenator::io::PaletteFile", "Unrecognized palette format."));
 }
 
 std::vector<core::Rgb> PaletteFile::load(const QString& path)
 {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        throw IoError(translate("Cannot open \"%1\": %2").arg(path, file.errorString()));
+        throw IoError(
+            QCoreApplication::translate("spritenator::io::PaletteFile", "Cannot open \"%1\": %2")
+                .arg(path, file.errorString()));
     }
     const QByteArray contents = file.readAll();
     file.close();
@@ -241,7 +244,9 @@ void PaletteFile::save(const QString& path, const core::Palette& palette, Palett
     QSaveFile file(path);
     if (!file.open(QIODevice::WriteOnly) || file.write(encoded) != encoded.size()
         || !file.commit()) {
-        throw IoError(translate("Cannot write \"%1\": %2").arg(path, file.errorString()));
+        throw IoError(
+            QCoreApplication::translate("spritenator::io::PaletteFile", "Cannot write \"%1\": %2")
+                .arg(path, file.errorString()));
     }
 }
 
@@ -250,14 +255,17 @@ void PaletteFile::save(const QString& path, const core::Palette& palette, Palett
 // -----------------------------------------------------------------------------
 QStringList PaletteFile::openFilters()
 {
-    return { translate("Palettes and images (*.pal *.act *.png *.bmp)"),
-        translate("All files (*)") };
+    return { QCoreApplication::translate(
+                 "spritenator::io::PaletteFile", "Palettes and images (*.pal *.act *.png *.bmp)"),
+        QCoreApplication::translate("spritenator::io::PaletteFile", "All files (*)") };
 }
 
 QStringList PaletteFile::saveFilters()
 {
-    return { translate("Microsoft RIFF palette (*.pal)"), translate("JASC palette (*.pal)"),
-        translate("Adobe color table (*.act)") };
+    return { QCoreApplication::translate(
+                 "spritenator::io::PaletteFile", "Microsoft RIFF palette (*.pal)"),
+        QCoreApplication::translate("spritenator::io::PaletteFile", "JASC palette (*.pal)"),
+        QCoreApplication::translate("spritenator::io::PaletteFile", "Adobe color table (*.act)") };
 }
 
 PaletteFormat PaletteFile::formatFromFilterIndex(int index)
