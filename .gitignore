@@ -1,0 +1,16 @@
+# Binários proprietários da aplicação original (mantidos apenas localmente)
+original/CharacterMaker1999.exe
+original/CharacterMaker1999.HLP
+
+# Diretórios de build do CMake
+build/
+build-*/
+cmake-build-*/
+out/
+
+# Arquivos de IDEs e editores
+.vscode/
+.idea/
+*.user
+.cache/
+compile_commands.json
