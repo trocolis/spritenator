@@ -4,6 +4,7 @@
 // =============================================================================
 #include "gui/MainWindow.h"
 #include "gui/ActionCatalog.h"
+#include "gui/AnimationWindow.h"
 #include "gui/Document.h"
 #include "gui/DrawBuffer.h"
 #include "gui/EditorSession.h"
@@ -106,6 +107,46 @@ private slots:
         QVERIFY(!window.actions()->action(ActionId::PaletteAutoMask)->isChecked());
         window.actions()->action(ActionId::PaletteInvertMask)->trigger();
         QCOMPARE(session->mask().count(), std::size_t { 256 }); // paleta de 256 cores
+    }
+
+    /// "Limpar tudo" preenche o canvas com a cor de fundo (com desfazer).
+    void clearAllFillsCanvas()
+    {
+        QTemporaryDir directory;
+        const QString path = directory.filePath(QStringLiteral("clear.png"));
+        io::ImageFile::save(path,
+            { core::IndexedImage({ 8, 8 }, 7),
+                core::Palette::makeDefault(core::ColorDepth::Bits8) });
+
+        MainWindow window;
+        QVERIFY(window.openFile(path));
+        window.session()->setBackgroundColor(3);
+        window.actions()->action(ActionId::CanvasClearAll)->trigger();
+        QCOMPARE(int(window.activeDocument()->canvas().pixel(5, 5)), 3);
+        window.actions()->action(ActionId::EditUndo)->trigger();
+        QCOMPARE(int(window.activeDocument()->canvas().pixel(5, 5)), 7);
+    }
+
+    /// F2 abre a janela de animação; o ciclo de caminhada usa a última célula.
+    void animationWindowUsesLastCell()
+    {
+        QTemporaryDir directory;
+        const QString path = directory.filePath(QStringLiteral("walk.png"));
+        io::ImageFile::save(path,
+            { core::IndexedImage({ 72, 128 }),
+                core::Palette::makeDefault(core::ColorDepth::Bits8) });
+
+        MainWindow window;
+        QVERIFY(window.openFile(path));
+        window.actions()->action(ActionId::ViewAnimation)->trigger();
+        auto* animation = window.findChild<gui::AnimationWindow*>();
+        QVERIFY(animation != nullptr);
+        QVERIFY(animation->isVisible());
+
+        window.session()->getFromCanvas(window.activeDocument(), { 24, 32, 24, 32 });
+        animation->addWalkCycle();
+        QCOMPARE(animation->animation().size(), std::size_t { 4 });
+        QCOMPARE(animation->animation().frames().at(2), (core::Rect { 48, 32, 24, 32 }));
     }
 
     /// Gradação altera a paleta do documento com um passo de desfazer.

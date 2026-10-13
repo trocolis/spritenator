@@ -26,6 +26,7 @@ class QToolBar;
 namespace spritenator::gui {
 
 class ActionCatalog;
+class AnimationWindow;
 class CanvasWindow;
 class Document;
 class EditOperations;
@@ -111,7 +112,12 @@ private:
     void commitDocumentState(Document* document, const core::IndexedImage& canvas,
         const core::Palette& palette, const QString& undoText);
 
+    // --- Canvas ---
+    void resizeCanvas();
+    void clearCanvas();
+
     // --- Exibir ---
+    void showAnimationWindow();
     void editCharacterSize();
     /// Aplica a grade de personagens a todas as janelas de canvas abertas.
     void applyCharacterLayoutToWindows();
@@ -141,6 +147,7 @@ private:
     QAction* m_recentSeparator = nullptr; ///< Separador antes dos recentes.
     QList<QAction*> m_recentFileActions; ///< Entradas de arquivos recentes.
     QLabel* m_positionLabel = nullptr; ///< Posição do mouse no canvas.
+    AnimationWindow* m_animationWindow = nullptr; ///< Criada sob demanda (F2).
 };
 
 } // namespace spritenator::gui

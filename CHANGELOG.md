@@ -5,6 +5,20 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.9.0] - 2026-10-13
+
+### Adicionado
+- Canvas > Tamanho do canvas (Ctrl+E): novo tamanho, com a opção de redimensionar o conteúdo. Sem ela, o conteúdo fica ancorado no canto e as áreas novas recebem a cor de fundo.
+- Canvas > Limpar tudo (Ctrl+Shift+N): preenche o canvas com a cor de fundo.
+- Janela de animação (F2):
+  - lista de quadros e tempo de espera de 50 a 1000 ms;
+  - zoom de 1x a 4x, reprodução em laço e pausa;
+  - prévia ao vivo: edições no canvas aparecem na hora;
+  - "Add Cell" adiciona a última célula trazida para a área de desenho;
+  - "Walk Cycle" gera a sequência 1-2-3-2 do RPG Maker.
+- `core/Animation`: modelo de sequência de quadros e gerador do ciclo de caminhada.
+- Testes do modelo de animação, de Limpar tudo (com desfazer) e da janela de animação.
+
 ## [0.8.0] - 2026-10-13
 
 ### Adicionado

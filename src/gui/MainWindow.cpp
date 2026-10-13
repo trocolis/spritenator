@@ -4,6 +4,7 @@
 #include "MainWindow.h"
 
 #include "ActionCatalog.h"
+#include "AnimationWindow.h"
 #include "CanvasView.h"
 #include "CanvasWindow.h"
 #include "Document.h"
@@ -14,6 +15,8 @@
 #include "IntegratorPanel.h"
 #include "commands/ImageCommands.h"
 #include "core/PaletteOps.h"
+#include "core/Transform.h"
+#include "dialogs/CanvasSizeDialog.h"
 #include "dialogs/CharacterSizeDialog.h"
 #include "dialogs/LoadPaletteDialog.h"
 #include "dialogs/NewImageDialog.h"
@@ -330,6 +333,10 @@ void MainWindow::connectActions()
     // --- Canvas ---
     connect(action(ActionId::CanvasGetAll), &QAction::triggered, m_session,
         &EditorSession::transferAll);
+    connect(action(ActionId::CanvasResize), &QAction::triggered, this, &MainWindow::resizeCanvas);
+    connect(action(ActionId::CanvasClearAll), &QAction::triggered, this, &MainWindow::clearCanvas);
+    connect(action(ActionId::ViewAnimation), &QAction::triggered, this,
+        &MainWindow::showAnimationWindow);
 
     // --- Paleta ---
     connect(action(ActionId::PaletteTransparent), &QAction::toggled, m_session,
@@ -395,6 +402,7 @@ void MainWindow::updateActionStates()
         ActionId::ViewZoom6,
         ActionId::ViewZoom8,
         ActionId::ViewZoom12,
+        ActionId::ViewAnimation,
         ActionId::PaletteTransparent,
         ActionId::PaletteMaskMode,
         ActionId::PaletteClearMask,
@@ -409,6 +417,8 @@ void MainWindow::updateActionStates()
         ActionId::FileSaveAs,
         ActionId::FileClose,
         ActionId::CanvasGetAll,
+        ActionId::CanvasResize,
+        ActionId::CanvasClearAll,
         ActionId::PaletteLoad,
         ActionId::PaletteSave,
         ActionId::PaletteEdit,
@@ -839,6 +849,53 @@ void MainWindow::applyGradation()
         document->undoStack()->push(
             new PaletteCommand(document, document->palette(), palette, tr("Gradation")));
     }
+}
+
+// -----------------------------------------------------------------------------
+// Canvas
+// -----------------------------------------------------------------------------
+void MainWindow::resizeCanvas()
+{
+    Document* document = activeDocument();
+    if (document == nullptr) {
+        return;
+    }
+    CanvasSizeDialog dialog(document->canvas().size(), this);
+    if (dialog.exec() != QDialog::Accepted || dialog.newSize() == document->canvas().size()) {
+        return;
+    }
+    const core::IndexedImage resized = dialog.scaleContents()
+        ? core::scaled(document->canvas(), dialog.newSize())
+        : document->canvas().resizedCanvas(dialog.newSize(), m_session->backgroundColor());
+    document->undoStack()->push(
+        new ReplaceImageCommand(document, document->canvas(), resized, tr("Canvas Size")));
+}
+
+void MainWindow::clearCanvas()
+{
+    Document* document = activeDocument();
+    if (document == nullptr) {
+        return;
+    }
+    const core::IndexedImage cleared(document->canvas().size(), m_session->backgroundColor());
+    if (cleared != document->canvas()) {
+        document->undoStack()->push(
+            new ReplaceImageCommand(document, document->canvas(), cleared, tr("Clear All")));
+    }
+}
+
+// -----------------------------------------------------------------------------
+// Exibir > Animação
+// -----------------------------------------------------------------------------
+void MainWindow::showAnimationWindow()
+{
+    if (m_animationWindow == nullptr) {
+        m_animationWindow = new AnimationWindow(m_session, this);
+        m_animationWindow->resize(420, 300);
+    }
+    m_animationWindow->show();
+    m_animationWindow->raise();
+    m_animationWindow->activateWindow();
 }
 
 // -----------------------------------------------------------------------------

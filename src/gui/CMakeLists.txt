@@ -8,6 +8,8 @@
 add_library(spritenator_gui STATIC
     ActionCatalog.cpp
     ActionCatalog.h
+    AnimationWindow.cpp
+    AnimationWindow.h
     AppSettings.cpp
     AppSettings.h
     CanvasView.cpp
@@ -33,6 +35,8 @@ add_library(spritenator_gui STATIC
     MainWindow.h
     commands/ImageCommands.cpp
     commands/ImageCommands.h
+    dialogs/CanvasSizeDialog.cpp
+    dialogs/CanvasSizeDialog.h
     dialogs/CharacterSizeDialog.cpp
     dialogs/CharacterSizeDialog.h
     dialogs/LoadPaletteDialog.cpp

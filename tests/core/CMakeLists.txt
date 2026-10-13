@@ -25,3 +25,7 @@ spritenator_add_test(test_transform
 spritenator_add_test(test_palette_ops
     SOURCES PaletteOpsTest.cpp
     LIBRARIES Spritenator::Core)
+
+spritenator_add_test(test_animation
+    SOURCES AnimationTest.cpp
+    LIBRARIES Spritenator::Core)

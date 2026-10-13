@@ -355,6 +355,8 @@ void EditorSession::getFromCanvas(Document* document, const core::Rect& cell)
     // Áreas da célula fora do canvas viram cor de fundo.
     m_buffer->replace(document->canvas().copy(cell, m_backgroundColor), tr("Get Cell"));
     m_buffer->setSelection(std::nullopt);
+    m_lastCell = cell;
+    emit lastCellChanged(cell);
 }
 
 void EditorSession::putToCanvas(Document* document, const core::Rect& cell)

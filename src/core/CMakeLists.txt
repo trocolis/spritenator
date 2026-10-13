@@ -7,6 +7,8 @@
 # =============================================================================
 
 add_library(spritenator_core STATIC
+    Animation.cpp
+    Animation.h
     CharacterLayout.h
     Color.h
     Geometry.h

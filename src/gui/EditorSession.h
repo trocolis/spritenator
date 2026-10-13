@@ -24,6 +24,7 @@
 
 #include <map>
 #include <memory>
+#include <optional>
 
 class QUndoGroup;
 class QUndoStack;
@@ -135,6 +136,10 @@ public:
     /// Traz o canvas inteiro do documento ativo para o buffer (F3).
     void transferAll();
 
+    /// Última célula trazida do canvas para a área de desenho (usada pela
+    /// janela de animação para montar a lista de quadros).
+    [[nodiscard]] const std::optional<core::Rect>& lastCell() const { return m_lastCell; }
+
 signals:
     void activeDocumentChanged(gui::Document* document);
     void paletteChanged();
@@ -148,6 +153,7 @@ signals:
     void maskChanged();
     void maskModeChanged(bool enabled);
     void autoMaskChanged(bool enabled);
+    void lastCellChanged(const core::Rect& cell);
 
 private:
     /// Ajusta as cores ao tamanho da paleta e repassa a paleta ao buffer.
@@ -168,6 +174,8 @@ private:
     bool m_subGridVisible = false;
     core::CharacterLayout m_layout;
     bool m_transparentEffect = false;
+
+    std::optional<core::Rect> m_lastCell;
 
     core::ColorSet m_mask;
     core::ColorSet m_maskBeforeAuto; ///< restaurada ao desligar a máscara automática
