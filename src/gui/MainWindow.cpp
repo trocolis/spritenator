@@ -128,7 +128,18 @@ MainWindow::MainWindow(QWidget* parent)
     restoreViewSettings();
 }
 
-MainWindow::~MainWindow() = default;
+MainWindow::~MainWindow()
+{
+    // Durante ~QWidget os filhos são escondidos e o QMdiArea emite
+    // subWindowActivated(nullptr); a sessão então troca a pilha ativa do
+    // QUndoGroup, cujos sinais chamariam slots desta classe — que, nesse
+    // ponto, já teve o destrutor executado (comportamento indefinido).
+    // Desconectar aqui, enquanto o objeto ainda está íntegro, evita isso.
+    disconnect(m_mdiArea, nullptr, this, nullptr);
+    disconnect(m_session, nullptr, this, nullptr);
+    disconnect(m_session->undoGroup(), nullptr, this, nullptr);
+    disconnect(m_mdiArea, nullptr, m_session, nullptr);
+}
 
 QAction* MainWindow::action(ActionId id) const
 {

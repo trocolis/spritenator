@@ -16,6 +16,9 @@
 #include <QTemporaryDir>
 #include <QTest>
 #include <QUndoGroup>
+#include <QUndoStack>
+
+#include <memory>
 
 using namespace spritenator;
 using spritenator::gui::ActionId;
@@ -58,6 +61,28 @@ private slots:
         // Desfazer pelo menu.
         window.actions()->action(ActionId::EditUndo)->trigger();
         QCOMPARE(window.session()->buffer()->image().size(), (core::Size { 24, 32 }));
+    }
+
+    /// Regressão: destruir a janela com um documento aberto, depois de uma
+    /// edição no CANVAS (pilha ativa = do documento), chamava slots da
+    /// MainWindow já destruída durante ~QWidget.
+    void destroyingWindowAfterCanvasEditIsSafe()
+    {
+        QTemporaryDir directory;
+        const QString path = directory.filePath(QStringLiteral("put.png"));
+        io::ImageFile::save(path,
+            { core::IndexedImage({ 48, 32 }, 1),
+                core::Palette::makeDefault(core::ColorDepth::Bits8) });
+
+        auto window = std::make_unique<MainWindow>();
+        window->show();
+        QVERIFY(QTest::qWaitForWindowExposed(window.get()));
+        QVERIFY(window->openFile(path));
+        gui::Document* document = window->activeDocument();
+        window->session()->putToCanvas(document, { 24, 0, 24, 32 });
+        QCOMPARE(window->session()->undoGroup()->activeStack(), document->undoStack());
+        document->undoStack()->setClean(); // evita o diálogo "salvar alterações?"
+        window.reset(); // não pode abortar nem acessar memória inválida
     }
 
     /// Ações do menu Editar estão ligadas às operações do buffer.
