@@ -1,10 +1,10 @@
 // =============================================================================
 // Tool.h
 //
-// Interface das ferramentas da área de desenho (padrão Strategy). A área de
-// desenho (DrawAreaView) não sabe COMO cada ferramenta funciona: apenas
-// converte eventos de mouse para coordenadas do buffer e repassa à
-// ferramenta atual da EditorSession.
+// Interface das ferramentas (padrão Strategy). O editor de imagem
+// (CanvasEditor) não sabe COMO cada ferramenta funciona: apenas converte
+// eventos de mouse para coordenadas da imagem e repassa à ferramenta atual
+// da EditorSession. As ferramentas editam o documento ativo da sessão.
 // =============================================================================
 #pragma once
 
@@ -12,7 +12,7 @@
 
 #include <Qt>
 
-class QPainter;
+#include <vector>
 
 namespace spritenator::gui {
 
@@ -39,7 +39,7 @@ class Tool {
 public:
     virtual ~Tool() = default;
 
-    /// Botão pressionado sobre o pixel "point" do buffer.
+    /// Botão pressionado sobre o pixel "point" da imagem.
     virtual void press(EditorSession& session, core::Point point, Qt::MouseButton button) = 0;
 
     /// Mouse arrastado (com botão pressionado) até "point".
@@ -51,9 +51,11 @@ public:
     /// Operação interrompida (Esc, troca de ferramenta, perda do mouse).
     virtual void cancel(EditorSession& session);
 
-    /// Desenha elementos temporários sobre a área de desenho (ex.: retângulo
-    /// de seleção em andamento). "scale" é o zoom atual.
-    virtual void paintOverlay(QPainter& painter, int scale) const;
+    /// Pixels que a ferramenta afetaria se o botão fosse pressionado em
+    /// "point" (antes de filtrar tom e máscara). Exibidos em destaque quando o
+    /// mouse passa sobre a imagem. Padrão: o próprio pixel.
+    [[nodiscard]] virtual std::vector<core::Point> footprint(
+        const EditorSession& session, core::Point point) const;
 
 protected:
     Tool() = default;

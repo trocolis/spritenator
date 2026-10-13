@@ -11,7 +11,6 @@ add_library(spritenator_core STATIC
     AnyImage.h
     Animation.cpp
     Animation.h
-    CharacterLayout.h
     Color.h
     ColorConversion.cpp
     ColorConversion.h

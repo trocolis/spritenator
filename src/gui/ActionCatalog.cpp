@@ -16,7 +16,6 @@
 #include "IconProvider.h"
 
 #include <QAction>
-#include <QActionGroup>
 
 #include <cassert>
 #include <vector>
@@ -33,7 +32,6 @@ struct ActionSpec {
     const char* icon; ///< nome lógico do ícone (nulo = sem ícone)
     QKeySequence shortcut;
     bool checkable = false;
-    int zoomFactor = 0; ///< > 0 apenas nas ações de zoom
 };
 
 /// Tabela de todas as ações, na ordem de ActionId. Construída na primeira
@@ -79,29 +77,28 @@ const std::vector<ActionSpec>& actionSpecs()
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Redo the last undone operation"),
             "edit_redo", Seq(Qt::CTRL | Qt::SHIFT | Qt::Key_Z) },
         { ActionId::EditCut, QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Cu&t"),
-            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
-                "Move the selection of the drawing area to the clipboard"),
+            QT_TRANSLATE_NOOP(
+                "spritenator::gui::ActionCatalog", "Move the selection to the clipboard"),
             "edit_cut", Seq(Qt::CTRL | Qt::Key_X) },
         { ActionId::EditCopy, QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Copy"),
-            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
-                "Copy the selection of the drawing area to the clipboard"),
+            QT_TRANSLATE_NOOP(
+                "spritenator::gui::ActionCatalog", "Copy the selection to the clipboard"),
             "edit_copy", Seq(Qt::CTRL | Qt::Key_C) },
         { ActionId::EditPaste, QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Paste"),
-            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
-                "Paste the clipboard contents into the drawing area"),
+            QT_TRANSLATE_NOOP(
+                "spritenator::gui::ActionCatalog", "Paste the clipboard contents into the image"),
             "edit_paste", Seq(Qt::CTRL | Qt::Key_V) },
         { ActionId::EditClear, QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "C&lear"),
-            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
-                "Erase the selection of the drawing area without copying it"),
+            QT_TRANSLATE_NOOP(
+                "spritenator::gui::ActionCatalog", "Erase the selection without copying it"),
             nullptr, Seq(Qt::Key_Delete) },
         { ActionId::EditSelectAll,
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Select &All"),
-            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Select the whole drawing area"),
-            nullptr, Seq(Qt::CTRL | Qt::Key_A) },
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Select the whole image"), nullptr,
+            Seq(Qt::CTRL | Qt::Key_A) },
         { ActionId::EditDrawText,
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Text &Input..."),
-            QT_TRANSLATE_NOOP(
-                "spritenator::gui::ActionCatalog", "Render text into the drawing area"),
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Render text into the image"),
             "edit_draw_text", Seq(Qt::CTRL | Qt::Key_T) },
         { ActionId::EditShadow,
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Prepare &Shadow"),
@@ -109,51 +106,35 @@ const std::vector<ActionSpec>& actionSpecs()
                 "Replace every non-background color with the drawing color"),
             nullptr, Seq(Qt::CTRL | Qt::Key_Q) },
         // --- Exibir ---
-        { ActionId::ViewCharaSize,
-            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Character Size..."),
+        { ActionId::ViewGrids, QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Grids..."),
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
-                "Change the character cell size and the sub grid"),
+                "Change the spacing of the main grid and of the sub grid (character size)"),
             "view_chara_size", Seq() },
         { ActionId::ViewMainGrid,
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Main Grid"),
-            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
-                "Show or hide the main grid of the drawing area"),
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Show or hide the main grid"),
             "view_main_grid", Seq(Qt::CTRL | Qt::Key_G), true },
         { ActionId::ViewSubGrid, QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Sub Grid"),
             QT_TRANSLATE_NOOP(
-                "spritenator::gui::ActionCatalog", "Show or hide the sub grid of the drawing area"),
+                "spritenator::gui::ActionCatalog", "Show or hide the sub grid (character cells)"),
             "view_sub_grid", Seq(Qt::SHIFT | Qt::Key_G), true },
-        // Zoom: "%1" = fator e "%2" = posição no menu (acelerador 1..6).
-        { ActionId::ViewZoom1,
-            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Zoom %1x (&%2)"),
+        // Zoom do editor de imagem ativo (a roda do mouse também amplia).
+        { ActionId::ViewZoomIn, QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Zoom &In"),
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Magnify the image"), nullptr,
+            Seq(Seq::ZoomIn) },
+        { ActionId::ViewZoomOut, QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Zoom &Out"),
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Reduce the image"), nullptr,
+            Seq(Seq::ZoomOut) },
+        { ActionId::ViewZoomActual,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Actual Si&ze (100%)"),
             QT_TRANSLATE_NOOP(
-                "spritenator::gui::ActionCatalog", "Show the drawing area magnified %1 times"),
-            "zoom_1", Seq(), true, 1 },
-        { ActionId::ViewZoom2,
-            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Zoom %1x (&%2)"),
-            QT_TRANSLATE_NOOP(
-                "spritenator::gui::ActionCatalog", "Show the drawing area magnified %1 times"),
-            "zoom_2", Seq(), true, 2 },
-        { ActionId::ViewZoom4,
-            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Zoom %1x (&%2)"),
-            QT_TRANSLATE_NOOP(
-                "spritenator::gui::ActionCatalog", "Show the drawing area magnified %1 times"),
-            "zoom_4", Seq(), true, 4 },
-        { ActionId::ViewZoom6,
-            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Zoom %1x (&%2)"),
-            QT_TRANSLATE_NOOP(
-                "spritenator::gui::ActionCatalog", "Show the drawing area magnified %1 times"),
-            "zoom_6", Seq(), true, 6 },
-        { ActionId::ViewZoom8,
-            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Zoom %1x (&%2)"),
-            QT_TRANSLATE_NOOP(
-                "spritenator::gui::ActionCatalog", "Show the drawing area magnified %1 times"),
-            "zoom_8", Seq(), true, 8 },
-        { ActionId::ViewZoom12,
-            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Zoom %1x (&%2)"),
-            QT_TRANSLATE_NOOP(
-                "spritenator::gui::ActionCatalog", "Show the drawing area magnified %1 times"),
-            "zoom_12", Seq(), true, 12 },
+                "spritenator::gui::ActionCatalog", "Show the image without magnification"),
+            nullptr, Seq(Qt::CTRL | Qt::Key_1) },
+        { ActionId::ViewZoomFit,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Fit to Window"),
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
+                "Choose the largest zoom that shows the whole image"),
+            nullptr, Seq(Qt::CTRL | Qt::Key_0) },
         { ActionId::ViewAnimation,
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Animation..."),
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
@@ -168,16 +149,11 @@ const std::vector<ActionSpec>& actionSpecs()
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Clear All"),
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Erase the whole canvas"), nullptr,
             Seq(Qt::CTRL | Qt::SHIFT | Qt::Key_N) },
-        { ActionId::CanvasGetAll,
-            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Transfer All"),
-            QT_TRANSLATE_NOOP(
-                "spritenator::gui::ActionCatalog", "Transfer the whole canvas to the drawing area"),
-            nullptr, Seq(Qt::Key_F3) },
         // --- Paleta ---
         { ActionId::PaletteTransparent,
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Transparent Color Effect"),
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
-                "Treat the background color as transparent when transferring images"),
+                "Do not paste pixels of the background color (or fully transparent ones)"),
             "palette_transparent", Seq(Qt::Key_F8), true },
         { ActionId::PaletteLoad,
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Load Palette..."),
@@ -217,24 +193,6 @@ const std::vector<ActionSpec>& actionSpecs()
                 "Interpolate the palette between the drawing and the background colors"),
             "palette_gradation", Seq(Qt::CTRL | Qt::Key_D) },
         // --- Janela ---
-        { ActionId::WindowCascade, QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Cascade"),
-            QT_TRANSLATE_NOOP(
-                "spritenator::gui::ActionCatalog", "Arrange the canvas windows in cascade"),
-            nullptr, Seq() },
-        { ActionId::WindowTileHorizontal,
-            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Tile &Horizontally"),
-            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
-                "Arrange the canvas windows one above the other"),
-            nullptr, Seq() },
-        { ActionId::WindowTileVertical,
-            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Tile &Vertically"),
-            QT_TRANSLATE_NOOP(
-                "spritenator::gui::ActionCatalog", "Arrange the canvas windows side by side"),
-            nullptr, Seq() },
-        { ActionId::WindowFit, QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Fit"),
-            QT_TRANSLATE_NOOP(
-                "spritenator::gui::ActionCatalog", "Resize the canvas window to fit the canvas"),
-            nullptr, Seq(Qt::CTRL | Qt::Key_W) },
         { ActionId::WindowReverseCanvas,
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Reverse Canvas"),
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
@@ -256,10 +214,7 @@ const std::vector<ActionSpec>& actionSpecs()
 
 ActionCatalog::ActionCatalog(QObject* parent)
     : QObject(parent)
-    , m_zoomGroup(new QActionGroup(this))
 {
-    m_zoomGroup->setExclusive(true); // apenas um zoom marcado, como "radio buttons"
-
     for (const ActionSpec& spec : actionSpecs()) {
         auto* created = new QAction(this);
         if (spec.icon != nullptr) {
@@ -267,16 +222,11 @@ ActionCatalog::ActionCatalog(QObject* parent)
         }
         created->setShortcut(spec.shortcut);
         created->setCheckable(spec.checkable);
-        if (spec.zoomFactor > 0) {
-            created->setData(spec.zoomFactor); // consultado pela MainWindow ao trocar o zoom
-            m_zoomGroup->addAction(created);
-        }
         m_actions.at(static_cast<std::size_t>(spec.id)) = created;
     }
 
     // Estados iniciais.
     action(ActionId::ViewMainGrid)->setChecked(true);
-    action(ActionId::ViewZoom8)->setChecked(true);
 
     // Garante, em builds de depuração, que a tabela cobre todas as ações.
     for ([[maybe_unused]] QAction* created : m_actions) {
@@ -287,16 +237,10 @@ ActionCatalog::ActionCatalog(QObject* parent)
 
 void ActionCatalog::retranslate()
 {
-    int zoomPosition = 1; // posição no menu, usada como acelerador (&1..&6)
     for (const ActionSpec& spec : actionSpecs()) {
         QAction* target = action(spec.id);
-        QString text = tr(spec.text);
-        QString tip = tr(spec.statusTip);
-        if (spec.zoomFactor > 0) {
-            text = text.arg(spec.zoomFactor).arg(zoomPosition++);
-            tip = tip.arg(spec.zoomFactor);
-        }
-        target->setText(text);
+        const QString tip = tr(spec.statusTip);
+        target->setText(tr(spec.text));
         target->setStatusTip(tip);
         target->setToolTip(tip);
     }
@@ -305,16 +249,6 @@ void ActionCatalog::retranslate()
 QAction* ActionCatalog::action(ActionId id) const
 {
     return m_actions.at(static_cast<std::size_t>(id));
-}
-
-int ActionCatalog::zoomFactorOf(ActionId id)
-{
-    for (const ActionSpec& spec : actionSpecs()) {
-        if (spec.id == id) {
-            return spec.zoomFactor;
-        }
-    }
-    return 0;
 }
 
 } // namespace spritenator::gui

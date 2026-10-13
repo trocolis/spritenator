@@ -3,7 +3,7 @@
 // =============================================================================
 #include "Tool.h"
 
-#include "gui/DrawBuffer.h"
+#include "gui/Document.h"
 #include "gui/EditorSession.h"
 
 namespace spritenator::gui {
@@ -11,14 +11,15 @@ namespace spritenator::gui {
 void Tool::cancel(EditorSession& session)
 {
     // Comportamento padrão: descarta a edição ao vivo em andamento, se houver.
-    if (session.buffer()->isEditing()) {
-        session.buffer()->cancelEdit();
+    Document* document = session.activeDocument();
+    if (document != nullptr && document->isEditing()) {
+        document->cancelEdit();
     }
 }
 
-void Tool::paintOverlay(QPainter& /*painter*/, int /*scale*/) const
+std::vector<core::Point> Tool::footprint(const EditorSession& /*session*/, core::Point point) const
 {
-    // A maioria das ferramentas não desenha nada além do próprio buffer.
+    return { point };
 }
 
 } // namespace spritenator::gui

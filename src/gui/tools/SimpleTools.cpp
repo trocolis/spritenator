@@ -4,7 +4,7 @@
 #include "SimpleTools.h"
 
 #include "core/Raster.h"
-#include "gui/DrawBuffer.h"
+#include "gui/Document.h"
 #include "gui/EditorSession.h"
 
 #include <variant>
@@ -20,18 +20,21 @@ void FillTool::press(EditorSession& session, core::Point point, Qt::MouseButton 
         return;
     }
     const ColorRole role = colorRoleFor(button);
-    DrawBuffer* buffer = session.buffer();
+    Document* document = session.activeDocument();
+    if (document == nullptr) {
+        return;
+    }
 
     // A região é calculada ANTES de pintar, sobre a imagem original: com tons
     // (retícula) a região pintada não é uniforme e não serve de referência.
     const std::vector<core::Point> region = std::visit(
-        [&](const auto& image) { return core::floodRegion(image, point); }, buffer->image());
+        [&](const auto& image) { return core::floodRegion(image, point); }, document->canvas());
     if (region.empty()) {
         return;
     }
 
-    buffer->beginEdit();
-    buffer->editLive([&](core::AnyImage& image) {
+    document->beginEdit();
+    document->editLive([&](core::AnyImage& image) {
         core::Rect bounds;
         for (const core::Point pixel : region) {
             session.plot(image, pixel, role);
@@ -39,7 +42,7 @@ void FillTool::press(EditorSession& session, core::Point point, Qt::MouseButton 
         }
         return bounds;
     });
-    buffer->commitEdit(UndoLabel { UndoOperation::Fill });
+    document->commitEdit(UndoLabel { UndoOperation::Fill });
 }
 
 void FillTool::move(EditorSession& /*session*/, core::Point /*point*/)
@@ -58,10 +61,14 @@ void SelectTool::press(EditorSession& session, core::Point point, Qt::MouseButto
     if (button != Qt::LeftButton && button != Qt::RightButton) {
         return;
     }
+    Document* document = session.activeDocument();
+    if (document == nullptr) {
+        return;
+    }
     m_active = true;
     m_dragged = false;
     m_anchor = point;
-    session.buffer()->setSelection(core::Rect::fromCorners(point, point));
+    document->setSelection(core::Rect::fromCorners(point, point));
 }
 
 void SelectTool::move(EditorSession& session, core::Point point)
@@ -70,7 +77,9 @@ void SelectTool::move(EditorSession& session, core::Point point)
         return;
     }
     m_dragged = m_dragged || point != m_anchor;
-    session.buffer()->setSelection(core::Rect::fromCorners(m_anchor, point));
+    if (Document* document = session.activeDocument()) {
+        document->setSelection(core::Rect::fromCorners(m_anchor, point));
+    }
 }
 
 void SelectTool::release(EditorSession& session, core::Point /*point*/)
@@ -79,27 +88,27 @@ void SelectTool::release(EditorSession& session, core::Point /*point*/)
         return;
     }
     m_active = false;
-    if (!m_dragged) {
-        session.buffer()->setSelection(std::nullopt); // clique simples: limpa
+    Document* document = session.activeDocument();
+    if (!m_dragged && document != nullptr) {
+        document->setSelection(std::nullopt); // clique simples: limpa
     }
 }
 
 void SelectTool::cancel(EditorSession& session)
 {
     m_active = false;
-    session.buffer()->setSelection(std::nullopt);
+    if (Document* document = session.activeDocument()) {
+        document->setSelection(std::nullopt);
+    }
 }
 
 // -----------------------------------------------------------------------------
 // ZoomTool
 // -----------------------------------------------------------------------------
-void ZoomTool::press(EditorSession& session, core::Point /*point*/, Qt::MouseButton button)
+// O zoom pertence a cada editor de imagem (CanvasEditor), que trata os cliques
+// desta ferramenta ancorando o zoom no ponto clicado. Aqui nada é feito.
+void ZoomTool::press(EditorSession& /*session*/, core::Point /*point*/, Qt::MouseButton /*button*/)
 {
-    if (button == Qt::LeftButton) {
-        session.zoomIn();
-    } else if (button == Qt::RightButton) {
-        session.zoomOut();
-    }
 }
 
 void ZoomTool::move(EditorSession& /*session*/, core::Point /*point*/)
@@ -108,6 +117,32 @@ void ZoomTool::move(EditorSession& /*session*/, core::Point /*point*/)
 
 void ZoomTool::release(EditorSession& /*session*/, core::Point /*point*/)
 {
+}
+
+std::vector<core::Point> ZoomTool::footprint(
+    const EditorSession& /*session*/, core::Point /*point*/) const
+{
+    return { }; // a lupa não altera pixels
+}
+
+// -----------------------------------------------------------------------------
+// Pegada do balde: a região que seria preenchida
+// -----------------------------------------------------------------------------
+std::vector<core::Point> FillTool::footprint(const EditorSession& session, core::Point point) const
+{
+    const Document* document = session.activeDocument();
+    if (document == nullptr) {
+        return { };
+    }
+    std::vector<core::Point> region = std::visit(
+        [&](const auto& image) { return core::floodRegion(image, point); }, document->canvas());
+    // Limite de segurança: em imagens enormes, destacar milhões de pixels a
+    // cada movimento do mouse tornaria a interface lenta.
+    constexpr std::size_t kMaxHighlighted = 262144; // 512 x 512
+    if (region.size() > kMaxHighlighted) {
+        return { point };
+    }
+    return region;
 }
 
 } // namespace spritenator::gui

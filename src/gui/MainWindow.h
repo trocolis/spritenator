@@ -1,9 +1,10 @@
 // =============================================================================
 // MainWindow.h
 //
-// Janela principal do Spritenator. Equivale ao "TCharacterRaiserMainForm"
-// do original: contém o menu, a barra de ferramentas, a área MDI onde ficam
-// as janelas de canvas e a barra de status.
+// Janela principal do Spritenator. Inspirada no "TCharacterRaiserMainForm"
+// do original: contém o menu, a barra de ferramentas, o painel lateral, a
+// área de documentos (abas, uma por imagem aberta) e a barra de status com o
+// zoom do editor ativo.
 // =============================================================================
 #pragma once
 
@@ -18,6 +19,7 @@
 
 #include <cstddef>
 
+class QComboBox;
 class QLabel;
 class QMdiArea;
 class QMdiSubWindow;
@@ -29,7 +31,7 @@ namespace spritenator::gui {
 
 class ActionCatalog;
 class AnimationWindow;
-class CanvasWindow;
+class CanvasEditor;
 class Document;
 class HelpWindow;
 class EditOperations;
@@ -52,8 +54,10 @@ public:
     /// Devolve true em caso de sucesso; erros são mostrados ao usuário.
     bool openFile(const QString& path);
 
-    /// Documento da janela MDI ativa (nulo se não houver).
+    /// Documento da aba ativa (nulo se não houver).
     [[nodiscard]] Document* activeDocument() const;
+    /// Editor da aba ativa (nulo se não houver).
+    [[nodiscard]] CanvasEditor* activeEditor() const;
 
     /// Estado do editor e catálogo de ações (expostos para testes de integração).
     [[nodiscard]] EditorSession* session() const { return m_session; }
@@ -91,8 +95,11 @@ private:
     /// false se a operação em andamento (fechar/sair) deve ser cancelada.
     bool maybeSave(Document* document);
 
-    /// Cria a janela-filha MDI para o documento e a exibe.
-    CanvasWindow* addDocumentWindow(Document* document);
+    /// Cria o editor (aba) do documento e o exibe.
+    CanvasEditor* addDocumentWindow(Document* document);
+
+    /// Torna o documento da aba atual o documento ativo da sessão.
+    void syncActiveDocument();
 
     /// Procura a janela de um arquivo já aberto (comparando caminhos absolutos).
     [[nodiscard]] QMdiSubWindow* findWindowForFile(const QString& path) const;
@@ -101,9 +108,6 @@ private:
     void updateRecentFilesMenu();
 
     // --- Janela ---
-    [[nodiscard]] CanvasWindow* activeCanvasWindow() const;
-    void tileWindows(Qt::Orientation orientation);
-    void fitActiveWindow();
     /// Troca os lados do Integrator e da área MDI ("Reverse Canvas").
     void setCanvasReversed(bool reversed);
 
@@ -115,8 +119,7 @@ private:
     void savePalette();
     void editPalette();
     void applyGradation();
-    /// Aplica imagem + paleta novas ao documento como um passo de desfazer e
-    /// converte o buffer da área de desenho com a mesma tabela/opções.
+    /// Aplica imagem + paleta novas ao documento como um passo de desfazer.
     void commitDocumentState(Document* document, const core::AnyImage& canvas,
         const core::Palette& palette, const UndoLabel& undoLabel);
 
@@ -133,13 +136,17 @@ private:
     /// Reaplica todos os textos da janela no idioma atual.
     void retranslateUi();
     void showAnimationWindow();
-    void editCharacterSize();
-    /// Aplica a grade de personagens a todas as janelas de canvas abertas.
-    void applyCharacterLayoutToWindows();
+    void editGrids();
+    /// Liga o indicador de zoom ao editor ativo.
+    void trackActiveEditorZoom();
+    /// Mostra o zoom (fator) no indicador da barra de status.
+    void showZoom(double zoom);
+    /// Aplica o zoom digitado/escolhido no indicador (em %).
+    void applyZoomText(const QString& text);
     /// Sincroniza as ações de desfazer/refazer com o grupo de pilhas.
     void updateUndoActions();
     /// Mostra uma posição de pixel na barra de status.
-    void showPosition(const QString& area, const core::Point& pixel);
+    void showPosition(const core::Point& pixel);
 
     // --- Ajuda ---
     void showHelp();
@@ -157,16 +164,18 @@ private:
 
     AppSettings m_settings;
     EditorSession* m_session = nullptr; ///< Estado central do editor.
-    EditOperations* m_operations = nullptr; ///< Operações de edição do buffer.
+    EditOperations* m_operations = nullptr; ///< Operações de edição do documento.
     ActionCatalog* m_actions = nullptr; ///< Todas as ações (pai: this).
     QSplitter* m_mainSplitter = nullptr; ///< Integrator | área MDI.
-    IntegratorPanel* m_integrator = nullptr; ///< Painel com a área de desenho.
-    QMdiArea* m_mdiArea = nullptr; ///< Área com as janelas de canvas.
+    IntegratorPanel* m_integrator = nullptr; ///< Painel com ferramentas e cores.
+    QMdiArea* m_mdiArea = nullptr; ///< Área com as abas dos documentos.
     QToolBar* m_toolBar = nullptr; ///< Barra de ferramentas principal.
     QMenu* m_fileMenu = nullptr;
     QAction* m_recentSeparator = nullptr; ///< Separador antes dos recentes.
     QList<QAction*> m_recentFileActions; ///< Entradas de arquivos recentes.
-    QLabel* m_positionLabel = nullptr; ///< Posição do mouse no canvas.
+    QLabel* m_positionLabel = nullptr; ///< Posição do mouse na imagem.
+    QComboBox* m_zoomCombo = nullptr; ///< Zoom do editor ativo, em %.
+    QMetaObject::Connection m_zoomConnection; ///< editor ativo -> indicador
     AnimationWindow* m_animationWindow = nullptr; ///< Criada sob demanda (F2).
     HelpWindow* m_helpWindow = nullptr; ///< Criada sob demanda (F1).
     QList<QPair<QMenu*, const char*>> m_translatedMenus; ///< menu e título-fonte

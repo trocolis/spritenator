@@ -1,11 +1,10 @@
 // =============================================================================
-// RgbaEditingTest.cpp — edição de documentos RGBA: área de desenho, cores
-// primária/secundária, ferramentas, transparência, conversões entre modos,
-// operações de edição e estado da janela principal.
+// RgbaEditingTest.cpp — edição de documentos RGBA: cores primária/
+// secundária, ferramentas, transparência, conversões entre modos, operações
+// de edição e estado da janela principal.
 // =============================================================================
 #include "gui/ActionCatalog.h"
 #include "gui/Document.h"
-#include "gui/DrawBuffer.h"
 #include "gui/EditOperations.h"
 #include "gui/EditorSession.h"
 #include "gui/MainWindow.h"
@@ -14,6 +13,7 @@
 
 #include <QAction>
 #include <QCoreApplication>
+#include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QUndoStack>
@@ -39,12 +39,6 @@ std::unique_ptr<Document> makeRgbaDocument()
         core::RgbaImage({ 48, 32 }, kRed), core::Palette::makeDefault(core::ColorDepth::Bits8));
 }
 
-/// Pixel RGBA do buffer da área de desenho.
-core::Rgba bufferPixel(const EditorSession& session, int x, int y)
-{
-    return std::get<core::RgbaImage>(session.buffer()->image()).pixel(x, y);
-}
-
 /// Pixel RGBA do canvas de um documento.
 core::Rgba canvasPixel(const Document& document, int x, int y)
 {
@@ -63,25 +57,19 @@ private slots:
         QCoreApplication::setApplicationName(QStringLiteral("RgbaEditingTest"));
     }
 
-    /// O buffer acompanha o modo do documento ativo; o histórico é limpo.
-    void bufferFollowsActiveDocumentMode()
+    /// O modo de cor da sessão acompanha o documento ativo.
+    void sessionFollowsActiveDocumentMode()
     {
         EditorSession session;
-        session.tool().press(session, { 0, 0 }, Qt::LeftButton); // passo no modo indexado
-        session.tool().release(session, { 0, 0 });
-        QCOMPARE(session.buffer()->undoStack()->count(), 1);
-
+        QCOMPARE(session.colorMode(), core::ColorMode::Indexed);
+        QSignalSpy modeChanges(&session, &EditorSession::colorModeChanged);
         auto document = makeRgbaDocument();
         session.setActiveDocument(document.get());
         QCOMPARE(session.colorMode(), core::ColorMode::Rgba);
-        QCOMPARE(session.buffer()->colorMode(), core::ColorMode::Rgba);
-        QCOMPARE(session.buffer()->undoStack()->count(), 0);
-
-        // Indexada -> RGBA é exata: o índice 15 (branco) vira branco opaco.
-        QCOMPARE(bufferPixel(session, 0, 0), (core::Rgba { 255, 255, 255, 255 }));
-
+        QCOMPARE(modeChanges.count(), 1);
         session.setActiveDocument(nullptr);
-        QCOMPARE(session.buffer()->colorMode(), core::ColorMode::Indexed);
+        QCOMPARE(session.colorMode(), core::ColorMode::Indexed);
+        QCOMPARE(modeChanges.count(), 2);
     }
 
     /// Lápis: esquerdo pinta a primária (com alfa exato); direito, a
@@ -96,13 +84,12 @@ private slots:
 
         session.tool().press(session, { 2, 2 }, Qt::LeftButton);
         session.tool().release(session, { 2, 2 });
-        QCOMPARE(bufferPixel(session, 2, 2), kTranslucentBlue); // substitui, não mistura
+        QCOMPARE(canvasPixel(*document, 2, 2), kTranslucentBlue); // substitui, não mistura
 
-        session.buffer()->replace(
-            core::RgbaImage({ 24, 32 }, kRed), gui::UndoLabel { gui::UndoOperation::Paste });
         session.tool().press(session, { 5, 5 }, Qt::RightButton);
         session.tool().release(session, { 5, 5 });
-        QCOMPARE(bufferPixel(session, 5, 5), kClear);
+        QCOMPARE(canvasPixel(*document, 5, 5), kClear);
+        QCOMPARE(document->undoStack()->count(), 2);
         QCOMPARE(session.rgbaFor(ColorRole::Secondary), kClear);
     }
 
@@ -112,47 +99,56 @@ private slots:
         EditorSession session;
         auto document = makeRgbaDocument();
         session.setActiveDocument(document.get());
-        session.getFromCanvas(document.get(), { 0, 0, 24, 32 }); // tudo vermelho
         session.setPrimaryRgba(kTranslucentBlue);
         session.setToolKind(ToolKind::Fill);
         session.tool().press(session, { 0, 0 }, Qt::LeftButton);
         session.tool().release(session, { 0, 0 });
-        QCOMPARE(bufferPixel(session, 23, 31), kTranslucentBlue);
+        QCOMPARE(canvasPixel(*document, 47, 31), kTranslucentBlue);
     }
 
-    /// Gravar no canvas com o efeito transparente: alfa 0 não é gravado.
-    void putSkipsTransparentPixelsWithEffect()
+    /// Colar com o efeito transparente: pixels de alfa 0 não são colados.
+    void pasteSkipsTransparentPixelsWithEffect()
     {
         EditorSession session;
+        gui::EditOperations operations(&session);
         auto document = makeRgbaDocument();
         session.setActiveDocument(document.get());
-        core::RgbaImage frame({ 24, 32 }); // transparente
-        frame.setPixel({ 1, 1 }, kTranslucentBlue);
-        session.buffer()->replace(frame, gui::UndoLabel { gui::UndoOperation::Paste });
+        // Origem: [transparente, azul translúcido].
+        core::RgbaImage canvas = std::get<core::RgbaImage>(document->canvas());
+        canvas.setPixel({ 0, 0 }, kClear);
+        canvas.setPixel({ 1, 0 }, kTranslucentBlue);
+        document->applyCanvas(canvas);
+        document->setSelection(core::Rect { 0, 0, 2, 1 });
+        operations.copy();
 
         session.setTransparentEffect(true);
-        session.putToCanvas(document.get(), { 0, 0, 24, 32 });
-        QCOMPARE(canvasPixel(*document, 0, 0), kRed); // preservado
-        QCOMPARE(canvasPixel(*document, 1, 1), kTranslucentBlue); // gravado
+        document->setSelection(core::Rect { 10, 10, 1, 1 });
+        operations.paste();
+        QCOMPARE(canvasPixel(*document, 10, 10), kRed); // preservado
+        QCOMPARE(canvasPixel(*document, 11, 10), kTranslucentBlue); // colado
 
         session.setTransparentEffect(false);
-        session.putToCanvas(document.get(), { 24, 0, 24, 32 });
-        QCOMPARE(canvasPixel(*document, 24, 0), kClear); // sem o efeito: substitui
+        document->setSelection(core::Rect { 20, 20, 1, 1 });
+        operations.paste();
+        QCOMPARE(canvasPixel(*document, 20, 20), kClear); // sem o efeito: substitui
     }
 
-    /// Gravar o buffer RGBA num documento indexado converte para a paleta.
-    void putIntoIndexedDocumentConverts()
+    /// Colar pixels RGBA num documento indexado converte para a paleta.
+    void pasteIntoIndexedDocumentConverts()
     {
         EditorSession session;
+        gui::EditOperations operations(&session);
         auto rgba = makeRgbaDocument();
         session.setActiveDocument(rgba.get());
-        session.getFromCanvas(rgba.get(), { 0, 0, 24, 32 }); // buffer vermelho
+        rgba->setSelection(core::Rect { 0, 0, 4, 4 });
+        operations.copy(); // vermelho
 
         Document indexed(
             core::IndexedImage({ 24, 32 }, 0), core::Palette::makeDefault(core::ColorDepth::Bits4));
-        session.putToCanvas(&indexed, { 0, 0, 24, 32 });
+        session.setActiveDocument(&indexed);
+        operations.paste();
         QCOMPARE(int(indexed.indexedCanvas().pixel(3, 3)), 9); // vermelho vivo da paleta
-        QCOMPARE(session.buffer()->colorMode(), core::ColorMode::Rgba); // buffer intacto
+        session.setActiveDocument(nullptr);
     }
 
     /// Operações de edição em RGBA: limpar, sombra, rotação, copiar/colar.
@@ -162,31 +158,31 @@ private slots:
         gui::EditOperations operations(&session);
         auto document = makeRgbaDocument();
         session.setActiveDocument(document.get());
-        core::RgbaImage frame({ 24, 32 });
+        core::RgbaImage frame({ 48, 32 });
         frame.setPixel({ 0, 0 }, kTranslucentBlue);
         frame.setPixel({ 1, 0 }, kRed);
-        session.buffer()->replace(frame, gui::UndoLabel { gui::UndoOperation::Paste });
+        document->applyCanvas(frame);
 
         // Sombra: cor primária, alfa original.
         session.setPrimaryRgba({ 10, 20, 30, 255 });
         operations.prepareShadow();
-        QCOMPARE(bufferPixel(session, 0, 0), (core::Rgba { 10, 20, 30, 100 }));
-        QCOMPARE(bufferPixel(session, 5, 5), kClear);
+        QCOMPARE(canvasPixel(*document, 0, 0), (core::Rgba { 10, 20, 30, 100 }));
+        QCOMPARE(canvasPixel(*document, 5, 5), kClear);
 
         // Copiar e colar preserva o alfa exato.
-        session.buffer()->setSelection(core::Rect { 0, 0, 1, 1 });
+        document->setSelection(core::Rect { 0, 0, 1, 1 });
         operations.copy();
-        session.buffer()->setSelection(core::Rect { 10, 10, 1, 1 });
+        document->setSelection(core::Rect { 10, 10, 1, 1 });
         operations.paste();
-        QCOMPARE(bufferPixel(session, 10, 10), (core::Rgba { 10, 20, 30, 100 }));
+        QCOMPARE(canvasPixel(*document, 10, 10), (core::Rgba { 10, 20, 30, 100 }));
 
         // Rotação: lacunas ficam transparentes.
-        session.buffer()->setSelection(core::Rect { 0, 0, 4, 2 });
+        document->setSelection(core::Rect { 0, 0, 4, 2 });
         operations.transform(gui::TransformKind::RotateClockwise);
         // Limpar: tudo transparente.
         operations.selectAll();
         operations.clear();
-        QCOMPARE(bufferPixel(session, 1, 0), kClear);
+        QCOMPARE(canvasPixel(*document, 1, 0), kClear);
     }
 
     /// Janela principal com documento RGBA: menu Paleta desabilitado, grade

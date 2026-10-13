@@ -17,7 +17,9 @@ namespace {
 constexpr auto kRecentFilesKey = "files/recent";
 constexpr auto kLastDirectoryKey = "files/lastDirectory";
 constexpr auto kBackupFolderKey = "files/backupFolder";
-constexpr auto kLayoutGroup = "characterLayout";
+constexpr auto kGridGroup = "grids";
+/// Grupo da versão 1.x ("tamanho do personagem"), lido só para migração.
+constexpr auto kOldLayoutGroup = "characterLayout";
 constexpr auto kLanguageKey = "interface/language";
 constexpr auto kGeometryKey = "mainWindow/geometry";
 constexpr auto kStateKey = "mainWindow/state";
@@ -79,42 +81,44 @@ void AppSettings::setBackupFolder(const QString& folder)
 }
 
 // -----------------------------------------------------------------------------
-// Grade de personagens
+// Grades
 // -----------------------------------------------------------------------------
-core::CharacterLayout AppSettings::characterLayout() const
+core::GridLayout AppSettings::gridLayout() const
 {
     QSettings settings;
-    settings.beginGroup(key(kLayoutGroup));
-    const core::CharacterLayout defaults;
-    core::CharacterLayout layout;
-    layout.cellSize.width = settings.value("cellWidth", defaults.cellSize.width).toInt();
-    layout.cellSize.height = settings.value("cellHeight", defaults.cellSize.height).toInt();
-    layout.subGridSize.width = settings.value("subGridWidth", defaults.subGridSize.width).toInt();
-    layout.subGridSize.height
-        = settings.value("subGridHeight", defaults.subGridSize.height).toInt();
-    layout.doubleCanvas = settings.value("doubleCanvas", defaults.doubleCanvas).toBool();
-    layout.halfCellSteps = settings.value("halfCellSteps", defaults.halfCellSteps).toBool();
-    layout.keepMouseCursor = settings.value("keepMouseCursor", defaults.keepMouseCursor).toBool();
+    core::GridLayout defaults;
+    // Migração da 1.x: o antigo "tamanho do personagem" vira a sub-grade.
+    settings.beginGroup(key(kOldLayoutGroup));
+    defaults.subGrid.width = settings.value("cellWidth", defaults.subGrid.width).toInt();
+    defaults.subGrid.height = settings.value("cellHeight", defaults.subGrid.height).toInt();
+    settings.endGroup();
+    if (defaults.subGrid.isEmpty()) {
+        defaults.subGrid = core::GridLayout { }.subGrid;
+    }
+
+    settings.beginGroup(key(kGridGroup));
+    core::GridLayout layout;
+    layout.mainGrid.width = settings.value("mainWidth", defaults.mainGrid.width).toInt();
+    layout.mainGrid.height = settings.value("mainHeight", defaults.mainGrid.height).toInt();
+    layout.subGrid.width = settings.value("subWidth", defaults.subGrid.width).toInt();
+    layout.subGrid.height = settings.value("subHeight", defaults.subGrid.height).toInt();
     settings.endGroup();
 
     // Proteção contra valores corrompidos no arquivo de configuração.
-    if (layout.cellSize.isEmpty() || layout.subGridSize.isEmpty()) {
+    if (layout.mainGrid.isEmpty() || layout.subGrid.isEmpty()) {
         return defaults;
     }
     return layout;
 }
 
-void AppSettings::setCharacterLayout(const core::CharacterLayout& layout)
+void AppSettings::setGridLayout(const core::GridLayout& layout)
 {
     QSettings settings;
-    settings.beginGroup(key(kLayoutGroup));
-    settings.setValue("cellWidth", layout.cellSize.width);
-    settings.setValue("cellHeight", layout.cellSize.height);
-    settings.setValue("subGridWidth", layout.subGridSize.width);
-    settings.setValue("subGridHeight", layout.subGridSize.height);
-    settings.setValue("doubleCanvas", layout.doubleCanvas);
-    settings.setValue("halfCellSteps", layout.halfCellSteps);
-    settings.setValue("keepMouseCursor", layout.keepMouseCursor);
+    settings.beginGroup(key(kGridGroup));
+    settings.setValue("mainWidth", layout.mainGrid.width);
+    settings.setValue("mainHeight", layout.mainGrid.height);
+    settings.setValue("subWidth", layout.subGrid.width);
+    settings.setValue("subHeight", layout.subGrid.height);
     settings.endGroup();
 }
 
@@ -140,13 +144,14 @@ ViewSettings AppSettings::viewSettings() const
     settings.beginGroup(QStringLiteral("view"));
     const ViewSettings defaults;
     ViewSettings view;
-    view.zoom = settings.value("zoom", defaults.zoom).toInt();
     view.mainGridVisible = settings.value("mainGrid", defaults.mainGridVisible).toBool();
     view.subGridVisible = settings.value("subGrid", defaults.subGridVisible).toBool();
     view.transparentEffect
         = settings.value("transparentEffect", defaults.transparentEffect).toBool();
     view.canvasReversed = settings.value("canvasReversed", defaults.canvasReversed).toBool();
-    view.splitterState = settings.value("splitter").toByteArray();
+    // Chave nova na 2.0: o painel mudou de largura e a proporção antiga não
+    // serve mais.
+    view.splitterState = settings.value("panelSplitter").toByteArray();
     settings.endGroup();
     return view;
 }
@@ -155,12 +160,11 @@ void AppSettings::setViewSettings(const ViewSettings& view)
 {
     QSettings settings;
     settings.beginGroup(QStringLiteral("view"));
-    settings.setValue("zoom", view.zoom);
     settings.setValue("mainGrid", view.mainGridVisible);
     settings.setValue("subGrid", view.subGridVisible);
     settings.setValue("transparentEffect", view.transparentEffect);
     settings.setValue("canvasReversed", view.canvasReversed);
-    settings.setValue("splitter", view.splitterState);
+    settings.setValue("panelSplitter", view.splitterState);
     settings.endGroup();
 }
 

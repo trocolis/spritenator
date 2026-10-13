@@ -4,7 +4,7 @@
 #include "PenTool.h"
 
 #include "core/Raster.h"
-#include "gui/DrawBuffer.h"
+#include "gui/Document.h"
 #include "gui/EditorSession.h"
 
 namespace spritenator::gui {
@@ -27,10 +27,14 @@ void PenTool::press(EditorSession& session, core::Point point, Qt::MouseButton b
     if (button != Qt::LeftButton && button != Qt::RightButton) {
         return;
     }
+    Document* document = session.activeDocument();
+    if (document == nullptr) {
+        return;
+    }
     m_role = colorRoleFor(button); // esquerdo = primária; direito = secundária
     m_active = true;
     m_last = point;
-    session.buffer()->beginEdit();
+    document->beginEdit();
     stroke(session, point, point);
 }
 
@@ -51,7 +55,9 @@ void PenTool::release(EditorSession& session, core::Point /*point*/)
         return;
     }
     m_active = false;
-    session.buffer()->commitEdit(UndoLabel { UndoOperation::Pen });
+    if (Document* document = session.activeDocument()) {
+        document->commitEdit(UndoLabel { UndoOperation::Pen });
+    }
 }
 
 void PenTool::cancel(EditorSession& session)
@@ -63,7 +69,11 @@ void PenTool::cancel(EditorSession& session)
 void PenTool::stroke(EditorSession& session, core::Point from, core::Point to) const
 {
     const int margin = m_thick ? 1 : 0;
-    session.buffer()->editLive([&](core::AnyImage& image) {
+    Document* document = session.activeDocument();
+    if (document == nullptr) {
+        return;
+    }
+    document->editLive([&](core::AnyImage& image) {
         core::plotLine(from, to, [&](core::Point center) {
             if (m_thick) {
                 for (const core::Point offset : kThickBrush) {
@@ -78,6 +88,19 @@ void PenTool::stroke(EditorSession& session, core::Point from, core::Point to) c
         return core::Rect { bounds.x - margin, bounds.y - margin, bounds.width + 2 * margin,
             bounds.height + 2 * margin };
     });
+}
+
+std::vector<core::Point> PenTool::footprint(
+    const EditorSession& /*session*/, core::Point point) const
+{
+    if (!m_thick) {
+        return { point };
+    }
+    std::vector<core::Point> points;
+    for (const core::Point offset : kThickBrush) {
+        points.push_back(point + offset);
+    }
+    return points;
 }
 
 } // namespace spritenator::gui

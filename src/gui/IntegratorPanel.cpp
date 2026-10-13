@@ -4,7 +4,7 @@
 #include "IntegratorPanel.h"
 
 #include "ActionCatalog.h"
-#include "DrawBuffer.h"
+#include "Document.h"
 #include "EditOperations.h"
 #include "EditorSession.h"
 #include "IconProvider.h"
@@ -12,19 +12,12 @@
 #include "dialogs/StretchDialog.h"
 #include "widgets/ColorEditor.h"
 #include "widgets/ColorWheel.h"
-#include "widgets/DrawAreaView.h"
-#include "widgets/OrgAreaView.h"
 #include "widgets/PaletteView.h"
 #include "widgets/ToolPanel.h"
 
 #include <QEvent>
-#include <QFrame>
 #include <QGridLayout>
-#include <QHBoxLayout>
 #include <QInputDialog>
-#include <QLabel>
-#include <QScrollArea>
-#include <QSplitter>
 #include <QToolButton>
 #include <QVBoxLayout>
 
@@ -52,38 +45,33 @@ IntegratorPanel::IntegratorPanel(
     , m_session(session)
     , m_operations(operations)
 {
-    auto* splitter = new QSplitter(Qt::Horizontal, this);
-    splitter->addWidget(createLeftColumn(actions));
-    splitter->addWidget(createRightColumn());
-    splitter->setStretchFactor(0, 0); // coluna de controles com largura fixa
-    splitter->setStretchFactor(1, 1); // área de desenho ocupa o restante
-    splitter->setChildrenCollapsible(false);
-
-    auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(splitter);
+    buildColumn(actions);
     retranslate();
 }
 
-QWidget* IntegratorPanel::createLeftColumn(ActionCatalog* actions)
+void IntegratorPanel::buildColumn(ActionCatalog* actions)
 {
-    auto* column = new QWidget(this);
+    auto* column = this;
     auto* layout = new QVBoxLayout(column);
     layout->setContentsMargins(4, 4, 4, 4);
 
-    // Ordem de cima para baixo: ferramentas, ajuste das cores e paleta.
-    // Um pequeno espaço separa visualmente os três painéis.
+    // Ordem de cima para baixo: ferramentas, transformações, ajuste das
+    // cores e paleta. Um pequeno espaço separa visualmente as seções.
     constexpr int kSectionSpacing = 8;
 
     // --- 1. Ferramentas e tons ---
     layout->addWidget(new ToolPanel(m_session, column));
     layout->addSpacing(kSectionSpacing);
 
-    // --- 2. Ajuste das cores (amostras de desenho/fundo e controles R, G, B) ---
+    // --- 2. Transformações (seleção ou imagem inteira) ---
+    layout->addWidget(createTransformBar(column));
+    layout->addSpacing(kSectionSpacing);
+
+    // --- 3. Ajuste das cores (mostradores e barras R, G, B, A) ---
     layout->addWidget(new ColorEditor(m_session, column));
     layout->addSpacing(kSectionSpacing);
 
-    // --- 3. Paleta: grade de cores e seus botões (os mesmos do original,
+    // --- 4. Paleta: grade de cores e seus botões (os mesmos do original,
     //        ligados às ações do catálogo). Só existe no modo indexado. ---
     auto* paletteSection = new QWidget(column);
     auto* paletteLayout = new QVBoxLayout(paletteSection);
@@ -113,7 +101,7 @@ QWidget* IntegratorPanel::createLeftColumn(ActionCatalog* actions)
     paletteLayout->addLayout(paletteButtons);
     layout->addWidget(paletteSection);
 
-    // --- 3'. Seletor circular (modo RGBA), no lugar da paleta ---
+    // --- 4'. Seletor circular (modo RGBA), no lugar da paleta ---
     m_colorWheel = new ColorWheel(column);
     layout->addWidget(m_colorWheel);
 
@@ -150,31 +138,6 @@ QWidget* IntegratorPanel::createLeftColumn(ActionCatalog* actions)
     layout->addStretch(1);
 
     column->setMinimumWidth(m_paletteView->minimumSizeHint().width() + 8);
-    return column;
-}
-
-QWidget* IntegratorPanel::createRightColumn()
-{
-    auto* column = new QWidget(this);
-    auto* layout = new QVBoxLayout(column);
-    layout->setContentsMargins(0, 4, 4, 4);
-
-    // Prévia em tamanho real.
-    auto* preview = new OrgAreaView(m_session, column);
-    preview->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    layout->addWidget(preview);
-
-    // Área de desenho com barras de rolagem.
-    m_drawArea = new DrawAreaView(m_session, column);
-    m_drawScroll = new QScrollArea(column);
-    m_drawScroll->setWidget(m_drawArea);
-    m_drawScroll->setWidgetResizable(false);
-    m_drawScroll->setAlignment(Qt::AlignCenter);
-    m_drawScroll->setBackgroundRole(QPalette::Dark);
-    layout->addWidget(m_drawScroll, 1);
-    layout->addWidget(createTransformBar(column));
-
-    return column;
 }
 
 QWidget* IntegratorPanel::createTransformBar(QWidget* parent)
@@ -210,20 +173,24 @@ QWidget* IntegratorPanel::createTransformBar(QWidget* parent)
         { "stretch", QT_TR_NOOP("Stretch or shrink..."), [this] { stretchWorkArea(); } },
     };
 
+    // Duas linhas de seis botões: cabem na largura do painel.
+    constexpr int kColumns = 6;
     auto* bar = new QWidget(parent);
-    auto* layout = new QHBoxLayout(bar);
+    auto* layout = new QGridLayout(bar);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(1);
+    int position = 0;
     for (const TransformButton& spec : buttons) {
         auto* button = new QToolButton(bar);
         button->setIcon(IconProvider::icon(QString::fromLatin1(spec.icon)));
         button->setIconSize(QSize(20, 20));
         button->setAutoRaise(true);
         connect(button, &QToolButton::clicked, this, spec.action);
-        layout->addWidget(button);
+        layout->addWidget(button, position / kColumns, position % kColumns);
+        ++position;
         m_transformButtons.append({ button, spec.tip });
     }
-    layout->addStretch(1);
+    layout->setColumnStretch(kColumns, 1);
     return bar;
 }
 
@@ -238,7 +205,7 @@ void IntegratorPanel::changeEvent(QEvent* event)
 void IntegratorPanel::retranslate()
 {
     for (const auto& [button, tip] : std::as_const(m_transformButtons)) {
-        button->setToolTip(tr(tip) + tr(" (selection or whole drawing area)"));
+        button->setToolTip(tr(tip) + tr(" (selection or whole image)"));
     }
 }
 
@@ -254,7 +221,11 @@ void IntegratorPanel::rotateFreely()
 
 void IntegratorPanel::stretchWorkArea()
 {
-    StretchDialog dialog(m_session->buffer()->workArea().size(), this);
+    const Document* document = m_session->activeDocument();
+    if (document == nullptr) {
+        return;
+    }
+    StretchDialog dialog(document->workArea().size(), this);
     if (dialog.exec() == QDialog::Accepted) {
         m_operations->stretch(dialog.newSize());
     }

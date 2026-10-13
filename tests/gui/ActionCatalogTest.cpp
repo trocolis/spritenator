@@ -13,7 +13,6 @@
 #include <spritenator/Version.h>
 
 #include <QAction>
-#include <QActionGroup>
 #include <QFile>
 #include <QRegularExpression>
 #include <QSet>
@@ -79,18 +78,15 @@ private slots:
         QVERIFY(IconProvider::icon(QStringLiteral("does_not_exist")).isNull());
     }
 
-    /// Apenas um fator de zoom está selecionado por padrão.
-    void zoomGroupIsExclusive()
+    /// As ações de zoom têm os atalhos usuais dos editores de imagem.
+    void zoomActionsHaveShortcuts()
     {
         QObject owner;
         const ActionCatalog catalog(&owner);
-        int checked = 0;
-        for (const QAction* zoom : catalog.zoomGroup()->actions()) {
-            checked += zoom->isChecked() ? 1 : 0;
-        }
-        QCOMPARE(checked, 1);
-        QCOMPARE(ActionCatalog::zoomFactorOf(ActionId::ViewZoom12), 12);
-        QCOMPARE(ActionCatalog::zoomFactorOf(ActionId::FileNew), 0);
+        QCOMPARE(catalog[ActionId::ViewZoomIn]->shortcut(), QKeySequence(QKeySequence::ZoomIn));
+        QCOMPARE(catalog[ActionId::ViewZoomOut]->shortcut(), QKeySequence(QKeySequence::ZoomOut));
+        QCOMPARE(catalog[ActionId::ViewZoomActual]->shortcut(), QKeySequence(Qt::CTRL | Qt::Key_1));
+        QCOMPARE(catalog[ActionId::ViewZoomFit]->shortcut(), QKeySequence(Qt::CTRL | Qt::Key_0));
     }
 
     /// A versão gerada segue o versionamento semântico X.Y.Z.

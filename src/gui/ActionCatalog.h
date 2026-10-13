@@ -17,7 +17,6 @@
 #include <cstddef>
 
 class QAction;
-class QActionGroup;
 
 namespace spritenator::gui {
 
@@ -43,20 +42,17 @@ enum class ActionId : std::size_t {
     EditDrawText,
     EditShadow,
     // --- Exibir ---
-    ViewCharaSize,
+    ViewGrids,
     ViewMainGrid,
     ViewSubGrid,
-    ViewZoom1,
-    ViewZoom2,
-    ViewZoom4,
-    ViewZoom6,
-    ViewZoom8,
-    ViewZoom12,
+    ViewZoomIn,
+    ViewZoomOut,
+    ViewZoomActual,
+    ViewZoomFit,
     ViewAnimation,
     // --- Canvas ---
     CanvasResize,
     CanvasClearAll,
-    CanvasGetAll,
     // --- Paleta ---
     PaletteTransparent,
     PaletteLoad,
@@ -68,10 +64,6 @@ enum class ActionId : std::size_t {
     PaletteMaskMode,
     PaletteGradation,
     // --- Janela ---
-    WindowCascade,
-    WindowTileHorizontal,
-    WindowTileVertical,
-    WindowFit,
     WindowReverseCanvas,
     // --- Ajuda ---
     HelpContents,
@@ -97,19 +89,12 @@ public:
     /// Atalho sintático: catalog[ActionId::FileNew].
     [[nodiscard]] QAction* operator[](ActionId id) const { return action(id); }
 
-    /// Grupo exclusivo das ações de zoom (apenas uma marcada por vez).
-    [[nodiscard]] QActionGroup* zoomGroup() const { return m_zoomGroup; }
-
-    /// Fator de zoom associado a uma ação ViewZoomN (0 se não for de zoom).
-    [[nodiscard]] static int zoomFactorOf(ActionId id);
-
     /// Reaplica textos e dicas no idioma atual (chamado na criação e quando o
     /// idioma muda com o programa aberto).
     void retranslate();
 
 private:
     std::array<QAction*, kActionCount> m_actions { };
-    QActionGroup* m_zoomGroup = nullptr;
 };
 
 } // namespace spritenator::gui

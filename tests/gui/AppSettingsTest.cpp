@@ -43,19 +43,24 @@ private slots:
     void layoutAndViewRoundTrip()
     {
         AppSettings settings;
-        core::CharacterLayout layout;
-        layout.cellSize = { 16, 16 };
-        layout.halfCellSteps = true;
-        settings.setCharacterLayout(layout);
-        QCOMPARE(settings.characterLayout(), layout);
+        // Sem grupo "grids", o antigo tamanho do personagem (1.x) vira a
+        // sub-grade.
+        QSettings().setValue(QStringLiteral("characterLayout/cellWidth"), 16);
+        QSettings().setValue(QStringLiteral("characterLayout/cellHeight"), 20);
+        QCOMPARE(settings.gridLayout().subGrid, (core::Size { 16, 20 }));
+        QCOMPARE(settings.gridLayout().mainGrid, (core::Size { 1, 1 }));
+
+        core::GridLayout layout;
+        layout.mainGrid = { 2, 3 };
+        layout.subGrid = { 32, 48 };
+        settings.setGridLayout(layout);
+        QCOMPARE(settings.gridLayout(), layout);
 
         gui::ViewSettings view;
-        view.zoom = 12;
         view.subGridVisible = true;
         view.canvasReversed = true;
         settings.setViewSettings(view);
         const gui::ViewSettings loaded = settings.viewSettings();
-        QCOMPARE(loaded.zoom, 12);
         QVERIFY(loaded.subGridVisible);
         QVERIFY(loaded.canvasReversed);
 

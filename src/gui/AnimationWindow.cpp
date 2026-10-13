@@ -34,6 +34,8 @@ AnimationPreview::AnimationPreview(
 {
     setMinimumSize(96, 96);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    // O tamanho ideal depende da sub-grade (tamanho do personagem).
+    connect(m_session, &EditorSession::gridLayoutChanged, this, &QWidget::updateGeometry);
 }
 
 void AnimationPreview::setFramePosition(std::size_t position)
@@ -51,7 +53,7 @@ void AnimationPreview::setScale(int scale)
 
 QSize AnimationPreview::sizeHint() const
 {
-    const core::Size cell = m_session->characterLayout().cellSize;
+    const core::Size cell = m_session->gridLayout().subGrid;
     return QSize(cell.width, cell.height) * m_scale + QSize(16, 16);
 }
 
@@ -189,11 +191,10 @@ void AnimationWindow::retranslate()
 {
     setWindowTitle(tr("Animation"));
     m_addCell->setText(tr("&Add Cell"));
-    m_addCell->setToolTip(
-        tr("Add the cell last transferred to the drawing area (right-click on the canvas)"));
+    m_addCell->setToolTip(tr("Add the sub grid cell (character cell) last clicked on the image"));
     m_walkCycle->setText(tr("&Walk Cycle"));
     m_walkCycle->setToolTip(
-        tr("Add the RPG Maker walk cycle (frames 1-2-3-2) of the last transferred cell"));
+        tr("Add the RPG Maker walk cycle (frames 1-2-3-2) starting at the last clicked cell"));
     m_removeButton->setText(tr("&Remove"));
     m_clearButton->setText(tr("&Delete All"));
     m_framesBox->setTitle(tr("Frames"));

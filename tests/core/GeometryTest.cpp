@@ -1,8 +1,7 @@
 // =============================================================================
-// GeometryTest.cpp — testes de Point/Size/Rect e CharacterLayout.
+// GeometryTest.cpp — testes de Point/Size/Rect e GridLayout.
 // =============================================================================
 #include "core/Geometry.h"
-#include "core/CharacterLayout.h"
 #include "core/GridLayout.h"
 
 #include <QTest>
@@ -37,26 +36,6 @@ private slots:
         QVERIFY(!a.contains(b));
     }
 
-    /// cellAt alinha o ponto à célula que o contém.
-    void cellAtSnapsToCells()
-    {
-        const CharacterLayout layout; // 24x32 por padrão
-        QCOMPARE(layout.cellAt({ 0, 0 }), (Rect { 0, 0, 24, 32 }));
-        QCOMPARE(layout.cellAt({ 30, 40 }), (Rect { 24, 32, 24, 32 }));
-        QCOMPARE(layout.cellAt({ 47, 63 }), (Rect { 24, 32, 24, 32 }));
-        QCOMPARE(layout.cellAt({ -1, -1 }), (Rect { -24, -32, 24, 32 }));
-    }
-
-    /// Com meia célula, o passo cai pela metade mas o tamanho é mantido.
-    void halfCellStepsMoveByHalf()
-    {
-        CharacterLayout layout;
-        layout.halfCellSteps = true;
-        QCOMPARE(layout.stepSize(), (Size { 12, 16 }));
-        QCOMPARE(layout.cellAt({ 13, 17 }), (Rect { 12, 16, 24, 32 }));
-        QCOMPARE(layout.neighbour(Rect { 12, 16, 24, 32 }, 1, -1), (Rect { 24, 0, 24, 32 }));
-    }
-
     /// Grades: padrão 1x1 (pixels) e sub-grade 24x32; células alinhadas.
     void gridLayoutCells()
     {
@@ -64,6 +43,10 @@ private slots:
         QCOMPARE(grid.mainGrid, (Size { 1, 1 }));
         QCOMPARE(grid.subGridCellAt({ 30, 40 }), (Rect { 24, 32, 24, 32 }));
         QCOMPARE(GridLayout::cellAt({ -1, 5 }, { 2, 2 }), (Rect { -2, 4, 2, 2 }));
+        // Células da sub-grade (tamanho do personagem), inclusive negativas.
+        QCOMPARE(grid.subGridCellAt({ 0, 0 }), (Rect { 0, 0, 24, 32 }));
+        QCOMPARE(grid.subGridCellAt({ 47, 63 }), (Rect { 24, 32, 24, 32 }));
+        QCOMPARE(grid.subGridCellAt({ -1, -1 }), (Rect { -24, -32, 24, 32 }));
     }
 };
 

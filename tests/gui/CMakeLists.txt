@@ -40,3 +40,7 @@ spritenator_add_test(test_rgba_editing
 spritenator_add_test(test_color_picker
     SOURCES ColorPickerTest.cpp
     LIBRARIES Spritenator::Gui)
+
+spritenator_add_test(test_canvas_editor
+    SOURCES CanvasEditorTest.cpp
+    LIBRARIES Spritenator::Gui)

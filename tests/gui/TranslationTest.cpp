@@ -7,7 +7,7 @@
 // =============================================================================
 #include "gui/ActionCatalog.h"
 #include "gui/AnimationWindow.h"
-#include "gui/CanvasWindow.h"
+#include "gui/CanvasEditor.h"
 #include "gui/Document.h"
 #include "gui/EditorSession.h"
 #include "gui/HelpWindow.h"
@@ -27,6 +27,7 @@
 #include <QMenuBar>
 #include <QRegularExpression>
 #include <QSet>
+#include <QTemporaryDir>
 #include <QTest>
 #include <QXmlStreamReader>
 
@@ -314,16 +315,23 @@ private slots:
         window.actions()->action(ActionId::ViewAnimation)->trigger();
         window.actions()->action(ActionId::HelpContents)->trigger();
 
-        // Um passo de desfazer criado em inglês ("Pen").
+        // Um passo de desfazer criado em inglês ("Pen") num documento aberto.
+        QTemporaryDir directory;
+        const QString path = directory.filePath(QStringLiteral("pen.png"));
+        io::ImageFile::save(path,
+            { core::IndexedImage({ 8, 8 }), core::Palette::makeDefault(core::ColorDepth::Bits8) });
+        QVERIFY(window.openFile(path));
         gui::EditorSession* session = window.session();
         session->setToolKind(gui::ToolKind::PenThin);
         session->tool().press(*session, { 1, 1 }, Qt::LeftButton);
         session->tool().release(*session, { 1, 1 });
         QCOMPARE(window.actions()->action(ActionId::EditUndo)->text(), QStringLiteral("&Undo Pen"));
         QCOMPARE(window.menuBar()->actions().first()->text(), QStringLiteral("&File"));
-        // Janela de canvas de um documento sem nome ("Untitled<N>").
-        auto canvas = std::make_unique<gui::CanvasWindow>(new gui::Document(
-            core::IndexedImage({ 8, 8 }), core::Palette::makeDefault(core::ColorDepth::Bits8)));
+        // Editor de um documento sem nome ("Untitled<N>").
+        auto canvas = std::make_unique<gui::CanvasEditor>(
+            new gui::Document(
+                core::IndexedImage({ 8, 8 }), core::Palette::makeDefault(core::ColorDepth::Bits8)),
+            session);
         canvas->show();
         QVERIFY(canvas->windowTitle().startsWith(QStringLiteral("Untitled")));
 

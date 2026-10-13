@@ -4,7 +4,7 @@
 #include "ShapeTool.h"
 
 #include "core/Raster.h"
-#include "gui/DrawBuffer.h"
+#include "gui/Document.h"
 #include "gui/EditorSession.h"
 
 namespace spritenator::gui {
@@ -20,11 +20,15 @@ void ShapeTool::press(EditorSession& session, core::Point point, Qt::MouseButton
     if (button != Qt::LeftButton && button != Qt::RightButton) {
         return;
     }
+    Document* document = session.activeDocument();
+    if (document == nullptr) {
+        return;
+    }
     m_role = colorRoleFor(button); // esquerdo = primária; direito = secundária
     m_active = true;
     m_start = point;
     m_last = point;
-    session.buffer()->beginEdit();
+    document->beginEdit();
     drawShape(session, point);
 }
 
@@ -35,7 +39,11 @@ void ShapeTool::move(EditorSession& session, core::Point point)
     }
     m_last = point;
     // Efeito elástico: apaga a figura anterior e desenha a nova.
-    session.buffer()->restoreSnapshot();
+    Document* document = session.activeDocument();
+    if (document == nullptr) {
+        return;
+    }
+    document->restoreSnapshot();
     drawShape(session, point);
 }
 
@@ -45,7 +53,9 @@ void ShapeTool::release(EditorSession& session, core::Point /*point*/)
         return;
     }
     m_active = false;
-    session.buffer()->commitEdit(undoLabel());
+    if (Document* document = session.activeDocument()) {
+        document->commitEdit(undoLabel());
+    }
 }
 
 void ShapeTool::cancel(EditorSession& session)
@@ -56,7 +66,11 @@ void ShapeTool::cancel(EditorSession& session)
 
 void ShapeTool::drawShape(EditorSession& session, core::Point current) const
 {
-    session.buffer()->editLive([&](core::AnyImage& image) {
+    Document* document = session.activeDocument();
+    if (document == nullptr) {
+        return;
+    }
+    document->editLive([&](core::AnyImage& image) {
         const core::Plotter plot = [&](core::Point point) { session.plot(image, point, m_role); };
         const core::Rect bounds = core::Rect::fromCorners(m_start, current);
         switch (m_shape) {

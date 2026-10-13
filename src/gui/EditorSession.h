@@ -2,19 +2,22 @@
 // EditorSession.h
 //
 // Estado central do editor — a "fonte única de verdade" compartilhada por
-// todas as views (área de desenho, paleta, canvas, menus):
+// todas as views (editores de imagem, paleta, seletor de cor, menus):
 //
-//   - buffer da área de desenho (DrawBuffer) e documento ativo;
-//   - cores de desenho/fundo, zoom, grades e grade de personagens;
-//   - ferramenta atual e regras de escrita (transparência, máscara);
-//   - roteamento do desfazer/refazer entre buffer e documentos.
+//   - documento ativo (a imagem editada diretamente pelas ferramentas);
+//   - cores primária/secundária (índices ou RGBA, conforme o modo de cor);
+//   - grades (visibilidade e espaçamentos), tom, máscara de cores;
+//   - ferramenta atual e regras de escrita;
+//   - grupo de desfazer (uma pilha por documento; a ativa é a do documento
+//     ativo).
 //
+// O zoom NÃO fica aqui: cada editor de imagem (CanvasEditor) tem o seu.
 // As views observam os sinais desta classe; nenhuma guarda cópia do estado.
 // =============================================================================
 #pragma once
 
 #include "core/AnyImage.h"
-#include "core/CharacterLayout.h"
+#include "core/GridLayout.h"
 #include "core/Image.h"
 #include "core/Palette.h"
 #include "core/Tone.h"
@@ -33,7 +36,6 @@ class QUndoStack;
 namespace spritenator::gui {
 
 class Document;
-class DrawBuffer;
 
 /// Papel de uma cor: primária (desenho, botão esquerdo) ou secundária
 /// (fundo, botão direito). As ferramentas pedem um papel, e a sessão decide o
@@ -51,17 +53,14 @@ class EditorSession final : public QObject {
     Q_OBJECT
 
 public:
-    /// Fatores de zoom disponíveis (iguais aos do original).
-    static constexpr int kZoomLevels[] = { 1, 2, 4, 6, 8, 12 };
-
     explicit EditorSession(QObject* parent = nullptr);
     ~EditorSession() override;
 
     EditorSession(const EditorSession&) = delete;
     EditorSession& operator=(const EditorSession&) = delete;
 
-    // --- Buffer e documento ---
-    [[nodiscard]] DrawBuffer* buffer() const { return m_buffer; }
+    // --- Documento ativo ---
+    /// Documento editado pelas ferramentas e operações (nulo se nenhum).
     [[nodiscard]] Document* activeDocument() const;
     void setActiveDocument(Document* document);
 
@@ -71,9 +70,7 @@ public:
     /// Modo de cor em uso: o do documento ativo (indexado, se não houver).
     [[nodiscard]] core::ColorMode colorMode() const;
 
-    // --- Desfazer/refazer ---
-    /// Grupo com a pilha do buffer e as pilhas de cada documento. A pilha
-    /// ativa é sempre a da edição mais recente ("desfazer a última coisa").
+    /// Grupo com as pilhas de desfazer de cada documento.
     [[nodiscard]] QUndoGroup* undoGroup() const { return m_undoGroup; }
 
     // --- Cores do modo indexado (índices da paleta) ---
@@ -96,29 +93,23 @@ public:
     [[nodiscard]] ColorRole activeColorRole() const { return m_activeColorRole; }
     void setActiveColorRole(ColorRole role);
 
-    // --- Visualização ---
-    [[nodiscard]] int zoom() const { return m_zoom; }
-    void setZoom(int factor);
-    /// Próximo/anterior nível de zoom (usado pela ferramenta lupa).
-    void zoomIn();
-    void zoomOut();
-
+    // --- Grades ---
     [[nodiscard]] bool mainGridVisible() const { return m_mainGridVisible; }
     [[nodiscard]] bool subGridVisible() const { return m_subGridVisible; }
     void setMainGridVisible(bool visible);
     void setSubGridVisible(bool visible);
 
-    [[nodiscard]] const core::CharacterLayout& characterLayout() const { return m_layout; }
-    /// Altera a grade; se o tamanho da célula mudar, o buffer é redimensionado.
-    void setCharacterLayout(const core::CharacterLayout& layout);
+    [[nodiscard]] const core::GridLayout& gridLayout() const { return m_gridLayout; }
+    void setGridLayout(const core::GridLayout& layout);
 
     // --- Regras de escrita ---
+    /// "Efeito de cor transparente": ao COLAR, pixels da cor de fundo
+    /// (indexada) ou totalmente transparentes (RGBA) não são colados.
     [[nodiscard]] bool transparentEffect() const { return m_transparentEffect; }
     void setTransparentEffect(bool enabled);
 
-    // --- Máscara de cores protegidas ---
-    /// Cores cujos pixels NÃO podem ser alterados pelo desenho nem pela
-    /// gravação no canvas.
+    // --- Máscara de cores protegidas (só indexadas) ---
+    /// Cores cujos pixels NÃO podem ser alterados pelo desenho nem por colar.
     [[nodiscard]] const core::ColorSet& mask() const { return m_mask; }
     void setMask(const core::ColorSet& mask);
     void toggleMasked(int index);
@@ -134,11 +125,10 @@ public:
 
     /// Regras usadas pelas ferramentas de desenho (máscara de cores).
     [[nodiscard]] core::WriteRules drawingRules() const;
-    /// Regras usadas ao gravar o buffer no canvas (transparência + máscara).
-    [[nodiscard]] core::WriteRules transferRules() const;
-    /// Regras RGBA ao gravar no canvas: com o efeito transparente ligado,
-    /// pixels totalmente transparentes (alfa 0) não são gravados.
-    [[nodiscard]] core::RgbaWriteRules rgbaTransferRules() const;
+    /// Regras de colar em imagens indexadas (máscara + efeito transparente).
+    [[nodiscard]] core::WriteRules pasteRules() const;
+    /// Regras de colar em imagens RGBA (efeito transparente: ignora alfa 0).
+    [[nodiscard]] core::RgbaWriteRules rgbaPasteRules() const;
 
     // --- Tom (retícula) ---
     [[nodiscard]] core::Tone tone() const { return m_tone; }
@@ -153,9 +143,13 @@ public:
     /// desenham, em qualquer modo de cor. Devolve true se o pixel mudou.
     bool plot(core::AnyImage& image, core::Point point, ColorRole role) const;
 
-    /// Pixel "de fundo" do modo da imagem: o índice da cor de fundo
-    /// (indexada) ou transparente (RGBA). Usado para limpar e preencher
-    /// áreas novas.
+    /// Verifica se uma ferramenta PODERIA pintar o pixel (dentro da imagem,
+    /// coberto pelo tom e não protegido pela máscara). Usado no destaque dos
+    /// pixels sob o mouse.
+    [[nodiscard]] bool canPlot(const core::AnyImage& image, core::Point point) const;
+
+    /// Imagem nova do modo de "image", toda com o pixel de fundo do modo: o
+    /// índice da cor de fundo (indexada) ou transparente (RGBA).
     [[nodiscard]] core::AnyImage blankLike(const core::AnyImage& image, core::Size size) const;
 
     // --- Ferramentas ---
@@ -166,25 +160,19 @@ public:
     /// Interrompe a operação em andamento da ferramenta atual.
     void cancelTool();
 
-    // --- Transferência canvas <-> área de desenho ---
-    /// Traz uma célula do canvas para o buffer (botão direito no canvas).
-    void getFromCanvas(Document* document, const core::Rect& cell);
-    /// Grava o buffer no canvas na posição da célula (botão esquerdo).
-    void putToCanvas(Document* document, const core::Rect& cell);
-    /// Traz o canvas inteiro do documento ativo para o buffer (F3).
-    void transferAll();
-
-    /// Última célula trazida do canvas para a área de desenho (usada pela
-    /// janela de animação para montar a lista de quadros).
+    // --- Célula para a animação ---
+    /// Célula da sub-grade sob o último clique na imagem (usada pela janela
+    /// de animação para montar a lista de quadros).
     [[nodiscard]] const std::optional<core::Rect>& lastCell() const { return m_lastCell; }
+    /// Registra o ponto clicado (convertido para a célula da sub-grade).
+    void setLastClickedPoint(core::Point point);
 
 signals:
     void activeDocumentChanged(gui::Document* document);
     void paletteChanged();
     void colorsChanged();
-    void zoomChanged(int factor);
     void gridsChanged();
-    void characterLayoutChanged(const core::CharacterLayout& layout);
+    void gridLayoutChanged(const core::GridLayout& layout);
     void transparentEffectChanged(bool enabled);
     void toolChanged(gui::ToolKind kind);
     void toneChanged();
@@ -198,15 +186,11 @@ signals:
     void activeColorRoleChanged(gui::ColorRole role);
 
 private:
-    /// Ajusta as cores ao tamanho da paleta e repassa a paleta ao buffer.
+    /// Ajusta as cores ao tamanho da paleta e avisa as views.
     void syncPalette();
-    /// Converte o buffer para o modo do documento ativo e avisa as views.
+    /// Avisa as views se o modo de cor em uso mudou.
     void syncColorMode();
 
-    /// Inclui a pilha no grupo e a torna ativa sempre que for alterada.
-    void trackUndoStack(QUndoStack* stack);
-
-    DrawBuffer* m_buffer = nullptr;
     QPointer<Document> m_activeDocument;
     QUndoGroup* m_undoGroup = nullptr;
     core::Palette m_defaultPalette;
@@ -217,10 +201,10 @@ private:
     core::Rgba m_secondaryRgba { }; ///< transparente: o botão direito apaga
     core::ColorMode m_colorMode = core::ColorMode::Indexed;
     ColorRole m_activeColorRole = ColorRole::Primary;
-    int m_zoom = 8;
+
     bool m_mainGridVisible = true;
     bool m_subGridVisible = false;
-    core::CharacterLayout m_layout;
+    core::GridLayout m_gridLayout;
     bool m_transparentEffect = false;
 
     std::optional<core::Rect> m_lastCell;

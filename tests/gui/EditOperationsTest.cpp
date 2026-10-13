@@ -2,16 +2,43 @@
 // EditOperationsTest.cpp — área de transferência, transformações e texto.
 // =============================================================================
 #include "gui/EditOperations.h"
-#include "gui/DrawBuffer.h"
+#include "gui/Document.h"
 #include "gui/EditorSession.h"
 
 #include <QTest>
 #include <QUndoStack>
 
+#include <memory>
+
 using namespace spritenator;
+using spritenator::gui::Document;
 using spritenator::gui::EditOperations;
 using spritenator::gui::EditorSession;
 using spritenator::gui::TransformKind;
+
+namespace {
+
+/// Sessão com um documento indexado 24x32 (cor 0) ativo.
+struct Fixture {
+    EditorSession session;
+    std::unique_ptr<Document> document = std::make_unique<Document>(
+        core::IndexedImage({ 24, 32 }, 0), core::Palette::makeDefault(core::ColorDepth::Bits8));
+    EditOperations operations { &session };
+
+    Fixture() { session.setActiveDocument(document.get()); }
+
+    /// Pinta um pixel diretamente (sem passar por ferramentas).
+    void setPixel(core::Point point, int color)
+    {
+        core::IndexedImage canvas = document->indexedCanvas();
+        canvas.setPixel(point, static_cast<core::ColorIndex>(color));
+        document->applyCanvas(canvas);
+    }
+
+    [[nodiscard]] int pixel(int x, int y) const { return document->indexedCanvas().pixel(x, y); }
+};
+
+} // namespace
 
 class EditOperationsTest final : public QObject {
     Q_OBJECT
@@ -20,85 +47,107 @@ private slots:
     /// Copiar e colar preserva os índices exatos (formato privado).
     void copyPastePreservesIndices()
     {
-        EditorSession session;
-        EditOperations operations(&session);
-        gui::DrawBuffer* buffer = session.buffer();
-        core::IndexedImage frame = buffer->indexedImage();
-        frame.setPixel({ 1, 1 }, 200);
-        buffer->replace(frame, gui::UndoLabel { gui::UndoOperation::Paste });
+        Fixture fixture;
+        fixture.setPixel({ 1, 1 }, 200);
 
-        buffer->setSelection(core::Rect { 1, 1, 2, 2 });
-        operations.copy();
+        fixture.document->setSelection(core::Rect { 1, 1, 2, 2 });
+        fixture.operations.copy();
         QVERIFY(EditOperations::canPaste());
 
-        buffer->setSelection(core::Rect { 10, 10, 1, 1 });
-        operations.paste();
-        QCOMPARE(int(buffer->indexedImage().pixel(10, 10)), 200);
-        QCOMPARE(buffer->selection().value(), (core::Rect { 10, 10, 2, 2 }));
+        fixture.document->setSelection(core::Rect { 10, 10, 1, 1 });
+        fixture.operations.paste();
+        QCOMPARE(fixture.pixel(10, 10), 200);
+        QCOMPARE(fixture.document->selection().value(), (core::Rect { 10, 10, 2, 2 }));
+        QCOMPARE(fixture.document->undoStack()->count(), 1);
+    }
+
+    /// F8 (efeito de cor transparente): ao colar, a cor de fundo não cobre
+    /// o que já existe na imagem.
+    void pasteHonoursTransparentEffect()
+    {
+        Fixture fixture;
+        fixture.session.setBackgroundColor(0);
+        fixture.setPixel({ 1, 0 }, 7); // origem: [0, 7]
+        fixture.setPixel({ 10, 10 }, 5); // destino: [5, ?]
+        fixture.document->setSelection(core::Rect { 0, 0, 2, 1 });
+        fixture.operations.copy();
+
+        fixture.session.setTransparentEffect(true);
+        fixture.document->setSelection(core::Rect { 10, 10, 1, 1 });
+        fixture.operations.paste();
+        QCOMPARE(fixture.pixel(10, 10), 5); // fundo da origem: ignorado
+        QCOMPARE(fixture.pixel(11, 10), 7);
     }
 
     /// Recortar = copiar + limpar com a cor de fundo.
     void cutClearsWithBackground()
     {
-        EditorSession session;
-        EditOperations operations(&session);
-        session.setBackgroundColor(3);
-        operations.selectAll();
-        operations.cut();
-        QCOMPARE(int(session.buffer()->indexedImage().pixel(0, 0)), 3);
-        QCOMPARE(session.buffer()->undoStack()->undoText(), QStringLiteral("Clear"));
+        Fixture fixture;
+        fixture.session.setBackgroundColor(3);
+        fixture.operations.selectAll();
+        QCOMPARE(fixture.document->selection().value(), (core::Rect { 0, 0, 24, 32 }));
+        fixture.operations.cut();
+        QCOMPARE(fixture.pixel(0, 0), 3);
+        QCOMPARE(fixture.document->undoStack()->undoText(), QStringLiteral("Clear"));
     }
 
     /// Transformações atuam só na seleção e geram um passo de desfazer cada.
     void transformsActOnSelection()
     {
-        EditorSession session;
-        EditOperations operations(&session);
-        gui::DrawBuffer* buffer = session.buffer();
-        core::IndexedImage frame = buffer->indexedImage();
-        frame.setPixel({ 0, 0 }, 5);
-        frame.setPixel({ 10, 0 }, 6);
-        buffer->replace(frame, gui::UndoLabel { gui::UndoOperation::Paste });
-        buffer->setSelection(core::Rect { 0, 0, 4, 4 });
+        Fixture fixture;
+        fixture.setPixel({ 0, 0 }, 5);
+        fixture.setPixel({ 10, 0 }, 6);
+        fixture.document->setSelection(core::Rect { 0, 0, 4, 4 });
 
-        const int before = buffer->undoStack()->count();
-        operations.transform(TransformKind::FlipHorizontal);
-        QCOMPARE(int(buffer->indexedImage().pixel(3, 0)), 5);
-        QCOMPARE(int(buffer->indexedImage().pixel(10, 0)), 6); // fora da seleção: intacto
-        QCOMPARE(buffer->undoStack()->count(), before + 1);
+        QUndoStack* undoStack = fixture.document->undoStack();
+        const int before = undoStack->count();
+        fixture.operations.transform(TransformKind::FlipHorizontal);
+        QCOMPARE(fixture.pixel(3, 0), 5);
+        QCOMPARE(fixture.pixel(10, 0), 6); // fora da seleção: intacto
+        QCOMPARE(undoStack->count(), before + 1);
 
-        buffer->undoStack()->undo();
-        QCOMPARE(int(buffer->indexedImage().pixel(0, 0)), 5);
+        undoStack->undo();
+        QCOMPARE(fixture.pixel(0, 0), 5);
     }
 
     /// Esticar amplia o conteúdo e seleciona a nova área.
     void stretchSelectsNewArea()
     {
-        EditorSession session;
-        EditOperations operations(&session);
-        gui::DrawBuffer* buffer = session.buffer();
-        core::IndexedImage frame = buffer->indexedImage();
-        frame.setPixel({ 0, 0 }, 4);
-        buffer->replace(frame, gui::UndoLabel { gui::UndoOperation::Paste });
-        buffer->setSelection(core::Rect { 0, 0, 2, 2 });
-        operations.stretch({ 4, 4 });
-        QCOMPARE(int(buffer->indexedImage().pixel(1, 1)), 4);
-        QCOMPARE(buffer->selection().value(), (core::Rect { 0, 0, 4, 4 }));
+        Fixture fixture;
+        fixture.setPixel({ 0, 0 }, 4);
+        fixture.document->setSelection(core::Rect { 0, 0, 2, 2 });
+        fixture.operations.stretch({ 4, 4 });
+        QCOMPARE(fixture.pixel(1, 1), 4);
+        QCOMPARE(fixture.document->selection().value(), (core::Rect { 0, 0, 4, 4 }));
     }
 
     /// Sombra: tudo que não é fundo vira a cor de desenho.
     void shadowUsesDrawColor()
     {
+        Fixture fixture;
+        fixture.setPixel({ 2, 2 }, 8);
+        fixture.session.setBackgroundColor(0);
+        fixture.session.setDrawColor(1);
+        fixture.operations.prepareShadow();
+        QCOMPARE(fixture.pixel(2, 2), 1);
+        QCOMPARE(fixture.pixel(3, 3), 0);
+    }
+
+    /// Sem documento ativo, nenhuma operação faz nada (nem quebra).
+    void operationsWithoutDocumentAreHarmless()
+    {
         EditorSession session;
         EditOperations operations(&session);
-        core::IndexedImage frame = session.buffer()->indexedImage();
-        frame.setPixel({ 2, 2 }, 8);
-        session.buffer()->replace(frame, gui::UndoLabel { gui::UndoOperation::Paste });
-        session.setBackgroundColor(0);
-        session.setDrawColor(1);
+        operations.selectAll();
+        operations.copy();
+        operations.cut();
+        operations.paste();
+        operations.clear();
+        operations.transform(TransformKind::RotateClockwise);
+        operations.rotate(45);
+        operations.stretch({ 2, 2 });
         operations.prepareShadow();
-        QCOMPARE(int(session.buffer()->indexedImage().pixel(2, 2)), 1);
-        QCOMPARE(int(session.buffer()->indexedImage().pixel(3, 3)), 0);
+        QVERIFY(session.activeDocument() == nullptr);
     }
 
     /// Texto: rasterizado sem suavização e desenhado com a cor de desenho.
@@ -112,11 +161,10 @@ private slots:
         QVERIFY(used.test(1));
         QCOMPARE(used.count(), std::size_t { 2 }); // só 0 e 1: nada de meios-tons
 
-        EditorSession session;
-        EditOperations operations(&session);
-        session.setDrawColor(9);
-        operations.drawText(QStringLiteral("H"), font);
-        QVERIFY(session.buffer()->indexedImage().usedColors().test(9));
+        Fixture fixture;
+        fixture.session.setDrawColor(9);
+        fixture.operations.drawText(QStringLiteral("H"), font);
+        QVERIFY(fixture.document->indexedCanvas().usedColors().test(9));
         QVERIFY(EditOperations::renderText(QString(), font).isEmpty());
     }
 };

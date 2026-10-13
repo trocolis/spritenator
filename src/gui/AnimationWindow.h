@@ -6,9 +6,9 @@
 // canvas atual do documento ativo — editar o desenho atualiza a animação ao
 // vivo.
 //
-// Como adicionar quadros: traga uma célula para a área de desenho (botão
-// direito no canvas) e clique em "Add Cell", ou em "Walk Cycle" para gerar
-// a sequência 1-2-3-2 do RPG Maker a partir dessa célula.
+// Como adicionar quadros: clique na imagem dentro de uma célula da sub-grade
+// (o "tamanho do personagem") e use "Add Cell", ou "Walk Cycle" para gerar a
+// sequência 1-2-3-2 do RPG Maker a partir dessa célula.
 // =============================================================================
 #pragma once
 
@@ -60,9 +60,9 @@ public:
 
     [[nodiscard]] const core::Animation& animation() const { return m_animation; }
 
-    /// Adiciona a última célula transferida para a área de desenho.
+    /// Adiciona a célula da sub-grade do último clique na imagem.
     void addLastCell();
-    /// Adiciona o ciclo de caminhada a partir da última célula transferida.
+    /// Adiciona o ciclo de caminhada a partir dessa célula.
     void addWalkCycle();
 
 protected:

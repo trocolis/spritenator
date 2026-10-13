@@ -4,8 +4,6 @@
 #include "EditorSession.h"
 
 #include "Document.h"
-#include "DrawBuffer.h"
-#include "commands/ImageCommands.h"
 #include "tools/PenTool.h"
 #include "tools/ShapeTool.h"
 #include "tools/SimpleTools.h"
@@ -15,8 +13,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <cstdlib>
-#include <iterator>
 #include <variant>
 
 namespace spritenator::gui {
@@ -26,10 +22,6 @@ EditorSession::EditorSession(QObject* parent)
     , m_undoGroup(new QUndoGroup(this))
     , m_defaultPalette(core::Palette::makeDefault(core::ColorDepth::Bits8))
 {
-    m_buffer = new DrawBuffer(m_layout.cellSize, this);
-    trackUndoStack(m_buffer->undoStack());
-    m_undoGroup->setActiveStack(m_buffer->undoStack());
-
     // Registro das ferramentas disponíveis (uma instância de cada).
     m_tools.emplace(ToolKind::Select, std::make_unique<SelectTool>());
     m_tools.emplace(ToolKind::Zoom, std::make_unique<ZoomTool>());
@@ -63,24 +55,21 @@ void EditorSession::setActiveDocument(Document* document)
         return;
     }
     if (m_activeDocument) {
+        m_activeDocument->cancelEdit(); // não deixa um traço pela metade
         disconnect(m_activeDocument, nullptr, this, nullptr);
     }
-    // Se o usuário estava desfazendo edições do documento anterior, passa a
-    // desfazer as do novo; se estava no buffer, permanece no buffer.
-    const bool documentStackWasActive = m_undoGroup->activeStack() != m_buffer->undoStack();
-
     m_activeDocument = document;
     if (document != nullptr) {
-        trackUndoStack(document->undoStack());
+        // Desfazer/refazer passam a agir sobre o documento ativo.
+        if (!m_undoGroup->stacks().contains(document->undoStack())) {
+            m_undoGroup->addStack(document->undoStack());
+        }
+        m_undoGroup->setActiveStack(document->undoStack());
         connect(document, &Document::paletteChanged, this, &EditorSession::syncPalette);
         connect(document, &Document::colorModeChanged, this, &EditorSession::syncColorMode);
-        if (documentStackWasActive) {
-            m_undoGroup->setActiveStack(document->undoStack());
-        }
-    } else if (documentStackWasActive) {
-        m_undoGroup->setActiveStack(m_buffer->undoStack());
+    } else {
+        m_undoGroup->setActiveStack(nullptr);
     }
-
     syncPalette();
     syncColorMode();
     emit activeDocumentChanged(document);
@@ -93,9 +82,6 @@ core::ColorMode EditorSession::colorMode() const
 
 void EditorSession::syncColorMode()
 {
-    // O buffer é compartilhado: passa a ter o modo do documento ativo (a
-    // conversão usa a paleta do documento quando um dos lados é indexado).
-    m_buffer->convertTo(colorMode(), palette());
     if (colorMode() != m_colorMode) {
         m_colorMode = colorMode();
         emit colorModeChanged(m_colorMode);
@@ -114,23 +100,10 @@ void EditorSession::syncPalette()
     m_drawColor = static_cast<core::ColorIndex>(std::min<int>(m_drawColor, last));
     m_backgroundColor = static_cast<core::ColorIndex>(std::min<int>(m_backgroundColor, last));
 
-    m_buffer->setPalette(palette());
     emit paletteChanged();
     if (clamped) {
         emit colorsChanged();
     }
-}
-
-void EditorSession::trackUndoStack(QUndoStack* stack)
-{
-    if (m_undoGroup->stacks().contains(stack)) {
-        return;
-    }
-    m_undoGroup->addStack(stack);
-    // Qualquer alteração na pilha (push/undo/redo) a torna a pilha ativa. Assim
-    // Ctrl+Z desfaz sempre o alvo editado por último (buffer ou canvas).
-    connect(stack, &QUndoStack::indexChanged, this,
-        [this, stack] { m_undoGroup->setActiveStack(stack); });
 }
 
 // -----------------------------------------------------------------------------
@@ -157,33 +130,6 @@ void EditorSession::setBackgroundColor(int index)
 // -----------------------------------------------------------------------------
 // Visualização
 // -----------------------------------------------------------------------------
-void EditorSession::setZoom(int factor)
-{
-    // Aceita apenas os níveis conhecidos (escolhe o mais próximo).
-    const auto nearest = std::min_element(std::begin(kZoomLevels), std::end(kZoomLevels),
-        [factor](int a, int b) { return std::abs(a - factor) < std::abs(b - factor); });
-    if (*nearest != m_zoom) {
-        m_zoom = *nearest;
-        emit zoomChanged(m_zoom);
-    }
-}
-
-void EditorSession::zoomIn()
-{
-    const auto next = std::upper_bound(std::begin(kZoomLevels), std::end(kZoomLevels), m_zoom);
-    if (next != std::end(kZoomLevels)) {
-        setZoom(*next);
-    }
-}
-
-void EditorSession::zoomOut()
-{
-    const auto current = std::lower_bound(std::begin(kZoomLevels), std::end(kZoomLevels), m_zoom);
-    if (current != std::begin(kZoomLevels)) {
-        setZoom(*std::prev(current));
-    }
-}
-
 void EditorSession::setMainGridVisible(bool visible)
 {
     if (visible != m_mainGridVisible) {
@@ -200,21 +146,12 @@ void EditorSession::setSubGridVisible(bool visible)
     }
 }
 
-void EditorSession::setCharacterLayout(const core::CharacterLayout& layout)
+void EditorSession::setGridLayout(const core::GridLayout& layout)
 {
-    if (layout == m_layout) {
-        return;
+    if (layout != m_gridLayout && !layout.mainGrid.isEmpty() && !layout.subGrid.isEmpty()) {
+        m_gridLayout = layout;
+        emit gridLayoutChanged(m_gridLayout);
     }
-    const bool cellSizeChanged = layout.cellSize != m_layout.cellSize;
-    m_layout = layout;
-    if (cellSizeChanged && m_buffer->size() != layout.cellSize) {
-        // O buffer acompanha o tamanho da célula (conteúdo preservado no
-        // canto; a área nova recebe o pixel de fundo do modo).
-        core::AnyImage resized = blankLike(m_buffer->image(), layout.cellSize);
-        core::pasteImage(resized, m_buffer->image(), { 0, 0 });
-        m_buffer->replace(resized, UndoLabel { UndoOperation::CharacterSize });
-    }
-    emit characterLayoutChanged(m_layout);
 }
 
 // -----------------------------------------------------------------------------
@@ -303,18 +240,18 @@ void EditorSession::setAutoMask(bool enabled)
     emit autoMaskChanged(enabled);
 }
 
-core::RgbaWriteRules EditorSession::rgbaTransferRules() const
+core::RgbaWriteRules EditorSession::rgbaPasteRules() const
 {
     core::RgbaWriteRules rules;
-    rules.skipTransparent = m_transparentEffect; // alfa 0 não é gravado
+    rules.skipTransparent = m_transparentEffect; // alfa 0 não é colado
     return rules;
 }
 
-core::WriteRules EditorSession::transferRules() const
+core::WriteRules EditorSession::pasteRules() const
 {
     core::WriteRules rules = drawingRules();
     if (m_transparentEffect) {
-        // "Transparent Colour Effect": a cor de fundo não é copiada.
+        // "Transparent Colour Effect": a cor de fundo não é colada.
         rules.transparentIndex = m_backgroundColor;
     }
     return rules;
@@ -332,6 +269,18 @@ bool EditorSession::plot(core::AnyImage& image, core::Point point, ColorRole rol
     }
     // RGBA: substitui o pixel pela cor exata, inclusive o alfa (sem mistura).
     return std::get<core::RgbaImage>(image).setPixel(point, rgbaFor(role));
+}
+
+bool EditorSession::canPlot(const core::AnyImage& image, core::Point point) const
+{
+    if (!core::boundsOf(image).contains(point) || !core::toneCovers(m_tone, point, m_toneShift)) {
+        return false;
+    }
+    // Máscara: pixels de cores protegidas não podem ser alterados.
+    if (const auto* indexed = std::get_if<core::IndexedImage>(&image)) {
+        return !m_mask.test(indexed->pixel(point.x, point.y));
+    }
+    return true;
 }
 
 core::AnyImage EditorSession::blankLike(const core::AnyImage& image, core::Size size) const
@@ -420,64 +369,14 @@ void EditorSession::cancelTool()
 }
 
 // -----------------------------------------------------------------------------
-// Transferência canvas <-> área de desenho
+// Célula para a animação
 // -----------------------------------------------------------------------------
-void EditorSession::getFromCanvas(Document* document, const core::Rect& cell)
+void EditorSession::setLastClickedPoint(core::Point point)
 {
-    if (document == nullptr || cell.isEmpty()) {
-        return;
-    }
-    cancelTool();
-    // O buffer adota o modo do documento de origem (normalmente já é o ativo).
-    m_buffer->convertTo(document->colorMode(), document->palette());
-    // Áreas da célula fora do canvas viram o pixel de fundo do modo.
-    core::AnyImage region = blankLike(document->canvas(), cell.size());
-    core::pasteImage(region, document->canvas(), core::Point { } - cell.topLeft());
-    m_buffer->replace(region, UndoLabel { UndoOperation::GetCell });
-    m_buffer->setSelection(std::nullopt);
-    m_lastCell = cell;
-    emit lastCellChanged(cell);
-}
-
-void EditorSession::putToCanvas(Document* document, const core::Rect& cell)
-{
-    if (document == nullptr) {
-        return;
-    }
-    cancelTool();
-    const core::Rect target = core::Rect::fromPointAndSize(cell.topLeft(), m_buffer->size())
-                                  .intersected(core::boundsOf(document->canvas()));
-    if (target.isEmpty()) {
-        return;
-    }
-    // Se o documento for de outro modo, o conteúdo é convertido só para esta
-    // gravação (o buffer em si não muda).
-    const core::AnyImage source
-        = core::convertImage(m_buffer->image(), document->colorMode(), document->palette());
-    const core::Point offset = cell.topLeft() - target.topLeft();
-
-    // "Depois" = canvas atual com o buffer colado segundo as regras do modo.
-    const core::AnyImage before = core::copyRegion(document->canvas(), target);
-    core::AnyImage after = before;
-    if (auto* indexed = std::get_if<core::IndexedImage>(&after)) {
-        indexed->paste(std::get<core::IndexedImage>(source), offset, transferRules());
-    } else {
-        std::get<core::RgbaImage>(after).paste(
-            std::get<core::RgbaImage>(source), offset, rgbaTransferRules());
-    }
-    if (after == before) {
-        return;
-    }
-    document->undoStack()->push(new RegionCommand(document, target.topLeft(), before,
-        std::move(after), UndoLabel { UndoOperation::PutCell }));
-}
-
-void EditorSession::transferAll()
-{
-    if (m_activeDocument) {
-        cancelTool();
-        m_buffer->convertTo(m_activeDocument->colorMode(), m_activeDocument->palette());
-        m_buffer->replace(m_activeDocument->canvas(), UndoLabel { UndoOperation::TransferAll });
+    const core::Rect cell = m_gridLayout.subGridCellAt(point);
+    if (cell != m_lastCell) {
+        m_lastCell = cell;
+        emit lastCellChanged(cell);
     }
 }
 

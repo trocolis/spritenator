@@ -12,14 +12,10 @@ add_library(spritenator_gui STATIC
     AnimationWindow.h
     AppSettings.cpp
     AppSettings.h
-    CanvasView.cpp
-    CanvasView.h
-    CanvasWindow.cpp
-    CanvasWindow.h
+    CanvasEditor.cpp
+    CanvasEditor.h
     Document.cpp
     Document.h
-    DrawBuffer.cpp
-    DrawBuffer.h
     EditOperations.cpp
     EditOperations.h
     EditorSession.cpp
@@ -45,8 +41,8 @@ add_library(spritenator_gui STATIC
     dialogs/BackupFolderDialog.h
     dialogs/CanvasSizeDialog.cpp
     dialogs/CanvasSizeDialog.h
-    dialogs/CharacterSizeDialog.cpp
-    dialogs/CharacterSizeDialog.h
+    dialogs/GridDialog.cpp
+    dialogs/GridDialog.h
     dialogs/LoadPaletteDialog.cpp
     dialogs/LoadPaletteDialog.h
     dialogs/NewImageDialog.cpp
@@ -71,10 +67,6 @@ add_library(spritenator_gui STATIC
     widgets/ColorSwatch.h
     widgets/ColorWheel.cpp
     widgets/ColorWheel.h
-    widgets/DrawAreaView.cpp
-    widgets/DrawAreaView.h
-    widgets/OrgAreaView.cpp
-    widgets/OrgAreaView.h
     widgets/PaletteGrid.cpp
     widgets/PaletteGrid.h
     widgets/PaletteView.cpp

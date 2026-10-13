@@ -23,6 +23,8 @@ public:
     void move(EditorSession& session, core::Point point) override;
     void release(EditorSession& session, core::Point point) override;
     void cancel(EditorSession& session) override;
+    [[nodiscard]] std::vector<core::Point> footprint(
+        const EditorSession& session, core::Point point) const override;
 
 private:
     /// Desenha um segmento de reta com o pincel atual.

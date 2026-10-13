@@ -88,48 +88,100 @@
         <translation>Recor&amp;tar</translation>
     </message>
     <message>
-        <source>Move the selection of the drawing area to the clipboard</source>
-        <translation>Move a seleção da área de desenho para a área de transferência</translation>
+        <source>Move the selection to the clipboard</source>
+        <translation>Move a seleção para a área de transferência</translation>
+    </message>
+    <message>
+        <source>Copy the selection to the clipboard</source>
+        <translation>Copia a seleção para a área de transferência</translation>
+    </message>
+    <message>
+        <source>Paste the clipboard contents into the image</source>
+        <translation>Cola o conteúdo da área de transferência na imagem</translation>
+    </message>
+    <message>
+        <source>Erase the selection without copying it</source>
+        <translation>Apaga a seleção sem copiá-la</translation>
+    </message>
+    <message>
+        <source>Select the whole image</source>
+        <translation>Seleciona a imagem inteira</translation>
+    </message>
+    <message>
+        <source>Render text into the image</source>
+        <translation>Desenha um texto na imagem</translation>
+    </message>
+    <message>
+        <source>&amp;Grids...</source>
+        <translation>&amp;Grades...</translation>
+    </message>
+    <message>
+        <source>Change the spacing of the main grid and of the sub grid (character size)</source>
+        <translation>Muda o espaçamento da grade principal e da sub-grade (tamanho do personagem)</translation>
+    </message>
+    <message>
+        <source>Show or hide the main grid</source>
+        <translation>Mostra ou oculta a grade principal</translation>
+    </message>
+    <message>
+        <source>Show or hide the sub grid (character cells)</source>
+        <translation>Mostra ou oculta a sub-grade (células do personagem)</translation>
+    </message>
+    <message>
+        <source>Zoom &amp;In</source>
+        <translation>Aumentar &amp;zoom</translation>
+    </message>
+    <message>
+        <source>Magnify the image</source>
+        <translation>Amplia a imagem</translation>
+    </message>
+    <message>
+        <source>Zoom &amp;Out</source>
+        <translation>&amp;Diminuir zoom</translation>
+    </message>
+    <message>
+        <source>Reduce the image</source>
+        <translation>Reduz a imagem</translation>
+    </message>
+    <message>
+        <source>Actual Si&amp;ze (100%)</source>
+        <translation>&amp;Tamanho real (100%)</translation>
+    </message>
+    <message>
+        <source>Show the image without magnification</source>
+        <translation>Mostra a imagem sem ampliação</translation>
+    </message>
+    <message>
+        <source>&amp;Fit to Window</source>
+        <translation>Ajustar à &amp;janela</translation>
+    </message>
+    <message>
+        <source>Choose the largest zoom that shows the whole image</source>
+        <translation>Escolhe o maior zoom que mostra a imagem inteira</translation>
+    </message>
+    <message>
+        <source>Do not paste pixels of the background color (or fully transparent ones)</source>
+        <translation>Não cola os pixels da cor de fundo (nem os totalmente transparentes)</translation>
     </message>
     <message>
         <source>&amp;Copy</source>
         <translation>&amp;Copiar</translation>
     </message>
     <message>
-        <source>Copy the selection of the drawing area to the clipboard</source>
-        <translation>Copia a seleção da área de desenho para a área de transferência</translation>
-    </message>
-    <message>
         <source>&amp;Paste</source>
         <translation>Co&amp;lar</translation>
-    </message>
-    <message>
-        <source>Paste the clipboard contents into the drawing area</source>
-        <translation>Cola o conteúdo da área de transferência na área de desenho</translation>
     </message>
     <message>
         <source>C&amp;lear</source>
         <translation>Li&amp;mpar</translation>
     </message>
     <message>
-        <source>Erase the selection of the drawing area without copying it</source>
-        <translation>Apaga a seleção da área de desenho sem copiá-la</translation>
-    </message>
-    <message>
         <source>Select &amp;All</source>
         <translation>&amp;Selecionar tudo</translation>
     </message>
     <message>
-        <source>Select the whole drawing area</source>
-        <translation>Seleciona a área de desenho inteira</translation>
-    </message>
-    <message>
         <source>Text &amp;Input...</source>
         <translation>Entrada de te&amp;xto...</translation>
-    </message>
-    <message>
-        <source>Render text into the drawing area</source>
-        <translation>Desenha um texto na área de desenho</translation>
     </message>
     <message>
         <source>Prepare &amp;Shadow</source>
@@ -140,36 +192,12 @@
         <translation>Substitui toda cor diferente da cor de fundo pela cor de desenho</translation>
     </message>
     <message>
-        <source>&amp;Character Size...</source>
-        <translation>&amp;Tamanho do personagem...</translation>
-    </message>
-    <message>
-        <source>Change the character cell size and the sub grid</source>
-        <translation>Altera o tamanho da célula de personagem e a sub-grade</translation>
-    </message>
-    <message>
         <source>&amp;Main Grid</source>
         <translation>Grade &amp;principal</translation>
     </message>
     <message>
-        <source>Show or hide the main grid of the drawing area</source>
-        <translation>Mostra ou oculta a grade principal da área de desenho</translation>
-    </message>
-    <message>
         <source>&amp;Sub Grid</source>
         <translation>&amp;Sub-grade</translation>
-    </message>
-    <message>
-        <source>Show or hide the sub grid of the drawing area</source>
-        <translation>Mostra ou oculta a sub-grade da área de desenho</translation>
-    </message>
-    <message>
-        <source>Zoom %1x (&amp;%2)</source>
-        <translation>Zoom %1x (&amp;%2)</translation>
-    </message>
-    <message>
-        <source>Show the drawing area magnified %1 times</source>
-        <translation>Mostra a área de desenho ampliada %1 vezes</translation>
     </message>
     <message>
         <source>&amp;Animation...</source>
@@ -196,20 +224,8 @@
         <translation>Apaga o canvas inteiro</translation>
     </message>
     <message>
-        <source>&amp;Transfer All</source>
-        <translation>&amp;Transferir tudo</translation>
-    </message>
-    <message>
-        <source>Transfer the whole canvas to the drawing area</source>
-        <translation>Transfere o canvas inteiro para a área de desenho</translation>
-    </message>
-    <message>
         <source>&amp;Transparent Color Effect</source>
         <translation>Efeito de cor &amp;transparente</translation>
-    </message>
-    <message>
-        <source>Treat the background color as transparent when transferring images</source>
-        <translation>Trata a cor de fundo como transparente ao transferir imagens</translation>
     </message>
     <message>
         <source>&amp;Load Palette...</source>
@@ -276,38 +292,6 @@
         <translation>Interpola a paleta entre a cor de desenho e a cor de fundo</translation>
     </message>
     <message>
-        <source>&amp;Cascade</source>
-        <translation>&amp;Cascata</translation>
-    </message>
-    <message>
-        <source>Arrange the canvas windows in cascade</source>
-        <translation>Organiza as janelas de canvas em cascata</translation>
-    </message>
-    <message>
-        <source>Tile &amp;Horizontally</source>
-        <translation>Lado a lado &amp;horizontal</translation>
-    </message>
-    <message>
-        <source>Arrange the canvas windows one above the other</source>
-        <translation>Organiza as janelas de canvas uma sobre a outra</translation>
-    </message>
-    <message>
-        <source>Tile &amp;Vertically</source>
-        <translation>Lado a lado &amp;vertical</translation>
-    </message>
-    <message>
-        <source>Arrange the canvas windows side by side</source>
-        <translation>Organiza as janelas de canvas lado a lado</translation>
-    </message>
-    <message>
-        <source>&amp;Fit</source>
-        <translation>&amp;Ajustar</translation>
-    </message>
-    <message>
-        <source>Resize the canvas window to fit the canvas</source>
-        <translation>Redimensiona a janela para caber o canvas</translation>
-    </message>
-    <message>
         <source>&amp;Reverse Canvas</source>
         <translation>&amp;Inverter lados</translation>
     </message>
@@ -350,8 +334,16 @@
         <translation>&amp;Adicionar célula</translation>
     </message>
     <message>
+        <source>Add the sub grid cell (character cell) last clicked on the image</source>
+        <translation>Adiciona a célula da sub-grade (célula do personagem) do último clique na imagem</translation>
+    </message>
+    <message>
         <source>&amp;Walk Cycle</source>
         <translation>Ciclo de &amp;caminhada</translation>
+    </message>
+    <message>
+        <source>Add the RPG Maker walk cycle (frames 1-2-3-2) starting at the last clicked cell</source>
+        <translation>Adiciona o ciclo de caminhada do RPG Maker (quadros 1-2-3-2) a partir da última célula clicada</translation>
     </message>
     <message>
         <source>&amp;Pause</source>
@@ -364,14 +356,6 @@
     <message>
         <source> ms</source>
         <translation> ms</translation>
-    </message>
-    <message>
-        <source>Add the cell last transferred to the drawing area (right-click on the canvas)</source>
-        <translation>Adiciona a última célula trazida para a área de desenho (botão direito no canvas)</translation>
-    </message>
-    <message>
-        <source>Add the RPG Maker walk cycle (frames 1-2-3-2) of the last transferred cell</source>
-        <translation>Adiciona o ciclo de caminhada do RPG Maker (quadros 1-2-3-2) da última célula trazida</translation>
     </message>
     <message>
         <source>&amp;Remove</source>
@@ -461,49 +445,6 @@
     </message>
 </context>
 <context>
-    <name>spritenator::gui::CharacterSizeDialog</name>
-    <message>
-        <source>Character Size</source>
-        <translation>Tamanho do personagem</translation>
-    </message>
-    <message>
-        <source>Character basic size</source>
-        <translation>Tamanho básico do personagem</translation>
-    </message>
-    <message>
-        <source>Width:</source>
-        <translation>Largura:</translation>
-    </message>
-    <message>
-        <source>Height:</source>
-        <translation>Altura:</translation>
-    </message>
-    <message>
-        <source>Sub grid spacing</source>
-        <translation>Espaçamento da sub-grade</translation>
-    </message>
-    <message>
-        <source>Show the canvas at double size</source>
-        <translation>Mostrar o canvas em tamanho dobrado</translation>
-    </message>
-    <message>
-        <source>Move the cell cursor in half-character steps</source>
-        <translation>Mover o cursor de célula em passos de meio personagem</translation>
-    </message>
-    <message>
-        <source>Do not change the mouse cursor shape</source>
-        <translation>Não alterar o formato do cursor do mouse</translation>
-    </message>
-    <message>
-        <source>Options</source>
-        <translation>Opções</translation>
-    </message>
-    <message>
-        <source>All sizes must be positive numbers.</source>
-        <translation>Todos os tamanhos devem ser números positivos.</translation>
-    </message>
-</context>
-<context>
     <name>spritenator::gui::ColorEditor</name>
     <message>
         <source>Primary color (left button). Click to edit it with the sliders.</source>
@@ -548,6 +489,37 @@ Botão esquerdo: cor primária. Botão direito: cor secundária.</translation>
     <message>
         <source>Untitled%1</source>
         <translation>SemTitulo%1</translation>
+    </message>
+</context>
+<context>
+    <name>spritenator::gui::GridDialog</name>
+    <message>
+        <source>Grids</source>
+        <translation>Grades</translation>
+    </message>
+    <message>
+        <source>Main grid</source>
+        <translation>Grade principal</translation>
+    </message>
+    <message>
+        <source>Width:</source>
+        <translation>Largura:</translation>
+    </message>
+    <message>
+        <source>Height:</source>
+        <translation>Altura:</translation>
+    </message>
+    <message>
+        <source>Sub grid (character size)</source>
+        <translation>Sub-grade (tamanho do personagem)</translation>
+    </message>
+    <message>
+        <source>The main grid is hidden while its lines would be too close together on screen. The sub grid also defines the animation frames.</source>
+        <translation>A grade principal fica oculta enquanto as linhas ficariam próximas demais na tela. A sub-grade também define os quadros da animação.</translation>
+    </message>
+    <message>
+        <source>All sizes must be positive numbers.</source>
+        <translation>Todos os tamanhos devem ser números positivos.</translation>
     </message>
 </context>
 <context>
@@ -624,8 +596,8 @@ Botão esquerdo: cor primária. Botão direito: cor secundária.</translation>
         <translation>Esticar ou encolher...</translation>
     </message>
     <message>
-        <source> (selection or whole drawing area)</source>
-        <translation> (seleção ou área de desenho inteira)</translation>
+        <source> (selection or whole image)</source>
+        <translation> (seleção ou imagem inteira)</translation>
     </message>
     <message>
         <source>Free Rotation</source>
@@ -754,10 +726,6 @@ Botão esquerdo: cor primária. Botão direito: cor secundária.</translation>
         <translation>Pronto</translation>
     </message>
     <message>
-        <source>Draw</source>
-        <translation>Desenho</translation>
-    </message>
-    <message>
         <source>&amp;Undo %1</source>
         <translation>&amp;Desfazer %1</translation>
     </message>
@@ -814,10 +782,6 @@ Salvar mesmo assim?</translation>
 Do you want to save your changes?</source>
         <translation>&quot;%1&quot; foi modificado.
 Deseja salvar as alterações?</translation>
-    </message>
-    <message>
-        <source>Canvas</source>
-        <translation>Canvas</translation>
     </message>
     <message>
         <source>Save Palette</source>
@@ -921,13 +885,6 @@ Deseja salvar as alterações?</translation>
     <message>
         <source>Use the palette of the active image in the new image</source>
         <translation>Usa a paleta da imagem ativa na imagem nova</translation>
-    </message>
-</context>
-<context>
-    <name>spritenator::gui::OrgAreaView</name>
-    <message>
-        <source>Actual size preview of the drawing area</source>
-        <translation>Prévia em tamanho real da área de desenho</translation>
     </message>
 </context>
 <context>

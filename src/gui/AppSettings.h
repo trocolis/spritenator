@@ -6,7 +6,7 @@
 // =============================================================================
 #pragma once
 
-#include "core/CharacterLayout.h"
+#include "core/GridLayout.h"
 
 #include <QByteArray>
 #include <QString>
@@ -16,7 +16,6 @@ namespace spritenator::gui {
 
 /// Preferências de exibição restauradas ao abrir a aplicação.
 struct ViewSettings {
-    int zoom = 8;
     bool mainGridVisible = true;
     bool subGridVisible = false;
     bool transparentEffect = false;
@@ -44,9 +43,9 @@ public:
     [[nodiscard]] QString backupFolder() const;
     void setBackupFolder(const QString& folder);
 
-    // --- Grade de personagens ---
-    [[nodiscard]] core::CharacterLayout characterLayout() const;
-    void setCharacterLayout(const core::CharacterLayout& layout);
+    // --- Grades (principal e sub-grade) ---
+    [[nodiscard]] core::GridLayout gridLayout() const;
+    void setGridLayout(const core::GridLayout& layout);
 
     // --- Idioma da interface ("pt_BR", "en"...; vazio = idioma do sistema) ---
     [[nodiscard]] QString language() const;

@@ -8,7 +8,7 @@
 // =============================================================================
 #include "EditOperations.h"
 
-#include "DrawBuffer.h"
+#include "Document.h"
 #include "EditorSession.h"
 #include "commands/ImageCommands.h"
 #include "core/ColorConversion.h"
@@ -85,7 +85,7 @@ std::optional<core::AnyImage> decodeImage(const QByteArray& bytes)
     return complete ? std::optional<core::AnyImage>(std::move(image)) : std::nullopt;
 }
 
-/// Converte uma imagem de outro programa para o modo do buffer: RGBA é
+/// Converte uma imagem de outro programa para o modo do documento: RGBA é
 /// copiada sem perdas; para indexada, cada cor vira a mais próxima da paleta
 /// (pixels quase transparentes viram o índice 0).
 core::AnyImage importForeignImage(
@@ -118,15 +118,18 @@ void EditOperations::applyToWorkArea(const UndoLabel& undoLabel,
     const std::function<core::AnyImage(const core::AnyImage&)>& function)
 {
     m_session->cancelTool();
-    DrawBuffer* buffer = m_session->buffer();
-    const core::Rect area = buffer->workArea();
-    core::AnyImage before = core::copyRegion(buffer->image(), area);
+    Document* document = m_session->activeDocument();
+    if (document == nullptr) {
+        return;
+    }
+    const core::Rect area = document->workArea();
+    core::AnyImage before = core::copyRegion(document->canvas(), area);
     core::AnyImage after = function(before);
     if (after == before) {
         return; // nada mudou: não polui o histórico
     }
-    buffer->undoStack()->push(
-        new RegionCommand(buffer, area.topLeft(), std::move(before), std::move(after), undoLabel));
+    document->undoStack()->push(new RegionCommand(
+        document, area.topLeft(), std::move(before), std::move(after), undoLabel));
 }
 
 /// Pixel usado para preencher lacunas (rotação) no modo do tipo informado.
@@ -144,8 +147,11 @@ template <typename Pixel> Pixel EditOperations::fillPixel() const
 // -----------------------------------------------------------------------------
 void EditOperations::copy()
 {
-    const DrawBuffer* buffer = m_session->buffer();
-    const core::AnyImage region = core::copyRegion(buffer->image(), buffer->workArea());
+    const Document* document = m_session->activeDocument();
+    if (document == nullptr) {
+        return;
+    }
+    const core::AnyImage region = core::copyRegion(document->canvas(), document->workArea());
 
     auto* mime = new QMimeData;
     mime->setData(mimeType(), encodeImage(region));
@@ -172,8 +178,11 @@ void EditOperations::paste()
     if (mime == nullptr) {
         return;
     }
-    DrawBuffer* buffer = m_session->buffer();
-    const core::ColorMode mode = buffer->colorMode();
+    Document* document = m_session->activeDocument();
+    if (document == nullptr) {
+        return;
+    }
+    const core::ColorMode mode = document->colorMode();
     std::optional<core::AnyImage> pasted;
     if (mime->hasFormat(mimeType())) {
         // Do próprio Spritenator: índices/cores exatos; se o modo for outro,
@@ -191,23 +200,25 @@ void EditOperations::paste()
 
     m_session->cancelTool();
     const core::Point origin
-        = buffer->selection() ? buffer->selection()->topLeft() : core::Point { };
+        = document->selection() ? document->selection()->topLeft() : core::Point { };
     const core::Rect target = core::Rect::fromPointAndSize(origin, core::sizeOf(*pasted))
-                                  .intersected(core::boundsOf(buffer->image()));
+                                  .intersected(core::boundsOf(document->canvas()));
     if (target.isEmpty()) {
         return;
     }
-    core::AnyImage before = core::copyRegion(buffer->image(), target);
+    core::AnyImage before = core::copyRegion(document->canvas(), target);
     core::AnyImage after = before;
     const core::Point offset = origin - target.topLeft();
+    // Regras de colar: máscara + "efeito de cor transparente" (F8).
     if (auto* indexed = std::get_if<core::IndexedImage>(&after)) {
-        indexed->paste(std::get<core::IndexedImage>(*pasted), offset, m_session->drawingRules());
+        indexed->paste(std::get<core::IndexedImage>(*pasted), offset, m_session->pasteRules());
     } else {
-        core::pasteImage(after, *pasted, offset);
+        std::get<core::RgbaImage>(after).paste(
+            std::get<core::RgbaImage>(*pasted), offset, m_session->rgbaPasteRules());
     }
-    buffer->undoStack()->push(new RegionCommand(buffer, target.topLeft(), std::move(before),
+    document->undoStack()->push(new RegionCommand(document, target.topLeft(), std::move(before),
         std::move(after), UndoLabel { UndoOperation::Paste }));
-    buffer->setSelection(target); // o conteúdo colado fica selecionado
+    document->setSelection(target); // o conteúdo colado fica selecionado
 }
 
 void EditOperations::clear()
@@ -227,7 +238,9 @@ void EditOperations::clear()
 
 void EditOperations::selectAll()
 {
-    m_session->buffer()->setSelection(core::boundsOf(m_session->buffer()->image()));
+    if (Document* document = m_session->activeDocument()) {
+        document->setSelection(core::boundsOf(document->canvas()));
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -302,27 +315,30 @@ void EditOperations::stretch(core::Size newSize)
         return;
     }
     m_session->cancelTool();
-    DrawBuffer* buffer = m_session->buffer();
-    const core::Rect oldArea = buffer->workArea();
+    Document* document = m_session->activeDocument();
+    if (document == nullptr) {
+        return;
+    }
+    const core::Rect oldArea = document->workArea();
     const core::Rect newArea = core::Rect::fromPointAndSize(oldArea.topLeft(), newSize);
-    // A região afetada cobre a área antiga e a nova (recortadas ao buffer).
+    // A região afetada cobre a área antiga e a nova (recortadas ao canvas).
     const core::Rect affected
-        = oldArea.united(newArea).intersected(core::boundsOf(buffer->image()));
+        = oldArea.united(newArea).intersected(core::boundsOf(document->canvas()));
 
-    core::AnyImage before = core::copyRegion(buffer->image(), affected);
+    core::AnyImage before = core::copyRegion(document->canvas(), affected);
     core::AnyImage after = before;
     const core::Point offset = oldArea.topLeft() - affected.topLeft();
     // A área antiga é limpa (pixel de fundo do modo) e recebe o conteúdo escalado.
     core::pasteImage(after, m_session->blankLike(before, oldArea.size()), offset);
-    const core::AnyImage scaledContent = mapImage(core::copyRegion(buffer->image(), oldArea),
+    const core::AnyImage scaledContent = mapImage(core::copyRegion(document->canvas(), oldArea),
         [&](const auto& image) { return core::scaled(image, newSize); });
     core::pasteImage(after, scaledContent, offset);
     if (after == before) {
         return;
     }
-    buffer->undoStack()->push(new RegionCommand(buffer, affected.topLeft(), std::move(before),
+    document->undoStack()->push(new RegionCommand(document, affected.topLeft(), std::move(before),
         std::move(after), UndoLabel { UndoOperation::Stretch }));
-    buffer->setSelection(newArea);
+    document->setSelection(newArea);
 }
 
 // -----------------------------------------------------------------------------
@@ -385,11 +401,14 @@ void EditOperations::drawText(const QString& text, const QFont& font)
         return;
     }
     m_session->cancelTool();
-    DrawBuffer* buffer = m_session->buffer();
-    const core::Point origin = buffer->workArea().topLeft();
+    Document* document = m_session->activeDocument();
+    if (document == nullptr) {
+        return;
+    }
+    const core::Point origin = document->workArea().topLeft();
 
-    buffer->beginEdit();
-    buffer->editLive([&](core::AnyImage& image) {
+    document->beginEdit();
+    document->editLive([&](core::AnyImage& image) {
         for (int y = 0; y < mask.height(); ++y) {
             for (int x = 0; x < mask.width(); ++x) {
                 if (mask.pixel(x, y) != 0) {
@@ -399,7 +418,7 @@ void EditOperations::drawText(const QString& text, const QFont& font)
         }
         return core::Rect::fromPointAndSize(origin, mask.size());
     });
-    buffer->commitEdit(UndoLabel { UndoOperation::Text });
+    document->commitEdit(UndoLabel { UndoOperation::Text });
 }
 
 } // namespace spritenator::gui

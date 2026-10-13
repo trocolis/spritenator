@@ -1,14 +1,16 @@
 // =============================================================================
-// EditorSessionTest.cpp — testes do estado central do editor: transferência
-// canvas <-> área de desenho, regras de escrita, ferramentas e undo.
+// EditorSessionTest.cpp — testes do estado central do editor: documento
+// ativo, ferramentas editando a imagem diretamente, regras de escrita,
+// grades, pegadas (destaque sob o mouse) e undo.
 // =============================================================================
 #include "gui/EditorSession.h"
 #include "gui/Document.h"
-#include "gui/DrawBuffer.h"
 
 #include <QTest>
 #include <QUndoGroup>
 #include <QUndoStack>
+
+#include <algorithm>
 
 using namespace spritenator;
 using spritenator::gui::Document;
@@ -25,71 +27,69 @@ std::unique_ptr<Document> makeTwoCellDocument()
     return std::make_unique<Document>(canvas, core::Palette::makeDefault(core::ColorDepth::Bits8));
 }
 
+/// Documento indexado vazio (cor 0).
+std::unique_ptr<Document> makeBlankDocument(core::Size size = { 24, 32 })
+{
+    return std::make_unique<Document>(
+        core::IndexedImage(size, 0), core::Palette::makeDefault(core::ColorDepth::Bits8));
+}
+
+/// Pixel do canvas indexado do documento.
+int pixelAt(const Document& document, int x, int y)
+{
+    return document.indexedCanvas().pixel(x, y);
+}
+
+/// Pegada ordenada (a ordem devolvida pelas ferramentas não importa).
+std::vector<core::Point> sortedFootprint(const EditorSession& session, core::Point point)
+{
+    std::vector<core::Point> points = session.tool().footprint(session, point);
+    std::sort(points.begin(), points.end(),
+        [](core::Point a, core::Point b) { return a.y != b.y ? a.y < b.y : a.x < b.x; });
+    return points;
+}
+
 } // namespace
 
 class EditorSessionTest final : public QObject {
     Q_OBJECT
 
 private slots:
-    /// O buffer começa com o tamanho da célula padrão (24x32).
-    void bufferStartsWithCellSize()
+    /// A pilha de desfazer ativa é a do documento ativo.
+    void activeDocumentDrivesUndoStack()
     {
         EditorSession session;
-        QCOMPARE(session.buffer()->size(), (core::Size { 24, 32 }));
+        QVERIFY(session.activeDocument() == nullptr);
+        auto first = makeBlankDocument();
+        auto second = makeBlankDocument();
+        session.setActiveDocument(first.get());
+        QCOMPARE(session.undoGroup()->activeStack(), first->undoStack());
+        session.setActiveDocument(second.get());
+        QCOMPARE(session.undoGroup()->activeStack(), second->undoStack());
+        session.setActiveDocument(nullptr);
+        QVERIFY(session.undoGroup()->activeStack() == nullptr);
     }
 
-    /// Botão direito: a célula do canvas vai para o buffer.
-    void getCopiesCellIntoBuffer()
+    /// Sem documento ativo, as ferramentas não fazem nada (nem quebram).
+    void toolsWithoutDocumentAreHarmless()
     {
         EditorSession session;
-        auto document = makeTwoCellDocument();
-        session.setActiveDocument(document.get());
-        session.getFromCanvas(document.get(), { 24, 0, 24, 32 });
-        QCOMPARE(int(session.buffer()->indexedImage().pixel(0, 0)), 4);
-        // Desfazer devolve o buffer anterior.
-        session.undoGroup()->undo();
-        QCOMPARE(int(session.buffer()->indexedImage().pixel(0, 0)), 0);
+        for (const ToolKind kind : { ToolKind::PenThin, ToolKind::Fill, ToolKind::Rectangle,
+                 ToolKind::Select, ToolKind::Zoom }) {
+            session.setToolKind(kind);
+            session.tool().press(session, { 1, 1 }, Qt::LeftButton);
+            session.tool().move(session, { 2, 2 });
+            session.tool().release(session, { 2, 2 });
+            QVERIFY(session.tool().footprint(session, { 1, 1 }).size() <= 5);
+        }
     }
 
-    /// Botão esquerdo: o buffer é gravado no canvas, com desfazer no documento.
-    void putWritesBufferIntoCanvas()
-    {
-        EditorSession session;
-        auto document = makeTwoCellDocument();
-        session.setActiveDocument(document.get());
-        session.getFromCanvas(document.get(), { 0, 0, 24, 32 }); // buffer = cor 3
-        session.putToCanvas(document.get(), { 24, 0, 24, 32 });
-        QCOMPARE(int(document->indexedCanvas().pixel(30, 5)), 3);
-        QVERIFY(document->isModified());
-
-        // A pilha ativa passou a ser a do documento: desfazer reverte o "put".
-        QCOMPARE(session.undoGroup()->activeStack(), document->undoStack());
-        session.undoGroup()->undo();
-        QCOMPARE(int(document->indexedCanvas().pixel(30, 5)), 4);
-    }
-
-    /// Efeito de cor transparente: a cor de fundo do buffer não é gravada.
-    void transparentEffectSkipsBackground()
-    {
-        EditorSession session;
-        auto document = makeTwoCellDocument();
-        session.setActiveDocument(document.get());
-        session.setBackgroundColor(0);
-        session.setTransparentEffect(true);
-        // Buffer: tudo cor 0, exceto um pixel cor 9.
-        core::IndexedImage frame({ 24, 32 }, 0);
-        frame.setPixel({ 1, 1 }, 9);
-        session.buffer()->replace(frame, gui::UndoLabel { gui::UndoOperation::Paste });
-
-        session.putToCanvas(document.get(), { 0, 0, 24, 32 });
-        QCOMPARE(int(document->indexedCanvas().pixel(0, 0)), 3); // preservado
-        QCOMPARE(int(document->indexedCanvas().pixel(1, 1)), 9); // gravado
-    }
-
-    /// O lápis desenha um traço contínuo e gera UM passo de desfazer.
+    /// O lápis desenha um traço contínuo no documento e gera UM passo de desfazer.
     void penStrokeIsSingleUndoStep()
     {
         EditorSession session;
+        auto document = makeBlankDocument();
+        session.setActiveDocument(document.get());
         session.setToolKind(ToolKind::PenThin);
         session.setDrawColor(7);
         gui::Tool& pen = session.tool();
@@ -98,30 +98,52 @@ private slots:
         pen.release(session, { 5, 0 });
 
         for (int x = 0; x <= 5; ++x) {
-            QCOMPARE(int(session.buffer()->indexedImage().pixel(x, 0)), 7);
+            QCOMPARE(pixelAt(*document, x, 0), 7);
         }
-        QCOMPARE(session.buffer()->undoStack()->count(), 1);
+        QCOMPARE(document->undoStack()->count(), 1);
+        QVERIFY(document->isModified());
         session.undoGroup()->undo();
-        QCOMPARE(int(session.buffer()->indexedImage().pixel(3, 0)), 0);
+        QCOMPARE(pixelAt(*document, 3, 0), 0);
     }
 
     /// Botão direito desenha com a cor de fundo; Esc (cancel) descarta o traço.
     void penRightButtonAndCancel()
     {
         EditorSession session;
+        auto document = makeBlankDocument();
+        session.setActiveDocument(document.get());
         session.setBackgroundColor(2);
         gui::Tool& pen = session.tool();
         pen.press(session, { 3, 3 }, Qt::RightButton);
-        QCOMPARE(int(session.buffer()->indexedImage().pixel(3, 3)), 2);
+        QCOMPARE(pixelAt(*document, 3, 3), 2);
         session.cancelTool();
-        QCOMPARE(int(session.buffer()->indexedImage().pixel(3, 3)), 0);
-        QCOMPARE(session.buffer()->undoStack()->count(), 0);
+        QCOMPARE(pixelAt(*document, 3, 3), 0);
+        QCOMPARE(document->undoStack()->count(), 0);
+    }
+
+    /// Trocar de documento no meio de um traço não deixa o traço pela metade.
+    void switchingDocumentCancelsStroke()
+    {
+        EditorSession session;
+        auto first = makeBlankDocument();
+        auto second = makeBlankDocument();
+        session.setActiveDocument(first.get());
+        session.setDrawColor(5);
+        session.tool().press(session, { 1, 1 }, Qt::LeftButton);
+        QCOMPARE(pixelAt(*first, 1, 1), 5);
+        session.setActiveDocument(second.get());
+        QCOMPARE(pixelAt(*first, 1, 1), 0);
+        QVERIFY(!first->isEditing());
+        session.tool().release(session, { 1, 1 });
+        QCOMPARE(first->undoStack()->count(), 0);
     }
 
     /// Figuras: o efeito elástico deixa apenas a figura final.
     void shapeToolKeepsOnlyFinalShape()
     {
         EditorSession session;
+        auto document = makeBlankDocument();
+        session.setActiveDocument(document.get());
         session.setToolKind(ToolKind::Rectangle);
         session.setDrawColor(5);
         gui::Tool& tool = session.tool();
@@ -129,49 +151,134 @@ private slots:
         tool.move(session, { 10, 10 }); // retângulo grande (temporário)
         tool.move(session, { 4, 4 }); // retângulo final, menor
         tool.release(session, { 4, 4 });
-        QCOMPARE(int(session.buffer()->indexedImage().pixel(10, 10)), 0); // apagado
-        QCOMPARE(int(session.buffer()->indexedImage().pixel(4, 4)), 5);
-        QCOMPARE(int(session.buffer()->indexedImage().pixel(2, 2)), 0); // contorno: interior vazio
-        QCOMPARE(session.buffer()->undoStack()->count(), 1);
+        QCOMPARE(pixelAt(*document, 10, 10), 0); // apagado
+        QCOMPARE(pixelAt(*document, 4, 4), 5);
+        QCOMPARE(pixelAt(*document, 2, 2), 0); // contorno: interior vazio
+        QCOMPARE(document->undoStack()->count(), 1);
     }
 
     /// Balde com tom: só os pixels do padrão são pintados.
     void fillHonoursTone()
     {
         EditorSession session;
+        auto document = makeBlankDocument();
+        session.setActiveDocument(document.get());
         session.setToolKind(ToolKind::Fill);
         session.setTone(core::Tone::E); // xadrez
         session.setDrawColor(9);
         session.tool().press(session, { 0, 0 }, Qt::LeftButton);
         session.tool().release(session, { 0, 0 });
-        QCOMPARE(int(session.buffer()->indexedImage().pixel(0, 0)), 9);
-        QCOMPARE(int(session.buffer()->indexedImage().pixel(1, 0)), 0);
-        QCOMPARE(int(session.buffer()->indexedImage().pixel(1, 1)), 9);
+        QCOMPARE(pixelAt(*document, 0, 0), 9);
+        QCOMPARE(pixelAt(*document, 1, 0), 0);
+        QCOMPARE(pixelAt(*document, 1, 1), 9);
     }
 
-    /// Seleção: arrastar seleciona; clique simples limpa.
+    /// Seleção: arrastar seleciona no documento; clique simples limpa.
     void selectToolCreatesAndClearsSelection()
     {
         EditorSession session;
+        auto document = makeBlankDocument();
+        session.setActiveDocument(document.get());
         session.setToolKind(ToolKind::Select);
         gui::Tool& tool = session.tool();
         tool.press(session, { 5, 6 }, Qt::LeftButton);
         tool.move(session, { 2, 3 });
         tool.release(session, { 2, 3 });
-        QCOMPARE(session.buffer()->selection().value(), (core::Rect { 2, 3, 4, 4 }));
+        QCOMPARE(document->selection().value(), (core::Rect { 2, 3, 4, 4 }));
+        QCOMPARE(document->workArea(), (core::Rect { 2, 3, 4, 4 }));
         tool.press(session, { 1, 1 }, Qt::LeftButton);
         tool.release(session, { 1, 1 });
-        QVERIFY(!session.buffer()->selection().has_value());
+        QVERIFY(!document->selection().has_value());
+        QCOMPARE(document->workArea(), (core::Rect { 0, 0, 24, 32 }));
     }
 
-    /// Mudar o tamanho da célula redimensiona o buffer.
-    void layoutChangeResizesBuffer()
+    /// Pegadas usadas no destaque sob o mouse.
+    void toolFootprints()
     {
         EditorSession session;
-        core::CharacterLayout layout = session.characterLayout();
-        layout.cellSize = { 16, 16 };
-        session.setCharacterLayout(layout);
-        QCOMPARE(session.buffer()->size(), (core::Size { 16, 16 }));
+        auto document = makeTwoCellDocument();
+        session.setActiveDocument(document.get());
+
+        session.setToolKind(ToolKind::PenThin);
+        QCOMPARE(sortedFootprint(session, { 5, 5 }), (std::vector<core::Point> { { 5, 5 } }));
+
+        // Lápis grosso: o "+" de 5 pixels.
+        session.setToolKind(ToolKind::PenThick);
+        QCOMPARE(sortedFootprint(session, { 5, 5 }),
+            (std::vector<core::Point> { { 5, 4 }, { 4, 5 }, { 5, 5 }, { 6, 5 }, { 5, 6 } }));
+
+        // Figuras e seleção: o pixel inicial.
+        session.setToolKind(ToolKind::FilledEllipse);
+        QCOMPARE(sortedFootprint(session, { 2, 3 }), (std::vector<core::Point> { { 2, 3 } }));
+        session.setToolKind(ToolKind::Select);
+        QCOMPARE(sortedFootprint(session, { 2, 3 }), (std::vector<core::Point> { { 2, 3 } }));
+
+        // Balde: a região contígua inteira (a metade direita, cor 4).
+        session.setToolKind(ToolKind::Fill);
+        const auto region = session.tool().footprint(session, { 30, 10 });
+        QCOMPARE(region.size(), std::size_t { 24 * 32 });
+        QVERIFY(std::all_of(
+            region.begin(), region.end(), [](core::Point point) { return point.x >= 24; }));
+
+        // Lupa: nenhum pixel.
+        session.setToolKind(ToolKind::Zoom);
+        QVERIFY(session.tool().footprint(session, { 2, 3 }).empty());
+    }
+
+    /// canPlot reflete os limites da imagem, o tom e a máscara.
+    void canPlotHonoursToneAndMask()
+    {
+        EditorSession session;
+        auto document = makeTwoCellDocument();
+        session.setActiveDocument(document.get());
+        const core::AnyImage& canvas = document->canvas();
+        QVERIFY(session.canPlot(canvas, { 0, 0 }));
+        QVERIFY(!session.canPlot(canvas, { -1, 0 }));
+        QVERIFY(!session.canPlot(canvas, { 48, 0 }));
+
+        session.setTone(core::Tone::E); // xadrez: (1, 0) fica de fora
+        QVERIFY(session.canPlot(canvas, { 0, 0 }));
+        QVERIFY(!session.canPlot(canvas, { 1, 0 }));
+        session.setTone(core::Tone::A);
+
+        session.toggleMasked(4); // protege a metade direita
+        QVERIFY(session.canPlot(canvas, { 0, 0 }));
+        QVERIFY(!session.canPlot(canvas, { 30, 0 }));
+    }
+
+    /// Regras de colar: o efeito transparente ignora a cor de fundo (indexado)
+    /// ou os pixels de alfa 0 (RGBA).
+    void pasteRulesFollowTransparentEffect()
+    {
+        EditorSession session;
+        session.setBackgroundColor(6);
+        QVERIFY(!session.pasteRules().transparentIndex.has_value());
+        QVERIFY(!session.rgbaPasteRules().skipTransparent);
+        session.setTransparentEffect(true);
+        QCOMPARE(int(session.pasteRules().transparentIndex.value()), 6);
+        QVERIFY(session.rgbaPasteRules().skipTransparent);
+    }
+
+    /// Grades: valores vazios são rejeitados; o último clique define a célula
+    /// da sub-grade usada pela animação.
+    void gridLayoutAndLastCell()
+    {
+        EditorSession session;
+        QCOMPARE(session.gridLayout(), core::GridLayout { });
+        core::GridLayout invalid;
+        invalid.mainGrid = { 0, 1 };
+        session.setGridLayout(invalid);
+        QCOMPARE(session.gridLayout(), core::GridLayout { });
+
+        QVERIFY(!session.lastCell().has_value());
+        session.setLastClickedPoint({ 30, 40 });
+        QCOMPARE(session.lastCell().value(), (core::Rect { 24, 32, 24, 32 }));
+
+        core::GridLayout layout;
+        layout.subGrid = { 16, 16 };
+        session.setGridLayout(layout);
+        session.setLastClickedPoint({ 30, 40 });
+        QCOMPARE(session.lastCell().value(), (core::Rect { 16, 32, 16, 16 }));
     }
 
     /// Cores são limitadas ao tamanho da paleta do documento ativo.
@@ -186,22 +293,6 @@ private slots:
         session.setDrawColor(100); // inválido para 16 cores: ignorado
         QVERIFY(session.drawColor() < 16);
         session.setActiveDocument(nullptr);
-    }
-
-    /// Zoom aceita apenas os níveis conhecidos; lupa avança/recua.
-    void zoomLevels()
-    {
-        EditorSession session;
-        session.setZoom(5);
-        QCOMPARE(session.zoom(), 4); // mais próximo de 5 (empate: o menor)
-        session.zoomIn();
-        QCOMPARE(session.zoom(), 6);
-        session.setZoom(12);
-        session.zoomIn();
-        QCOMPARE(session.zoom(), 12);
-        session.setZoom(1);
-        session.zoomOut();
-        QCOMPARE(session.zoom(), 1);
     }
 };
 

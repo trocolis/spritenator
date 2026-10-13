@@ -1,13 +1,14 @@
 // =============================================================================
 // EditOperations.h
 //
-// Operações de edição aplicadas à área de desenho (região de trabalho = a
-// seleção, ou o buffer inteiro se não houver seleção):
+// Operações de edição aplicadas à imagem ativa (região de trabalho = a
+// seleção, ou a imagem inteira se não houver seleção):
 //   - área de transferência: recortar, copiar, colar, limpar, selecionar tudo;
-//   - transformações (os 12 botões sob a área de desenho);
+//   - transformações (os 12 botões do painel lateral);
 //   - preparar sombra e desenhar texto.
 //
-// Cada operação gera exatamente UM passo de desfazer no buffer.
+// Cada operação gera exatamente UM passo de desfazer no documento. Sem
+// documento ativo, as operações não fazem nada.
 // =============================================================================
 #pragma once
 
@@ -39,7 +40,7 @@ enum class TransformKind {
     RotateCounterClockwise,
 };
 
-/// Operações de edição sobre o buffer da área de desenho.
+/// Operações de edição sobre a imagem ativa.
 class EditOperations final : public QObject {
     Q_OBJECT
 

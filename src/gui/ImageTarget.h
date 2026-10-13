@@ -1,9 +1,9 @@
 // =============================================================================
 // ImageTarget.h
 //
-// Interface comum a tudo que contém uma imagem editável (indexada ou RGBA): o canvas
-// de um Document e o buffer da área de desenho (DrawBuffer). Os comandos de
-// undo trabalham com esta interface e, por isso, servem para os dois.
+// Interface de algo que contém uma imagem editável (indexada ou RGBA) — hoje,
+// o canvas de um Document. Os comandos de undo trabalham com esta interface,
+// sem depender do documento inteiro.
 // =============================================================================
 #pragma once
 
