@@ -9,3 +9,7 @@ spritenator_add_test(test_action_catalog
 spritenator_add_test(test_document
     SOURCES DocumentTest.cpp
     LIBRARIES Spritenator::Gui)
+
+spritenator_add_test(test_editor_session
+    SOURCES EditorSessionTest.cpp
+    LIBRARIES Spritenator::Gui)

@@ -14,6 +14,8 @@ add_library(spritenator_core STATIC
     IndexedImage.h
     Palette.cpp
     Palette.h
+    Raster.cpp
+    Raster.h
 )
 add_library(Spritenator::Core ALIAS spritenator_core)
 

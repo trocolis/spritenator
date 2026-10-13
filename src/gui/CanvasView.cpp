@@ -5,6 +5,7 @@
 
 #include "Document.h"
 
+#include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPainter>
 
@@ -19,6 +20,7 @@ CanvasView::CanvasView(Document* document, QWidget* parent)
     setMouseTracking(true); // recebe movimento mesmo sem botão pressionado
     setAttribute(Qt::WA_OpaquePaintEvent); // pintamos todos os pixels: evita limpar o fundo
     setCursor(Qt::CrossCursor);
+    setFocusPolicy(Qt::ClickFocus); // setas do teclado navegam entre células
 
     // Qualquer alteração do documento redesenha apenas a área afetada.
     connect(m_document, &Document::canvasChanged, this,
@@ -132,8 +134,36 @@ void CanvasView::mousePressEvent(QMouseEvent* event)
 
 void CanvasView::leaveEvent(QEvent* event)
 {
-    setHoveredCell(std::nullopt);
+    // Com o foco no canvas o cursor permanece, para a navegação por teclado.
+    if (!hasFocus()) {
+        setHoveredCell(std::nullopt);
+    }
     QWidget::leaveEvent(event);
+}
+
+// -----------------------------------------------------------------------------
+// Teclado: as setas movem o cursor de célula e trazem a nova célula para a
+// área de desenho — percorre os quadros de uma animação rapidamente.
+// -----------------------------------------------------------------------------
+void CanvasView::keyPressEvent(QKeyEvent* event)
+{
+    int columns = 0;
+    int rows = 0;
+    switch (event->key()) {
+    case Qt::Key_Left: columns = -1; break;
+    case Qt::Key_Right: columns = 1; break;
+    case Qt::Key_Up: rows = -1; break;
+    case Qt::Key_Down: rows = 1; break;
+    default: QWidget::keyPressEvent(event); return;
+    }
+    const core::Rect current = m_hoveredCell.value_or(m_layout.cellAt({ 0, 0 }));
+    const core::Rect next = m_layout.neighbour(current, columns, rows);
+    // Só navega se a nova célula ainda tocar o canvas.
+    if (next.intersected(m_document->canvas().bounds()).isEmpty()) {
+        return;
+    }
+    setHoveredCell(next);
+    emit getRequested(next);
 }
 
 } // namespace spritenator::gui

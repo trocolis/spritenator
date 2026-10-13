@@ -7,10 +7,15 @@
 #include "CanvasView.h"
 #include "CanvasWindow.h"
 #include "Document.h"
+#include "DrawBuffer.h"
+#include "EditorSession.h"
 #include "IconProvider.h"
+#include "IntegratorPanel.h"
+#include "dialogs/CharacterSizeDialog.h"
 #include "dialogs/NewImageDialog.h"
 #include "io/ImageFile.h"
 #include "io/IoError.h"
+#include "widgets/DrawAreaView.h"
 
 #include <spritenator/Version.h>
 
@@ -29,8 +34,10 @@
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QMimeData>
+#include <QSplitter>
 #include <QStatusBar>
 #include <QToolBar>
+#include <QUndoGroup>
 #include <QUndoStack>
 
 #include <algorithm>
@@ -60,6 +67,7 @@ QString ensureExtension(const QString& path, const QString& selectedFilter)
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
+    , m_session(new EditorSession(this))
     , m_actions(new ActionCatalog(this))
     , m_mdiArea(new QMdiArea(this))
 {
@@ -71,7 +79,19 @@ MainWindow::MainWindow(QWidget* parent)
     m_mdiArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_mdiArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_mdiArea->setActivationOrder(QMdiArea::ActivationHistoryOrder);
-    setCentralWidget(m_mdiArea);
+
+    // Layout do original: Integrator de um lado, canvas (MDI) do outro.
+    m_integrator = new IntegratorPanel(m_session, m_actions, this);
+    m_mainSplitter = new QSplitter(Qt::Horizontal, this);
+    m_mainSplitter->addWidget(m_integrator);
+    m_mainSplitter->addWidget(m_mdiArea);
+    m_mainSplitter->setStretchFactor(0, 3);
+    m_mainSplitter->setStretchFactor(1, 2);
+    m_mainSplitter->setChildrenCollapsible(false);
+    setCentralWidget(m_mainSplitter);
+
+    // Preferências persistentes da grade de personagens.
+    m_session->setCharacterLayout(m_settings.characterLayout());
 
     createMenus();
     createToolBar();
@@ -79,7 +99,11 @@ MainWindow::MainWindow(QWidget* parent)
     connectActions();
     updateRecentFilesMenu();
 
-    connect(m_mdiArea, &QMdiArea::subWindowActivated, this, &MainWindow::updateActionStates);
+    // Janela ativa -> documento ativo da sessão.
+    connect(m_mdiArea, &QMdiArea::subWindowActivated, this, [this] {
+        m_session->setActiveDocument(activeDocument());
+        updateActionStates();
+    });
     updateActionStates();
 
     resize(1024, 720);
@@ -243,7 +267,58 @@ void MainWindow::connectActions()
         &QMdiArea::closeActiveSubWindow);
     connect(action(ActionId::FileExit), &QAction::triggered, this, &QWidget::close);
 
+    // --- Editar: desfazer/refazer roteados pelo grupo de pilhas ---
+    QUndoGroup* undoGroup = m_session->undoGroup();
+    connect(action(ActionId::EditUndo), &QAction::triggered, this, [this, undoGroup] {
+        m_session->cancelTool(); // não desfazer no meio de um traço
+        undoGroup->undo();
+    });
+    connect(action(ActionId::EditRedo), &QAction::triggered, this, [this, undoGroup] {
+        m_session->cancelTool();
+        undoGroup->redo();
+    });
+    connect(undoGroup, &QUndoGroup::canUndoChanged, this, &MainWindow::updateUndoActions);
+    connect(undoGroup, &QUndoGroup::canRedoChanged, this, &MainWindow::updateUndoActions);
+    connect(undoGroup, &QUndoGroup::undoTextChanged, this, &MainWindow::updateUndoActions);
+    connect(undoGroup, &QUndoGroup::redoTextChanged, this, &MainWindow::updateUndoActions);
+    connect(undoGroup, &QUndoGroup::activeStackChanged, this, &MainWindow::updateUndoActions);
+
+    // --- Exibir ---
+    connect(
+        action(ActionId::ViewCharaSize), &QAction::triggered, this, &MainWindow::editCharacterSize);
+    connect(action(ActionId::ViewMainGrid), &QAction::toggled, m_session,
+        &EditorSession::setMainGridVisible);
+    connect(action(ActionId::ViewSubGrid), &QAction::toggled, m_session,
+        &EditorSession::setSubGridVisible);
+    m_session->setMainGridVisible(action(ActionId::ViewMainGrid)->isChecked());
+    m_session->setSubGridVisible(action(ActionId::ViewSubGrid)->isChecked());
+
+    // O fator de zoom fica no data() de cada ação (ver ActionCatalog).
+    connect(m_actions->zoomGroup(), &QActionGroup::triggered, this,
+        [this](const QAction* zoomAction) { m_session->setZoom(zoomAction->data().toInt()); });
+    // Zoom alterado por outra via (ex.: ferramenta lupa) -> marca a ação certa.
+    connect(m_session, &EditorSession::zoomChanged, this, [this](int factor) {
+        for (QAction* zoomAction : m_actions->zoomGroup()->actions()) {
+            zoomAction->setChecked(zoomAction->data().toInt() == factor);
+        }
+    });
+    m_session->setZoom(8);
+
+    // --- Canvas ---
+    connect(action(ActionId::CanvasGetAll), &QAction::triggered, m_session,
+        &EditorSession::transferAll);
+
+    // --- Paleta ---
+    connect(action(ActionId::PaletteTransparent), &QAction::toggled, m_session,
+        &EditorSession::setTransparentEffect);
+
+    // --- Barra de status: posição na área de desenho ---
+    connect(m_integrator->drawArea(), &DrawAreaView::pixelHovered, this,
+        [this](const core::Point& pixel) { showPosition(tr("Draw"), pixel); });
+
     // --- Janela ---
+    connect(action(ActionId::WindowReverseCanvas), &QAction::toggled, this,
+        &MainWindow::setCanvasReversed);
     connect(action(ActionId::WindowCascade), &QAction::triggered, m_mdiArea,
         &QMdiArea::cascadeSubWindows);
     connect(action(ActionId::WindowTileHorizontal), &QAction::triggered, this,
@@ -258,11 +333,22 @@ void MainWindow::connectActions()
 
 void MainWindow::updateActionStates()
 {
-    // Ações sempre disponíveis.
+    // Ações sempre disponíveis (não dependem de documento).
     const ActionId alwaysEnabled[] = {
         ActionId::FileNew,
         ActionId::FileOpen,
         ActionId::FileExit,
+        ActionId::ViewCharaSize,
+        ActionId::ViewMainGrid,
+        ActionId::ViewSubGrid,
+        ActionId::ViewZoom1,
+        ActionId::ViewZoom2,
+        ActionId::ViewZoom4,
+        ActionId::ViewZoom6,
+        ActionId::ViewZoom8,
+        ActionId::ViewZoom12,
+        ActionId::PaletteTransparent,
+        ActionId::WindowReverseCanvas,
         ActionId::HelpAbout,
     };
     // Ações que exigem um documento ativo.
@@ -270,6 +356,7 @@ void MainWindow::updateActionStates()
         ActionId::FileSave,
         ActionId::FileSaveAs,
         ActionId::FileClose,
+        ActionId::CanvasGetAll,
         ActionId::WindowCascade,
         ActionId::WindowTileHorizontal,
         ActionId::WindowTileVertical,
@@ -289,6 +376,19 @@ void MainWindow::updateActionStates()
     }
     // Reverter só faz sentido para documentos que já existem em disco.
     action(ActionId::FileRevert)->setEnabled(document != nullptr && document->hasFilePath());
+    updateUndoActions();
+}
+
+void MainWindow::updateUndoActions()
+{
+    const QUndoGroup* group = m_session->undoGroup();
+    QAction* undo = action(ActionId::EditUndo);
+    QAction* redo = action(ActionId::EditRedo);
+    undo->setEnabled(group->canUndo());
+    redo->setEnabled(group->canRedo());
+    // Mostra o que será desfeito/refeito, ex.: "Undo Pen".
+    undo->setText(group->canUndo() ? tr("&Undo %1").arg(group->undoText()) : tr("&Undo"));
+    redo->setText(group->canRedo() ? tr("&Redo %1").arg(group->redoText()) : tr("&Redo"));
 }
 
 // -----------------------------------------------------------------------------
@@ -458,10 +558,17 @@ CanvasWindow* MainWindow::addDocumentWindow(Document* document)
     // Intercepta o fechamento da janela-filha para perguntar se deve salvar.
     subWindow->installEventFilter(this);
 
+    // Cliques nas células: direito traz para a área de desenho; esquerdo grava.
+    CanvasView* view = window->view();
+    view->setCharacterLayout(m_session->characterLayout());
+    connect(view, &CanvasView::getRequested, this,
+        [this, document](const core::Rect& cell) { m_session->getFromCanvas(document, cell); });
+    connect(view, &CanvasView::putRequested, this,
+        [this, document](const core::Rect& cell) { m_session->putToCanvas(document, cell); });
+
     // Barra de status: posição do pixel sob o mouse.
-    connect(window->view(), &CanvasView::pixelHovered, this, [this](const core::Point& pixel) {
-        m_positionLabel->setText(QStringLiteral("X: %1  Y: %2").arg(pixel.x).arg(pixel.y));
-    });
+    connect(view, &CanvasView::pixelHovered, this,
+        [this](const core::Point& pixel) { showPosition(tr("Canvas"), pixel); });
     connect(document, &Document::filePathChanged, this, &MainWindow::updateActionStates);
 
     window->show();
@@ -552,6 +659,41 @@ void MainWindow::fitActiveWindow()
         subWindow->showNormal();
         subWindow->adjustSize();
     }
+}
+
+void MainWindow::setCanvasReversed(bool reversed)
+{
+    // Índice 0 = lado esquerdo do splitter.
+    m_mainSplitter->insertWidget(0, reversed ? static_cast<QWidget*>(m_mdiArea) : m_integrator);
+}
+
+// -----------------------------------------------------------------------------
+// Exibir > Tamanho do personagem
+// -----------------------------------------------------------------------------
+void MainWindow::editCharacterSize()
+{
+    CharacterSizeDialog dialog(m_session->characterLayout(), this);
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
+    }
+    m_session->setCharacterLayout(dialog.layout());
+    m_settings.setCharacterLayout(dialog.layout());
+    applyCharacterLayoutToWindows();
+}
+
+void MainWindow::applyCharacterLayoutToWindows()
+{
+    for (QMdiSubWindow* subWindow : m_mdiArea->subWindowList()) {
+        if (auto* window = qobject_cast<CanvasWindow*>(subWindow->widget())) {
+            window->view()->setCharacterLayout(m_session->characterLayout());
+        }
+    }
+}
+
+void MainWindow::showPosition(const QString& area, const core::Point& pixel)
+{
+    m_positionLabel->setText(
+        QStringLiteral("%1  X: %2  Y: %3").arg(area).arg(pixel.x).arg(pixel.y));
 }
 
 // -----------------------------------------------------------------------------

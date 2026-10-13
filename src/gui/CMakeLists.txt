@@ -16,14 +16,37 @@ add_library(spritenator_gui STATIC
     CanvasWindow.h
     Document.cpp
     Document.h
+    DrawBuffer.cpp
+    DrawBuffer.h
+    EditorSession.cpp
+    EditorSession.h
     IconProvider.cpp
     IconProvider.h
     ImageRendering.cpp
     ImageRendering.h
+    ImageTarget.h
+    IntegratorPanel.cpp
+    IntegratorPanel.h
     MainWindow.cpp
     MainWindow.h
+    commands/ImageCommands.cpp
+    commands/ImageCommands.h
+    dialogs/CharacterSizeDialog.cpp
+    dialogs/CharacterSizeDialog.h
     dialogs/NewImageDialog.cpp
     dialogs/NewImageDialog.h
+    tools/PenTool.cpp
+    tools/PenTool.h
+    tools/Tool.cpp
+    tools/Tool.h
+    widgets/ColorEditor.cpp
+    widgets/ColorEditor.h
+    widgets/DrawAreaView.cpp
+    widgets/DrawAreaView.h
+    widgets/OrgAreaView.cpp
+    widgets/OrgAreaView.h
+    widgets/PaletteView.cpp
+    widgets/PaletteView.h
 )
 add_library(Spritenator::Gui ALIAS spritenator_gui)
 

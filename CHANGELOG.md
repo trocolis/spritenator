@@ -5,6 +5,28 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.5.0] - 2026-10-13
+
+### Adicionado
+- Painel Integrator ao lado da área MDI (`Janela > Reverse Canvas` troca os lados), com:
+  - área de desenho ampliada (zoom 1x a 12x), grade de pixels, sub-grade e contorno das células;
+  - prévia em tamanho real (`OrgAreaView`);
+  - paleta clicável (esquerdo = cor de desenho, direito = cor de fundo) com dicas de índice e RGB;
+  - amostras das cores e controles R/G/B que editam a paleta; arrastar um controle gera um único passo de desfazer.
+- `DrawBuffer`: buffer da área de desenho compartilhado entre documentos, com edição ao vivo e commit no histórico.
+- `EditorSession`: estado central do editor (cores, zoom, grades, grade de personagens, ferramenta, regras de escrita).
+- Transferência entre canvas e área de desenho:
+  - botão direito na célula traz o quadro e o esquerdo grava o quadro;
+  - as setas navegam entre as células;
+  - F3 transfere o canvas inteiro.
+- "Transparent Color Effect" (F8): a cor de fundo não é gravada no canvas.
+- Diálogo "Character Size" (célula, sub-grade e opções), persistido nas configurações.
+- Desfazer/refazer unificado (`QUndoGroup`): desfaz sempre a última edição, seja do buffer ou do canvas, e o menu mostra o nome da operação.
+- Interface `ImageTarget` e comandos `RegionCommand`, `ReplaceImageCommand`, `PaletteCommand` (com fusão) e `DocumentStateCommand`.
+- Sistema de ferramentas (padrão Strategy) com lápis fino e grosso; Esc cancela o traço.
+- Reta de Bresenham no núcleo (`core/Raster`).
+- Testes da sessão (get/put, transparência, traço, cancelamento, undo, zoom) e da rasterização.
+
 ## [0.4.0] - 2026-10-13
 
 ### Adicionado

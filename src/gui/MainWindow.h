@@ -8,6 +8,7 @@
 #pragma once
 
 #include "AppSettings.h"
+#include "core/Geometry.h"
 
 #include <QMainWindow>
 
@@ -17,6 +18,7 @@ class QLabel;
 class QMdiArea;
 class QMdiSubWindow;
 class QMenu;
+class QSplitter;
 class QToolBar;
 
 namespace spritenator::gui {
@@ -24,6 +26,8 @@ namespace spritenator::gui {
 class ActionCatalog;
 class CanvasWindow;
 class Document;
+class EditorSession;
+class IntegratorPanel;
 enum class ActionId : std::size_t;
 
 /// Janela principal da aplicação.
@@ -84,6 +88,17 @@ private:
     [[nodiscard]] CanvasWindow* activeCanvasWindow() const;
     void tileWindows(Qt::Orientation orientation);
     void fitActiveWindow();
+    /// Troca os lados do Integrator e da área MDI ("Reverse Canvas").
+    void setCanvasReversed(bool reversed);
+
+    // --- Exibir ---
+    void editCharacterSize();
+    /// Aplica a grade de personagens a todas as janelas de canvas abertas.
+    void applyCharacterLayoutToWindows();
+    /// Sincroniza as ações de desfazer/refazer com o grupo de pilhas.
+    void updateUndoActions();
+    /// Mostra uma posição de pixel na barra de status.
+    void showPosition(const QString& area, const core::Point& pixel);
 
     // --- Ajuda ---
     void showAbout();
@@ -95,7 +110,10 @@ private:
     [[nodiscard]] QAction* action(ActionId id) const;
 
     AppSettings m_settings;
+    EditorSession* m_session = nullptr; ///< Estado central do editor.
     ActionCatalog* m_actions = nullptr; ///< Todas as ações (pai: this).
+    QSplitter* m_mainSplitter = nullptr; ///< Integrator | área MDI.
+    IntegratorPanel* m_integrator = nullptr; ///< Painel com a área de desenho.
     QMdiArea* m_mdiArea = nullptr; ///< Área com as janelas de canvas.
     QToolBar* m_toolBar = nullptr; ///< Barra de ferramentas principal.
     QMenu* m_fileMenu = nullptr;

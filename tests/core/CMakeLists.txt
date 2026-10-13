@@ -13,3 +13,7 @@ spritenator_add_test(test_palette
 spritenator_add_test(test_indexed_image
     SOURCES IndexedImageTest.cpp
     LIBRARIES Spritenator::Core)
+
+spritenator_add_test(test_raster
+    SOURCES RasterTest.cpp
+    LIBRARIES Spritenator::Core)

@@ -10,6 +10,7 @@
 // =============================================================================
 #pragma once
 
+#include "ImageTarget.h"
 #include "core/IndexedImage.h"
 #include "core/Palette.h"
 
@@ -22,7 +23,7 @@ class QUndoStack;
 namespace spritenator::gui {
 
 /// Documento de imagem indexada aberto no editor.
-class Document final : public QObject {
+class Document final : public QObject, public ImageTarget {
     Q_OBJECT
 
 public:
@@ -77,6 +78,14 @@ public:
 
     /// Substitui a paleta inteira.
     void applyPalette(const core::Palette& palette);
+
+    // --- ImageTarget (o alvo de edição de um documento é o seu canvas) ---
+    [[nodiscard]] const core::IndexedImage& targetImage() const override { return m_canvas; }
+    void applyRegion(core::Point origin, const core::IndexedImage& pixels) override
+    {
+        applyCanvasRegion(origin, pixels);
+    }
+    void applyImage(const core::IndexedImage& image) override { applyCanvas(image); }
 
 signals:
     /// Uma região do canvas mudou (coordenadas do canvas).

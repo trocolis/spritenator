@@ -165,6 +165,7 @@ void ActionCatalog::createViewActions()
             tr("Show the drawing area magnified %1 times").arg(spec.factor),
             QString::fromLatin1(spec.icon));
         zoom->setCheckable(true);
+        zoom->setData(spec.factor); // consultado pela MainWindow ao trocar o zoom
         m_zoomGroup->addAction(zoom);
         ++position;
     }
