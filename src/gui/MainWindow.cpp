@@ -524,10 +524,14 @@ void MainWindow::updateUndoActions()
 void MainWindow::newImage()
 {
     const Document* current = activeDocument();
-    NewImageDialog dialog(current != nullptr, this);
+    // Copiar a paleta só faz sentido se a imagem ativa for indexada.
+    const bool canCopyPalette
+        = current != nullptr && current->colorMode() == core::ColorMode::Indexed;
+    NewImageDialog dialog(canCopyPalette, m_settings.newImageHistory(), this);
     if (dialog.exec() != QDialog::Accepted) {
         return;
     }
+    m_settings.addNewImageEntry(dialog.entry()); // histórico do diálogo
 
     if (dialog.colorMode() == core::ColorMode::Rgba) {
         // RGBA: canvas totalmente transparente; a paleta padrão serve apenas

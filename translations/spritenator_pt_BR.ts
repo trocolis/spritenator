@@ -811,40 +811,24 @@ Deseja salvar as alterações?</translation>
 <context>
     <name>spritenator::gui::NewImageDialog</name>
     <message>
-        <source>Custom</source>
-        <translation>Personalizado</translation>
-    </message>
-    <message>
-        <source>RPG Maker charset - single (72 x 128)</source>
-        <translation>Charset do RPG Maker - um personagem (72 x 128)</translation>
-    </message>
-    <message>
-        <source>RPG Maker charset - full sheet (288 x 256)</source>
-        <translation>Charset do RPG Maker - folha completa (288 x 256)</translation>
-    </message>
-    <message>
-        <source>RPG Maker chipset (480 x 256)</source>
-        <translation>Chipset do RPG Maker (480 x 256)</translation>
-    </message>
-    <message>
-        <source>Screen (320 x 240)</source>
-        <translation>Tela (320 x 240)</translation>
-    </message>
-    <message>
         <source>RGBA (32 bit, true color with transparency)</source>
         <translation>RGBA (32 bits, cores reais com transparência)</translation>
     </message>
     <message>
-        <source>256 colors (8 bit)</source>
-        <translation>256 cores (8 bits)</translation>
+        <source>Indexed (palette)</source>
+        <translation>Indexada (paleta)</translation>
     </message>
     <message>
-        <source>16 colors (4 bit)</source>
-        <translation>16 cores (4 bits)</translation>
+        <source>256 colors</source>
+        <translation>256 cores</translation>
     </message>
     <message>
-        <source>2 colors (1 bit)</source>
-        <translation>2 cores (1 bit)</translation>
+        <source>16 colors</source>
+        <translation>16 cores</translation>
+    </message>
+    <message>
+        <source>2 colors</source>
+        <translation>2 cores</translation>
     </message>
     <message>
         <source>Copy current palette</source>
@@ -855,6 +839,18 @@ Deseja salvar as alterações?</translation>
         <translation>Nova imagem</translation>
     </message>
     <message>
+        <source>None yet</source>
+        <translation>Nenhum ainda</translation>
+    </message>
+    <message>
+        <source>Choose a previous size...</source>
+        <translation>Escolha um tamanho usado antes...</translation>
+    </message>
+    <message>
+        <source>Sizes and color modes used before (most recent first)</source>
+        <translation>Tamanhos e modos de cor usados antes (o mais recente primeiro)</translation>
+    </message>
+    <message>
         <source> px</source>
         <translation> px</translation>
     </message>
@@ -863,8 +859,20 @@ Deseja salvar as alterações?</translation>
         <translation>Tamanho do canvas</translation>
     </message>
     <message>
-        <source>Preset:</source>
-        <translation>Predefinição:</translation>
+        <source>Used before:</source>
+        <translation>Usados antes:</translation>
+    </message>
+    <message>
+        <source>RGBA</source>
+        <translation>RGBA</translation>
+    </message>
+    <message>
+        <source>%1 colors</source>
+        <translation>%1 cores</translation>
+    </message>
+    <message>
+        <source>%1 × %2 · %3</source>
+        <translation>%1 × %2 · %3</translation>
     </message>
     <message>
         <source>Width:</source>
@@ -877,10 +885,6 @@ Deseja salvar as alterações?</translation>
     <message>
         <source>Colors</source>
         <translation>Cores</translation>
-    </message>
-    <message>
-        <source>Options</source>
-        <translation>Opções</translation>
     </message>
     <message>
         <source>Use the palette of the active image in the new image</source>

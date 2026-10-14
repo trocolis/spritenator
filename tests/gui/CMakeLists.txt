@@ -44,3 +44,7 @@ spritenator_add_test(test_color_picker
 spritenator_add_test(test_canvas_editor
     SOURCES CanvasEditorTest.cpp
     LIBRARIES Spritenator::Gui)
+
+spritenator_add_test(test_new_image_dialog
+    SOURCES NewImageDialogTest.cpp
+    LIBRARIES Spritenator::Gui)

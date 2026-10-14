@@ -5,6 +5,19 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [2.2.0] - 2026-10-13
+
+### Alterado
+- Diálogo **Nova imagem**:
+  - as predefinições de tamanho deram lugar a um **histórico** ("Usados antes") com as últimas 8 combinações de tamanho e modo de cor criadas, da mais recente para a mais antiga; ele é gravado nas preferências;
+  - o diálogo abre com a última combinação usada (na primeira vez, 320×240 em RGBA);
+  - as cores ficam em duas seções: **RGBA** e **Indexada**, esta com 256, 16 ou 2 cores e a opção de copiar a paleta, habilitadas só quando Indexada está marcada;
+  - "Copiar a paleta atual" só fica disponível se a imagem ativa for indexada.
+- Manual atualizado nos dois idiomas.
+
+### Adicionado
+- `AppSettings::newImageHistory`/`addNewImageEntry` e testes do histórico e do diálogo.
+
 ## [2.1.0] - 2026-10-13
 
 ### Adicionado

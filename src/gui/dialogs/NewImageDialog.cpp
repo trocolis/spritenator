@@ -5,127 +5,149 @@
 
 #include "core/Image.h"
 
+#include <QButtonGroup>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
-#include <QLabel>
 #include <QRadioButton>
 #include <QSpinBox>
 #include <QVBoxLayout>
 
 namespace spritenator::gui {
 
-namespace {
-
-/// Predefinição de tamanho exibida no combo.
-struct SizePreset {
-    const char* label;
-    core::Size size;
-};
-
-/// Tamanhos padrão do RPG Maker 2000 (ver "Canvas Sizes" no manual original).
-constexpr SizePreset kPresets[] = {
-    { QT_TRANSLATE_NOOP("spritenator::gui::NewImageDialog", "Custom"), { 0, 0 } },
-    { QT_TRANSLATE_NOOP(
-          "spritenator::gui::NewImageDialog", "RPG Maker charset - single (72 x 128)"),
-        { 72, 128 } },
-    { QT_TRANSLATE_NOOP(
-          "spritenator::gui::NewImageDialog", "RPG Maker charset - full sheet (288 x 256)"),
-        { 288, 256 } },
-    { QT_TRANSLATE_NOOP("spritenator::gui::NewImageDialog", "RPG Maker chipset (480 x 256)"),
-        { 480, 256 } },
-    { QT_TRANSLATE_NOOP("spritenator::gui::NewImageDialog", "Screen (320 x 240)"), { 320, 240 } },
-};
-
-} // namespace
-
-NewImageDialog::NewImageDialog(bool canCopyPalette, QWidget* parent)
+NewImageDialog::NewImageDialog(
+    bool canCopyPalette, const QList<NewImageEntry>& history, QWidget* parent)
     : QDialog(parent)
-    , m_presets(new QComboBox(this))
+    , m_entries(history)
+    , m_canCopyPalette(canCopyPalette)
+    , m_history(new QComboBox(this))
     , m_width(new QSpinBox(this))
     , m_height(new QSpinBox(this))
-    , m_colorsRgba(new QRadioButton(tr("RGBA (32 bit, true color with transparency)"), this))
-    , m_colors256(new QRadioButton(tr("256 colors (8 bit)"), this))
-    , m_colors16(new QRadioButton(tr("16 colors (4 bit)"), this))
-    , m_colors2(new QRadioButton(tr("2 colors (1 bit)"), this))
-    , m_copyPalette(new QCheckBox(tr("Copy current palette"), this))
+    , m_rgba(new QRadioButton(tr("RGBA (32 bit, true color with transparency)"), this))
+    , m_indexed(new QRadioButton(tr("Indexed (palette)"), this))
+    , m_indexedOptions(new QWidget(this))
+    , m_colors256(new QRadioButton(tr("256 colors"), m_indexedOptions))
+    , m_colors16(new QRadioButton(tr("16 colors"), m_indexedOptions))
+    , m_colors2(new QRadioButton(tr("2 colors"), m_indexedOptions))
+    , m_copyPalette(new QCheckBox(tr("Copy current palette"), m_indexedOptions))
 {
     setWindowTitle(tr("New Image"));
 
-    // --- Tamanho ---
-    for (const SizePreset& preset : kPresets) {
-        m_presets->addItem(tr(preset.label));
+    // --- Tamanho, com o histórico das escolhas anteriores ---
+    for (const NewImageEntry& entry : std::as_const(m_entries)) {
+        m_history->addItem(entryLabel(entry));
     }
+    m_history->setEnabled(!m_entries.isEmpty());
+    m_history->setPlaceholderText(
+        m_entries.isEmpty() ? tr("None yet") : tr("Choose a previous size..."));
+    m_history->setToolTip(tr("Sizes and color modes used before (most recent first)"));
     for (QSpinBox* spin : { m_width, m_height }) {
         spin->setRange(1, core::IndexedImage::kMaxDimension);
         spin->setSuffix(tr(" px"));
     }
-    m_width->setValue(320); // valores padrão do original
-    m_height->setValue(240);
 
     auto* sizeBox = new QGroupBox(tr("Canvas size"), this);
     auto* sizeLayout = new QFormLayout(sizeBox);
-    sizeLayout->addRow(tr("Preset:"), m_presets);
+    sizeLayout->addRow(tr("Used before:"), m_history);
     sizeLayout->addRow(tr("Width:"), m_width);
     sizeLayout->addRow(tr("Height:"), m_height);
 
-    // --- Cores ---
-    auto* colorBox = new QGroupBox(tr("Colors"), this);
-    auto* colorLayout = new QVBoxLayout(colorBox);
-    colorLayout->addWidget(m_colorsRgba);
-    colorLayout->addWidget(m_colors256);
-    colorLayout->addWidget(m_colors16);
-    colorLayout->addWidget(m_colors2);
-    m_colorsRgba->setChecked(true); // RGBA é a primeira opção e o padrão
-
-    // --- Opções ---
-    auto* optionBox = new QGroupBox(tr("Options"), this);
-    auto* optionLayout = new QVBoxLayout(optionBox);
-    optionLayout->addWidget(m_copyPalette);
-    // Copiar a paleta só faz sentido para imagens indexadas.
-    const auto updatePaletteOption = [this, canCopyPalette] {
-        m_copyPalette->setEnabled(canCopyPalette && !m_colorsRgba->isChecked());
-    };
-    connect(m_colorsRgba, &QRadioButton::toggled, this, updatePaletteOption);
-    updatePaletteOption();
+    // --- Cores: duas seções, RGBA e Indexada (256, 16 ou 2 cores) ---
+    auto* modeGroup = new QButtonGroup(this);
+    modeGroup->addButton(m_rgba);
+    modeGroup->addButton(m_indexed);
+    auto* depthGroup = new QButtonGroup(this);
+    for (QRadioButton* depth : { m_colors256, m_colors16, m_colors2 }) {
+        depthGroup->addButton(depth);
+    }
     m_copyPalette->setToolTip(tr("Use the palette of the active image in the new image"));
 
-    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
+    auto* depthRow = new QHBoxLayout;
+    depthRow->addWidget(m_colors256);
+    depthRow->addWidget(m_colors16);
+    depthRow->addWidget(m_colors2);
+    depthRow->addStretch(1);
+    auto* indexedLayout = new QVBoxLayout(m_indexedOptions);
+    indexedLayout->setContentsMargins(24, 0, 0, 0); // recuo: opções da seção Indexada
+    indexedLayout->addLayout(depthRow);
+    indexedLayout->addWidget(m_copyPalette);
 
+    auto* colorBox = new QGroupBox(tr("Colors"), this);
+    auto* colorLayout = new QVBoxLayout(colorBox);
+    colorLayout->addWidget(m_rgba);
+    colorLayout->addWidget(m_indexed);
+    colorLayout->addWidget(m_indexedOptions);
+
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     auto* layout = new QVBoxLayout(this);
     layout->addWidget(sizeBox);
     layout->addWidget(colorBox);
-    layout->addWidget(optionBox);
     layout->addWidget(buttons);
 
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
-    connect(m_presets, &QComboBox::activated, this, &NewImageDialog::applyPreset);
+    connect(m_history, &QComboBox::activated, this,
+        [this](int index) { applyEntry(m_entries.at(index)); });
+    connect(m_indexed, &QRadioButton::toggled, this, &NewImageDialog::updateIndexedOptions);
 
-    // Editar o tamanho manualmente volta o combo para "Personalizado".
+    // Qualquer edição que não corresponda à entrada mostrada a desmarca.
     for (QSpinBox* spin : { m_width, m_height }) {
-        connect(spin, &QSpinBox::valueChanged, this, [this] {
-            const core::Size current = imageSize();
-            const auto& preset = kPresets[static_cast<std::size_t>(m_presets->currentIndex())];
-            if (preset.size != current) {
-                m_presets->setCurrentIndex(0);
-            }
-        });
+        connect(spin, &QSpinBox::valueChanged, this, &NewImageDialog::syncHistorySelection);
     }
+    for (QRadioButton* radio : { m_rgba, m_indexed, m_colors256, m_colors16, m_colors2 }) {
+        connect(radio, &QRadioButton::toggled, this, &NewImageDialog::syncHistorySelection);
+    }
+
+    // Abre com a escolha mais recente (ou o padrão: 320 x 240, RGBA).
+    applyEntry(m_entries.value(0, NewImageEntry { }));
 }
 
-void NewImageDialog::applyPreset(int index)
+QString NewImageDialog::entryLabel(const NewImageEntry& entry)
 {
-    if (index <= 0 || index >= static_cast<int>(std::size(kPresets))) {
-        return;
+    QString mode;
+    if (entry.mode == core::ColorMode::Rgba) {
+        mode = tr("RGBA");
+    } else {
+        mode = tr("%1 colors").arg(core::colorCountOf(entry.depth));
     }
-    const core::Size size = kPresets[static_cast<std::size_t>(index)].size;
-    m_width->setValue(size.width);
-    m_height->setValue(size.height);
-    m_presets->setCurrentIndex(index); // os setValue acima podem ter voltado p/ "Custom"
+    return tr("%1 × %2 · %3").arg(entry.size.width).arg(entry.size.height).arg(mode);
+}
+
+void NewImageDialog::applyEntry(const NewImageEntry& entry)
+{
+    m_width->setValue(entry.size.width);
+    m_height->setValue(entry.size.height);
+    m_rgba->setChecked(entry.mode == core::ColorMode::Rgba);
+    m_indexed->setChecked(entry.mode == core::ColorMode::Indexed);
+    // A profundidade fica marcada mesmo em RGBA: é a usada se o usuário
+    // trocar para Indexada (padrão: 256 cores).
+    switch (entry.depth) {
+    case core::ColorDepth::Bits1: m_colors2->setChecked(true); break;
+    case core::ColorDepth::Bits4: m_colors16->setChecked(true); break;
+    case core::ColorDepth::Bits8: m_colors256->setChecked(true); break;
+    }
+    updateIndexedOptions();
+    syncHistorySelection();
+}
+
+void NewImageDialog::updateIndexedOptions()
+{
+    m_indexedOptions->setEnabled(m_indexed->isChecked());
+    // Copiar a paleta exige uma imagem ativa com paleta.
+    m_copyPalette->setEnabled(m_canCopyPalette);
+}
+
+void NewImageDialog::syncHistorySelection()
+{
+    m_history->setCurrentIndex(static_cast<int>(m_entries.indexOf(entry())));
+}
+
+NewImageEntry NewImageDialog::entry() const
+{
+    return { imageSize(), colorMode(), colorDepth() };
 }
 
 core::Size NewImageDialog::imageSize() const
@@ -135,7 +157,7 @@ core::Size NewImageDialog::imageSize() const
 
 core::ColorMode NewImageDialog::colorMode() const
 {
-    return m_colorsRgba->isChecked() ? core::ColorMode::Rgba : core::ColorMode::Indexed;
+    return m_indexed->isChecked() ? core::ColorMode::Indexed : core::ColorMode::Rgba;
 }
 
 core::ColorDepth NewImageDialog::colorDepth() const
@@ -148,7 +170,8 @@ core::ColorDepth NewImageDialog::colorDepth() const
 
 bool NewImageDialog::copyCurrentPalette() const
 {
-    return m_copyPalette->isEnabled() && m_copyPalette->isChecked();
+    return colorMode() == core::ColorMode::Indexed && m_canCopyPalette
+        && m_copyPalette->isChecked();
 }
 
 } // namespace spritenator::gui

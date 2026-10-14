@@ -6,8 +6,13 @@
 // =============================================================================
 #include "AppSettings.h"
 
+#include "core/Image.h"
+
 #include <QDir>
+#include <QRegularExpression>
 #include <QSettings>
+
+#include <optional>
 
 namespace spritenator::gui {
 
@@ -18,6 +23,7 @@ constexpr auto kRecentFilesKey = "files/recent";
 constexpr auto kLastDirectoryKey = "files/lastDirectory";
 constexpr auto kBackupFolderKey = "files/backupFolder";
 constexpr auto kGridGroup = "grids";
+constexpr auto kNewImageHistoryKey = "newImage/history";
 /// Grupo da versão 1.x ("tamanho do personagem"), lido só para migração.
 constexpr auto kOldLayoutGroup = "characterLayout";
 constexpr auto kLanguageKey = "interface/language";
@@ -78,6 +84,81 @@ QString AppSettings::backupFolder() const
 void AppSettings::setBackupFolder(const QString& folder)
 {
     QSettings().setValue(key(kBackupFolderKey), folder);
+}
+
+// -----------------------------------------------------------------------------
+// Histórico do diálogo "Nova imagem"
+//
+// Cada entrada é gravada como texto: "LxA:rgba" ou "LxA:<bits>" (1, 4 ou 8),
+// ex.: "72x128:rgba", "288x256:4". Entradas inválidas são ignoradas.
+// -----------------------------------------------------------------------------
+namespace {
+
+QString encodeEntry(const NewImageEntry& entry)
+{
+    const QString mode = entry.mode == core::ColorMode::Rgba
+        ? QStringLiteral("rgba")
+        : QString::number(core::bitsPerPixelOf(entry.depth));
+    return QStringLiteral("%1x%2:%3").arg(entry.size.width).arg(entry.size.height).arg(mode);
+}
+
+std::optional<NewImageEntry> decodeEntry(const QString& text)
+{
+    static const QRegularExpression pattern(QStringLiteral(R"(^(\d+)x(\d+):(rgba|1|4|8)$)"));
+    const QRegularExpressionMatch match = pattern.match(text);
+    if (!match.hasMatch()) {
+        return std::nullopt;
+    }
+    NewImageEntry entry;
+    entry.size = { match.captured(1).toInt(), match.captured(2).toInt() };
+    if (entry.size.isEmpty() || entry.size.width > core::IndexedImage::kMaxDimension
+        || entry.size.height > core::IndexedImage::kMaxDimension) {
+        return std::nullopt;
+    }
+    const QString mode = match.captured(3);
+    if (mode == QLatin1String("rgba")) {
+        entry.mode = core::ColorMode::Rgba;
+    } else {
+        entry.mode = core::ColorMode::Indexed;
+        entry.depth = mode == QLatin1String("1") ? core::ColorDepth::Bits1
+            : mode == QLatin1String("4")         ? core::ColorDepth::Bits4
+                                                 : core::ColorDepth::Bits8;
+    }
+    return entry;
+}
+
+} // namespace
+
+QList<NewImageEntry> AppSettings::newImageHistory() const
+{
+    QList<NewImageEntry> history;
+    for (const QString& text : QSettings().value(key(kNewImageHistoryKey)).toStringList()) {
+        const auto entry = decodeEntry(text);
+        if (entry && !history.contains(*entry) && history.size() < kMaxNewImageHistory) {
+            history.append(*entry); // mantém a ordem gravada
+        }
+    }
+    return history;
+}
+
+void AppSettings::addNewImageEntry(const NewImageEntry& entry)
+{
+    QStringList texts;
+    for (const NewImageEntry& item : withEntry(newImageHistory(), entry)) {
+        texts.append(encodeEntry(item));
+    }
+    QSettings().setValue(key(kNewImageHistoryKey), texts);
+}
+
+QList<NewImageEntry> AppSettings::withEntry(
+    QList<NewImageEntry> history, const NewImageEntry& entry)
+{
+    history.removeAll(entry);
+    history.prepend(entry);
+    while (history.size() > kMaxNewImageHistory) {
+        history.removeLast();
+    }
+    return history;
 }
 
 // -----------------------------------------------------------------------------

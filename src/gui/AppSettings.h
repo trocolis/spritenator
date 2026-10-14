@@ -6,9 +6,12 @@
 // =============================================================================
 #pragma once
 
+#include "core/AnyImage.h"
 #include "core/GridLayout.h"
+#include "core/Palette.h"
 
 #include <QByteArray>
+#include <QList>
 #include <QString>
 #include <QStringList>
 
@@ -21,6 +24,22 @@ struct ViewSettings {
     bool transparentEffect = false;
     bool canvasReversed = false;
     QByteArray splitterState; ///< proporção Integrator | área MDI
+};
+
+/// Escolha feita no diálogo "Nova imagem": tamanho + modo de cor (o histórico
+/// do diálogo guarda estas combinações).
+struct NewImageEntry {
+    core::Size size { 320, 240 };
+    core::ColorMode mode = core::ColorMode::Rgba;
+    /// Só tem sentido no modo indexado (256, 16 ou 2 cores).
+    core::ColorDepth depth = core::ColorDepth::Bits8;
+
+    friend bool operator==(const NewImageEntry& a, const NewImageEntry& b)
+    {
+        // No modo RGBA a profundidade não conta.
+        return a.size == b.size && a.mode == b.mode
+            && (a.mode == core::ColorMode::Rgba || a.depth == b.depth);
+    }
 };
 
 /// Leitura e gravação das preferências da aplicação.
@@ -42,6 +61,17 @@ public:
     // --- Pasta de backup (vazia = backup desativado) ---
     [[nodiscard]] QString backupFolder() const;
     void setBackupFolder(const QString& folder);
+
+    // --- Histórico do diálogo "Nova imagem" (mais recente primeiro) ---
+    /// Quantidade máxima de entradas guardadas.
+    static constexpr int kMaxNewImageHistory = 8;
+    [[nodiscard]] QList<NewImageEntry> newImageHistory() const;
+    /// Coloca a entrada no topo (sem duplicatas, no máximo 8) e grava.
+    void addNewImageEntry(const NewImageEntry& entry);
+    /// Regra do histórico, sem gravar: a entrada vai para o topo, repetições
+    /// saem e a lista é limitada a kMaxNewImageHistory.
+    [[nodiscard]] static QList<NewImageEntry> withEntry(
+        QList<NewImageEntry> history, const NewImageEntry& entry);
 
     // --- Grades (principal e sub-grade) ---
     [[nodiscard]] core::GridLayout gridLayout() const;
