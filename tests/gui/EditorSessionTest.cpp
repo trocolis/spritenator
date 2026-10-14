@@ -213,9 +213,12 @@ private slots:
         QCOMPARE(sortedFootprint(session, { 5, 5 }),
             (std::vector<core::Point> { { 5, 5 }, { 6, 5 }, { 5, 6 }, { 6, 6 } }));
 
-        // Figuras e seleção: o pixel inicial.
+        // Figuras: a ponta no ponto inicial (aqui, quadrada de 2 px).
         session.setToolKind(ToolKind::FilledEllipse);
-        QCOMPARE(sortedFootprint(session, { 2, 3 }), (std::vector<core::Point> { { 2, 3 } }));
+        QCOMPARE(sortedFootprint(session, { 2, 3 }),
+            (std::vector<core::Point> { { 2, 3 }, { 3, 3 }, { 2, 4 }, { 3, 4 } }));
+        session.setBrushSize(1);
+        // Seleção: o pixel inicial.
         session.setToolKind(ToolKind::Select);
         QCOMPARE(sortedFootprint(session, { 2, 3 }), (std::vector<core::Point> { { 2, 3 } }));
 

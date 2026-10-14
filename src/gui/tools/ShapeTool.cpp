@@ -3,6 +3,7 @@
 // =============================================================================
 #include "ShapeTool.h"
 
+#include "core/Brush.h"
 #include "core/Raster.h"
 #include "gui/Document.h"
 #include "gui/EditorSession.h"
@@ -70,19 +71,52 @@ void ShapeTool::drawShape(EditorSession& session, core::Point current) const
     if (document == nullptr) {
         return;
     }
-    document->editLive([&](core::AnyImage& image) {
-        const core::Plotter plot = [&](core::Point point) { session.plot(image, point, m_role); };
-        const core::Rect bounds = core::Rect::fromCorners(m_start, current);
+    const core::Rect bounds = core::Rect::fromCorners(m_start, current);
+    // 1. O contorno de 1 px da figura (o "caminho" da ponta).
+    std::vector<core::Point> outline;
+    const core::Plotter collect = [&](core::Point point) { outline.push_back(point); };
+    switch (m_shape) {
+    case Shape::Line: core::plotLine(m_start, current, collect); break;
+    case Shape::Rectangle: core::plotRectangle(bounds, false, collect); break;
+    case Shape::RoundRectangle:
+        core::plotRoundRectangle(bounds, core::defaultCornerSize(bounds), false, collect);
+        break;
+    case Shape::Ellipse: core::plotEllipse(bounds, false, collect); break;
+    }
+    // 2. O traço: a ponta do lápis carimbada ao longo do contorno.
+    const int size = session.brushSize();
+    std::vector<core::Point> pixels = core::strokePixels(outline, session.brushShape(), size);
+    // 3. Preenchidas: o interior também.
+    if (m_filled) {
+        const core::Plotter fill = [&](core::Point point) { pixels.push_back(point); };
         switch (m_shape) {
-        case Shape::Line: core::plotLine(m_start, current, plot); break;
-        case Shape::Rectangle: core::plotRectangle(bounds, m_filled, plot); break;
+        case Shape::Line: break;
+        case Shape::Rectangle: core::plotRectangle(bounds, true, fill); break;
         case Shape::RoundRectangle:
-            core::plotRoundRectangle(bounds, core::defaultCornerSize(bounds), m_filled, plot);
+            core::plotRoundRectangle(bounds, core::defaultCornerSize(bounds), true, fill);
             break;
-        case Shape::Ellipse: core::plotEllipse(bounds, m_filled, plot); break;
+        case Shape::Ellipse: core::plotEllipse(bounds, true, fill); break;
         }
-        return bounds; // todas as figuras cabem no retângulo dos dois cantos
+    }
+    const core::Rect extent = core::brushExtent(size);
+    document->editLive([&](core::AnyImage& image) {
+        for (const core::Point point : pixels) {
+            session.plot(image, point, m_role);
+        }
+        // Os dois cantos, aumentados pela ponta.
+        return core::Rect { bounds.x + extent.x, bounds.y + extent.y,
+            bounds.width + extent.width - 1, bounds.height + extent.height - 1 };
     });
+}
+
+std::vector<core::Point> ShapeTool::footprint(const EditorSession& session, core::Point point) const
+{
+    // Antes de começar: a ponta no ponto inicial.
+    std::vector<core::Point> points;
+    for (const core::Point offset : core::brushOffsets(session.brushShape(), session.brushSize())) {
+        points.push_back(point + offset);
+    }
+    return points;
 }
 
 UndoLabel ShapeTool::undoLabel() const

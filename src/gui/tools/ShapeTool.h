@@ -2,7 +2,9 @@
 // ShapeTool.h
 //
 // Ferramentas de figuras geométricas: reta, retângulo, retângulo arredondado
-// e elipse (contorno ou preenchidos). Enquanto o mouse é arrastado a figura
+// e elipse (contorno ou preenchidos). O contorno é desenhado com a ponta do
+// lápis (formato e tamanho da barra de opções); nas preenchidas, o interior
+// também é pintado. Enquanto o mouse é arrastado a figura
 // é redesenhada do zero a cada movimento, sobre a imagem do início da edição
 // (efeito "elástico"); ao soltar o botão ela é fixada e vira um passo de
 // desfazer.
@@ -29,6 +31,9 @@ public:
     void move(EditorSession& session, core::Point point) override;
     void release(EditorSession& session, core::Point point) override;
     void cancel(EditorSession& session) override;
+    /// A ponta no ponto inicial.
+    [[nodiscard]] std::vector<core::Point> footprint(
+        const EditorSession& session, core::Point point) const override;
 
 private:
     /// Desenha a figura do ponto inicial até "current" (sobre o snapshot).

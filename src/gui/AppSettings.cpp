@@ -231,6 +231,18 @@ void AppSettings::setGridLayout(const core::GridLayout& layout)
 // -----------------------------------------------------------------------------
 // Idioma
 // -----------------------------------------------------------------------------
+QString AppSettings::theme() const
+{
+    return QSettings()
+        .value(QStringLiteral("interface/theme"), QStringLiteral("system"))
+        .toString();
+}
+
+void AppSettings::setTheme(const QString& theme)
+{
+    QSettings().setValue(QStringLiteral("interface/theme"), theme);
+}
+
 QString AppSettings::language() const
 {
     return QSettings().value(key(kLanguageKey)).toString();

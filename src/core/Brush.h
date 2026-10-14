@@ -30,4 +30,9 @@ inline constexpr int kMaxBrushSize = 64;
 /// Retângulo ocupado pela ponta em torno do pixel (0, 0).
 [[nodiscard]] Rect brushExtent(int size);
 
+/// Pixels cobertos ao carimbar a ponta em cada ponto do caminho, sem
+/// repetições (um pixel aparece uma vez, mesmo coberto por vários carimbos).
+[[nodiscard]] std::vector<Point> strokePixels(
+    const std::vector<Point>& path, BrushShape shape, int size);
+
 } // namespace spritenator::core

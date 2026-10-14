@@ -130,6 +130,8 @@ private:
     // --- Exibir ---
     /// Cria o submenu Exibir > Idioma (sistema, inglês e traduções embutidas).
     void createLanguageMenu(QMenu* viewMenu);
+    /// Cria o submenu Exibir > Tema (sistema, claro, escuro).
+    void createThemeMenu(QMenu* viewMenu);
     /// Cria um menu cujo título (texto-fonte em inglês, marcado com
     /// QT_TR_NOOP) é traduzido em retranslateUi().
     QMenu* addTranslatedMenu(QWidget* parent, const char* title);
@@ -184,6 +186,7 @@ private:
     HelpWindow* m_helpWindow = nullptr; ///< Criada sob demanda (F1).
     QList<QPair<QMenu*, const char*>> m_translatedMenus; ///< menu e título-fonte
     QAction* m_systemLanguageAction = nullptr; ///< item "padrão do sistema"
+    QList<QPair<QAction*, const char*>> m_themeActions; ///< item e texto-fonte
 };
 
 } // namespace spritenator::gui

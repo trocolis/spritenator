@@ -13,6 +13,7 @@
 #include "IconProvider.h"
 #include "IntegratorPanel.h"
 #include "SelectionTransform.h"
+#include "Theme.h"
 #include "Translations.h"
 #include "commands/ImageCommands.h"
 #include "core/PaletteOps.h"
@@ -128,6 +129,11 @@ MainWindow::MainWindow(QWidget* parent)
     m_mainSplitter->setChildrenCollapsible(false);
     setCentralWidget(m_mainSplitter);
 
+    // Tema das janelas (o do sistema, claro ou escuro), antes de exibir.
+    if (const Theme theme = themeFromKey(m_settings.theme()); theme != currentTheme()) {
+        applyTheme(theme);
+    }
+
     // Preferências persistentes das grades.
     m_session->setGridLayout(m_settings.gridLayout());
 
@@ -242,6 +248,7 @@ void MainWindow::createMenus()
     viewMenu->addAction(action(ActionId::ViewAnimation));
     viewMenu->addSeparator();
     createLanguageMenu(viewMenu);
+    createThemeMenu(viewMenu);
 
     QMenu* canvasMenu = addTranslatedMenu(menuBar(), QT_TR_NOOP("&Canvas"));
     canvasMenu->addAction(action(ActionId::CanvasResize));
@@ -1072,6 +1079,31 @@ void MainWindow::clearCanvas()
 // -----------------------------------------------------------------------------
 // Exibir > Idioma
 // -----------------------------------------------------------------------------
+void MainWindow::createThemeMenu(QMenu* viewMenu)
+{
+    QMenu* themeMenu = addTranslatedMenu(viewMenu, QT_TR_NOOP("&Theme"));
+    auto* group = new QActionGroup(themeMenu);
+    group->setExclusive(true);
+    const QPair<Theme, const char*> entries[] = {
+        { Theme::System, QT_TR_NOOP("&System") },
+        { Theme::Light, QT_TR_NOOP("&Light") },
+        { Theme::Dark, QT_TR_NOOP("&Dark") },
+    };
+    const Theme current = themeFromKey(m_settings.theme());
+    for (const auto& [theme, text] : entries) {
+        QAction* themeAction = themeMenu->addAction(QString());
+        themeAction->setObjectName(QStringLiteral("theme_") + themeKey(theme));
+        themeAction->setCheckable(true);
+        themeAction->setChecked(theme == current);
+        group->addAction(themeAction);
+        m_themeActions.append({ themeAction, text });
+        connect(themeAction, &QAction::triggered, this, [this, theme] {
+            m_settings.setTheme(themeKey(theme));
+            applyTheme(theme); // vale na hora, em todas as janelas
+        });
+    }
+}
+
 void MainWindow::createLanguageMenu(QMenu* viewMenu)
 {
     QMenu* languageMenu = addTranslatedMenu(viewMenu, QT_TR_NOOP("&Language"));
@@ -1145,6 +1177,9 @@ void MainWindow::retranslateUi()
     m_actions->retranslate();
     for (const auto& [menu, title] : std::as_const(m_translatedMenus)) {
         menu->setTitle(tr(title));
+    }
+    for (const auto& [themeAction, text] : std::as_const(m_themeActions)) {
+        themeAction->setText(tr(text));
     }
     m_toolBar->setWindowTitle(tr("Main"));
     if (m_systemLanguageAction != nullptr) {

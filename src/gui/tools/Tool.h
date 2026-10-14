@@ -44,6 +44,16 @@ enum class ToolKind {
         || kind == ToolKind::MagicWand;
 }
 
+/// Verdadeiro para as ferramentas que desenham com a ponta do lápis
+/// (formato e tamanho da barra de opções): o lápis e as figuras.
+[[nodiscard]] constexpr bool usesBrush(ToolKind kind)
+{
+    return kind == ToolKind::Pen || kind == ToolKind::Line || kind == ToolKind::Rectangle
+        || kind == ToolKind::RoundRectangle || kind == ToolKind::Ellipse
+        || kind == ToolKind::FilledRectangle || kind == ToolKind::FilledRoundRectangle
+        || kind == ToolKind::FilledEllipse;
+}
+
 /// Ferramenta de desenho.
 class Tool {
 public:

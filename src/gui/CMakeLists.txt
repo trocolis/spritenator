@@ -33,6 +33,8 @@ add_library(spritenator_gui STATIC
     MainWindow.h
     SelectionTransform.cpp
     SelectionTransform.h
+    Theme.cpp
+    Theme.h
     Translations.cpp
     Translations.h
     commands/ImageCommands.cpp

@@ -207,14 +207,14 @@ const std::vector<ActionSpec>& actionSpecs()
             nullptr, Seq(Qt::CTRL | Qt::Key_Down) },
         // --- Ferramentas ---
         { ActionId::PenSizeDecrease,
-            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Smaller Pen Tip"),
-            QT_TRANSLATE_NOOP(
-                "spritenator::gui::ActionCatalog", "Decrease the size of the pen tip by one pixel"),
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Smaller Tip"),
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
+                "Decrease the size of the tip (pen and shapes) by one pixel"),
             nullptr, Seq(Qt::Key_BracketLeft) },
         { ActionId::PenSizeIncrease,
-            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Larger Pen Tip"),
-            QT_TRANSLATE_NOOP(
-                "spritenator::gui::ActionCatalog", "Increase the size of the pen tip by one pixel"),
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Larger Tip"),
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
+                "Increase the size of the tip (pen and shapes) by one pixel"),
             nullptr, Seq(Qt::Key_BracketRight) },
         // --- Exibir ---
         { ActionId::ViewGrids, QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Grids..."),

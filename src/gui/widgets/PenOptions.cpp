@@ -91,14 +91,15 @@ void PenOptions::retranslate()
     m_round->setToolTip(tr("Round tip"));
     m_sizeLabel->setText(tr("Size:"));
     m_spin->setSuffix(tr(" px"));
-    const QString tip = tr("Size of the pen tip, in pixels ([ and ] change it)");
+    const QString tip
+        = tr("Size of the tip used by the pen and the shapes, in pixels ([ and ] change it)");
     m_slider->setToolTip(tip);
     m_spin->setToolTip(tip);
 }
 
 void PenOptions::syncFromSession()
 {
-    setVisible(m_session->toolKind() == ToolKind::Pen);
+    setVisible(usesBrush(m_session->toolKind()));
     const QSignalBlocker sliderBlocker(m_slider);
     const QSignalBlocker spinBlocker(m_spin);
     m_square->setChecked(m_session->brushShape() == core::BrushShape::Square);

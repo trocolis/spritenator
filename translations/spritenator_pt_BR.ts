@@ -272,22 +272,6 @@
         <translation>Move só o contorno da seleção um pixel para baixo</translation>
     </message>
     <message>
-        <source>Smaller Pen Tip</source>
-        <translation>Ponta do lápis menor</translation>
-    </message>
-    <message>
-        <source>Decrease the size of the pen tip by one pixel</source>
-        <translation>Diminui a ponta do lápis em um pixel</translation>
-    </message>
-    <message>
-        <source>Larger Pen Tip</source>
-        <translation>Ponta do lápis maior</translation>
-    </message>
-    <message>
-        <source>Increase the size of the pen tip by one pixel</source>
-        <translation>Aumenta a ponta do lápis em um pixel</translation>
-    </message>
-    <message>
         <source>&amp;Grids...</source>
         <translation>&amp;Grades...</translation>
     </message>
@@ -366,6 +350,22 @@
     <message>
         <source>Replace every non-background color with the drawing color</source>
         <translation>Substitui toda cor diferente da cor de fundo pela cor de desenho</translation>
+    </message>
+    <message>
+        <source>Smaller Tip</source>
+        <translation>Ponta menor</translation>
+    </message>
+    <message>
+        <source>Decrease the size of the tip (pen and shapes) by one pixel</source>
+        <translation>Diminui a ponta (lápis e figuras) em um pixel</translation>
+    </message>
+    <message>
+        <source>Larger Tip</source>
+        <translation>Ponta maior</translation>
+    </message>
+    <message>
+        <source>Increase the size of the tip (pen and shapes) by one pixel</source>
+        <translation>Aumenta a ponta (lápis e figuras) em um pixel</translation>
     </message>
     <message>
         <source>&amp;Main Grid</source>
@@ -972,6 +972,22 @@ Deseja salvar as alterações?</translation>
         <translation>Paleta salva em %1</translation>
     </message>
     <message>
+        <source>&amp;Theme</source>
+        <translation>T&amp;ema</translation>
+    </message>
+    <message>
+        <source>&amp;System</source>
+        <translation>&amp;Sistema</translation>
+    </message>
+    <message>
+        <source>&amp;Light</source>
+        <translation>&amp;Claro</translation>
+    </message>
+    <message>
+        <source>&amp;Dark</source>
+        <translation>&amp;Escuro</translation>
+    </message>
+    <message>
         <source>&amp;Language</source>
         <translation>&amp;Idioma</translation>
     </message>
@@ -1197,8 +1213,8 @@ R: %2  G: %3  B: %4</translation>
         <translation> px</translation>
     </message>
     <message>
-        <source>Size of the pen tip, in pixels ([ and ] change it)</source>
-        <translation>Tamanho da ponta do lápis, em pixels ([ e ] mudam)</translation>
+        <source>Size of the tip used by the pen and the shapes, in pixels ([ and ] change it)</source>
+        <translation>Tamanho da ponta usada pelo lápis e pelas figuras, em pixels ([ e ] mudam)</translation>
     </message>
 </context>
 <context>

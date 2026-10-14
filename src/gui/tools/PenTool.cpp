@@ -60,16 +60,17 @@ void PenTool::stroke(EditorSession& session, core::Point from, core::Point to) c
     if (document == nullptr) {
         return;
     }
-    // Ponta atual (formato e tamanho escolhidos na barra de opções).
-    const std::vector<core::Point> brush
-        = core::brushOffsets(session.brushShape(), session.brushSize());
+    // A ponta atual (formato e tamanho da barra de opções) carimbada ao
+    // longo do segmento, cada pixel uma vez só.
+    std::vector<core::Point> path;
+    core::plotLine(from, to, [&](core::Point point) { path.push_back(point); });
+    const std::vector<core::Point> pixels
+        = core::strokePixels(path, session.brushShape(), session.brushSize());
     const core::Rect extent = core::brushExtent(session.brushSize());
     document->editLive([&](core::AnyImage& image) {
-        core::plotLine(from, to, [&](core::Point center) {
-            for (const core::Point offset : brush) {
-                session.plot(image, center + offset, m_role);
-            }
-        });
+        for (const core::Point pixel : pixels) {
+            session.plot(image, pixel, m_role);
+        }
         // Área suja: retângulo da reta, expandido pelo tamanho da ponta.
         const core::Rect bounds = core::lineBounds(from, to);
         return core::Rect { bounds.x + extent.x, bounds.y + extent.y,

@@ -4,11 +4,14 @@
 // seções (FlowLayout) e ordem das seções do painel.
 // =============================================================================
 #include "gui/ActionCatalog.h"
+#include "gui/AppSettings.h"
 #include "gui/Document.h"
 #include "gui/EditOperations.h"
 #include "gui/EditorSession.h"
+#include "gui/IconProvider.h"
 #include "gui/IntegratorPanel.h"
 #include "gui/MainWindow.h"
+#include "gui/Theme.h"
 #include "gui/widgets/ColorEditor.h"
 #include "gui/widgets/FlowLayout.h"
 #include "gui/widgets/PenOptions.h"
@@ -16,9 +19,12 @@
 #include "gui/widgets/WandOptions.h"
 
 #include <QAction>
+#include <QApplication>
 #include <QCoreApplication>
+#include <QFrame>
 #include <QSettings>
 #include <QSpinBox>
+#include <QStyle>
 #include <QTest>
 #include <QToolButton>
 
@@ -65,6 +71,11 @@ private slots:
         session.setToolKind(ToolKind::MagicWand);
         QVERIFY(pen->isHidden());
         QVERIFY(!wand->isHidden());
+        // A ponta vale também para as figuras; o balde não tem opções.
+        session.setToolKind(ToolKind::FilledEllipse);
+        QVERIFY(!pen->isHidden());
+        session.setToolKind(ToolKind::Fill);
+        QVERIFY(pen->isHidden());
 
         pen->roundButton()->click();
         QCOMPARE(session.brushShape(), core::BrushShape::Round);
@@ -110,6 +121,47 @@ private slots:
             QCOMPARE(int(document.indexedCanvas().pixel(x, 13)), 2);
         }
         QCOMPARE(int(document.indexedCanvas().pixel(1, 11)), 0); // canto do "+"
+        session.setActiveDocument(nullptr);
+    }
+
+    /// Figuras desenham o contorno com a ponta; as preenchidas pintam também
+    /// o interior.
+    void shapesUseTheTip()
+    {
+        EditorSession session;
+        gui::Document document(
+            core::IndexedImage({ 20, 20 }, 0), core::Palette::makeDefault(core::ColorDepth::Bits8));
+        session.setActiveDocument(&document);
+        const auto drawShape = [&](ToolKind kind, core::Point from, core::Point to) {
+            session.setToolKind(kind);
+            session.tool().press(session, from, Qt::LeftButton);
+            session.tool().move(session, to);
+            session.tool().release(session, to);
+        };
+        const auto at = [&](int x, int y) { return int(document.indexedCanvas().pixel(x, y)); };
+
+        // Retângulo, ponta quadrada de 3 px: borda de 3 px centrada no contorno.
+        session.setBrushSize(3);
+        session.setDrawColor(5);
+        drawShape(ToolKind::Rectangle, { 4, 4 }, { 12, 12 });
+        QCOMPARE(at(3, 3), 5); // meia ponta para fora
+        QCOMPARE(at(5, 5), 5); // meia ponta para dentro
+        QCOMPARE(at(8, 8), 0); // o interior continua vazio
+        QCOMPARE(at(2, 2), 0);
+
+        // Preenchido: o interior também.
+        session.setDrawColor(6);
+        drawShape(ToolKind::FilledRectangle, { 4, 4 }, { 12, 12 });
+        QCOMPARE(at(8, 8), 6);
+        QCOMPARE(at(3, 3), 6);
+
+        // Reta com ponta de 2 px: dois pixels de espessura.
+        session.setBrushSize(2);
+        session.setDrawColor(7);
+        drawShape(ToolKind::Line, { 1, 17 }, { 10, 17 });
+        QCOMPARE(at(5, 17), 7);
+        QCOMPARE(at(5, 18), 7);
+        QCOMPARE(at(5, 16), 0);
         session.setActiveDocument(nullptr);
     }
 
@@ -181,6 +233,66 @@ private slots:
             tops.insert(button->geometry().top());
         }
         QCOMPARE(tops.size(), std::size_t { 1 });
+
+        // Uma linha separa cada seção (ferramentas | tons | transformações | cores).
+        QCOMPARE(panel.findChildren<QFrame*>(QStringLiteral("sectionSeparator")).size(), 3);
+    }
+
+    /// Tema: escuro e claro usam o Fusion com as paletas próprias; Sistema
+    /// devolve o estilo nativo. No escuro, o contorno dos ícones clareia.
+    void themesSwitchLive()
+    {
+        const QString native = QApplication::style()->name();
+        gui::applyTheme(gui::Theme::Dark);
+        QCOMPARE(gui::currentTheme(), gui::Theme::Dark);
+        QCOMPARE(QApplication::style()->name(), QStringLiteral("fusion"));
+        QVERIFY(QApplication::palette().color(QPalette::Window).lightness() < 80);
+        const auto outlinePixels = [](const QColor& color) {
+            const QImage image
+                = gui::IconProvider::icon(QStringLiteral("tool_rect")).pixmap(20, 20).toImage();
+            int count = 0;
+            for (int y = 0; y < image.height(); ++y) {
+                for (int x = 0; x < image.width(); ++x) {
+                    count += QColor(image.pixel(x, y)).rgb() == color.rgb()
+                            && qAlpha(image.pixel(x, y)) > 0
+                        ? 1
+                        : 0;
+                }
+            }
+            return count;
+        };
+        QVERIFY(outlinePixels(gui::IconProvider::darkThemeOutlineColor()) > 0);
+        QCOMPARE(outlinePixels(gui::IconProvider::outlineColor()), 0);
+
+        gui::applyTheme(gui::Theme::Light);
+        QVERIFY(QApplication::palette().color(QPalette::Window).lightness() > 180);
+        QVERIFY(outlinePixels(gui::IconProvider::outlineColor()) > 0);
+
+        gui::applyTheme(gui::Theme::System);
+        QCOMPARE(QApplication::style()->name(), native);
+        QCOMPARE(gui::themeFromKey(gui::themeKey(gui::Theme::Dark)), gui::Theme::Dark);
+        QCOMPARE(gui::themeFromKey(QStringLiteral("???")), gui::Theme::System);
+    }
+
+    /// Exibir > Tema: a escolha vale na hora e fica gravada.
+    void themeMenuPersists()
+    {
+        {
+            gui::MainWindow window;
+            auto* dark = window.findChild<QAction*>(QStringLiteral("theme_dark"));
+            QVERIFY(dark != nullptr);
+            dark->trigger();
+            QCOMPARE(gui::currentTheme(), gui::Theme::Dark);
+            QCOMPARE(gui::AppSettings().theme(), QStringLiteral("dark"));
+        }
+        gui::applyTheme(gui::Theme::System);
+        {
+            gui::MainWindow window; // ao abrir, aplica o tema gravado
+            QCOMPARE(gui::currentTheme(), gui::Theme::Dark);
+            QVERIFY(window.findChild<QAction*>(QStringLiteral("theme_dark"))->isChecked());
+            window.findChild<QAction*>(QStringLiteral("theme_system"))->trigger();
+        }
+        QCOMPARE(gui::currentTheme(), gui::Theme::System);
     }
 };
 

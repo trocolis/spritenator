@@ -1,9 +1,9 @@
 // =============================================================================
 // PenOptions.h
 //
-// Barra de opções do lápis, exibida abaixo das ferramentas apenas com o lápis
-// ativo: formato da ponta (quadrada ou redonda) e tamanho (1 a 64 pixels).
-// O estado vive na EditorSession.
+// Barra de opções da ponta, exibida abaixo das ferramentas com o lápis ou uma
+// figura (reta, retângulos, elipse) ativa: formato da ponta (quadrada ou
+// redonda) e tamanho (1 a 64 pixels). O estado vive na EditorSession.
 // =============================================================================
 #pragma once
 

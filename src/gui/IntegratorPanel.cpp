@@ -19,6 +19,7 @@
 #include "widgets/WandOptions.h"
 
 #include <QEvent>
+#include <QFrame>
 #include <QGridLayout>
 #include <QInputDialog>
 #include <QToolButton>
@@ -29,6 +30,21 @@
 namespace spritenator::gui {
 
 namespace {
+
+/// Espaço acima e abaixo da linha que separa as seções do painel.
+constexpr int kSeparatorSpacing = 10;
+
+/// Linha horizontal fina entre duas seções, com espaço acima e abaixo.
+void addSectionSeparator(QVBoxLayout* layout, QWidget* parent)
+{
+    auto* line = new QFrame(parent);
+    line->setObjectName(QStringLiteral("sectionSeparator"));
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+    layout->addSpacing(kSeparatorSpacing);
+    layout->addWidget(line);
+    layout->addSpacing(kSeparatorSpacing);
+}
 
 /// Cria um botão de ferramenta ligado a uma ação do catálogo.
 QToolButton* makeActionButton(QAction* action, QWidget* parent)
@@ -60,23 +76,24 @@ void IntegratorPanel::buildColumn(ActionCatalog* actions)
 
     // Ordem de cima para baixo: ferramentas (e as opções da ferramenta
     // atual), preenchimento (tons), transformações e cores. As três
-    // primeiras seções quebram linha conforme a largura do painel.
-    constexpr int kSectionSpacing = 8;
+    // primeiras seções quebram linha conforme a largura do painel; uma linha
+    // com espaço acima e abaixo separa as seções.
+    constexpr int kSectionSpacing = 8; // dentro da seção de cores
 
     // --- 1. Ferramentas ---
     layout->addWidget(new ToolPanel(m_session, column));
     // Opções da ferramenta atual: só aparecem com ela ativa.
     layout->addWidget(new PenOptions(m_session, column));
     layout->addWidget(new WandOptions(m_session, column));
-    layout->addSpacing(kSectionSpacing);
+    addSectionSeparator(layout, column);
 
     // --- 2. Preenchimento: tons de retícula ---
     layout->addWidget(new TonePanel(m_session, column));
-    layout->addSpacing(kSectionSpacing);
+    addSectionSeparator(layout, column);
 
     // --- 3. Transformações (seleção ou imagem inteira) ---
     layout->addWidget(createTransformBar(column));
-    layout->addSpacing(kSectionSpacing);
+    addSectionSeparator(layout, column);
 
     // --- 4. Ajuste das cores (mostradores e barras R, G, B, A) ---
     layout->addWidget(new ColorEditor(m_session, column));

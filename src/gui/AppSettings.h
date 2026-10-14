@@ -91,6 +91,10 @@ public:
 
     // --- Idioma da interface ("pt_BR", "en"...; vazio = idioma do sistema) ---
     [[nodiscard]] QString language() const;
+
+    // --- Tema das janelas ("system", "light" ou "dark") ---
+    [[nodiscard]] QString theme() const;
+    void setTheme(const QString& theme);
     void setLanguage(const QString& languageCode);
 
     // --- Preferências de exibição ---
