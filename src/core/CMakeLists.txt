@@ -9,8 +9,6 @@
 add_library(spritenator_core STATIC
     AnyImage.cpp
     AnyImage.h
-    Animation.cpp
-    Animation.h
     Brush.cpp
     Brush.h
     Color.h
@@ -24,6 +22,8 @@ add_library(spritenator_core STATIC
     Palette.h
     PaletteOps.cpp
     PaletteOps.h
+    Quantize.cpp
+    Quantize.h
     Raster.cpp
     FreeTransform.cpp
     FreeTransform.h

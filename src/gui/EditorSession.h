@@ -183,6 +183,11 @@ public:
     [[nodiscard]] int brushSize() const { return m_brushSize; }
     void setBrushSize(int size);
 
+    // --- Papel de seda (onion skin) ---
+    /// Mostra a cena anterior e a próxima, translúcidas, sobre a atual.
+    [[nodiscard]] bool onionSkin() const { return m_onionSkin; }
+    void setOnionSkin(bool enabled);
+
     // --- Varinha mágica ---
     /// Tolerância de cor: 0 (só a mesma cor) a 100 (qualquer cor).
     [[nodiscard]] int wandTolerance() const { return m_wandTolerance; }
@@ -190,13 +195,6 @@ public:
     /// Só a região conectada ao ponto clicado (senão, a imagem toda).
     [[nodiscard]] bool wandContiguous() const { return m_wandContiguous; }
     void setWandContiguous(bool contiguous);
-
-    // --- Célula para a animação ---
-    /// Célula da sub-grade sob o último clique na imagem (usada pela janela
-    /// de animação para montar a lista de quadros).
-    [[nodiscard]] const std::optional<core::Rect>& lastCell() const { return m_lastCell; }
-    /// Registra o ponto clicado (convertido para a célula da sub-grade).
-    void setLastClickedPoint(core::Point point);
 
 signals:
     void activeDocumentChanged(gui::Document* document);
@@ -210,11 +208,11 @@ signals:
     void maskChanged();
     void maskModeChanged(bool enabled);
     void autoMaskChanged(bool enabled);
-    void lastCellChanged(const core::Rect& cell);
     /// Tolerância ou modo "contígua" da varinha mudaram.
     void wandOptionsChanged();
     /// Formato ou tamanho da ponta do lápis mudaram.
     void brushChanged();
+    void onionSkinChanged(bool enabled);
     /// O modo de cor em uso mudou (troca de documento ou "Reverter").
     void colorModeChanged(core::ColorMode mode);
     /// O mostrador ativo mudou.
@@ -243,11 +241,11 @@ private:
     core::GridLayout m_gridLayout;
     bool m_transparentEffect = false;
 
-    std::optional<core::Rect> m_lastCell;
     Qt::KeyboardModifiers m_inputModifiers;
     core::BrushShape m_brushShape = core::BrushShape::Square;
     int m_brushSize = 1;
     int m_wandTolerance = 15;
+    bool m_onionSkin = false;
     bool m_wandContiguous = true;
 
     core::ColorSet m_mask;

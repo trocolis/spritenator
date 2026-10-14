@@ -4,7 +4,6 @@
 // =============================================================================
 #include "gui/MainWindow.h"
 #include "gui/ActionCatalog.h"
-#include "gui/AnimationWindow.h"
 #include "gui/CanvasEditor.h"
 #include "gui/Document.h"
 #include "gui/EditorSession.h"
@@ -13,6 +12,7 @@
 #include <QAction>
 #include <QComboBox>
 #include <QCoreApplication>
+#include <QDockWidget>
 #include <QLineEdit>
 #include <QMdiArea>
 #include <QTemporaryDir>
@@ -226,31 +226,39 @@ private slots:
         QCOMPARE(int(window.activeDocument()->indexedCanvas().pixel(5, 5)), 7);
     }
 
-    /// F2 abre a janela de animação; o ciclo de caminhada usa a última célula.
-    void animationWindowUsesLastCell()
+    /// F2 mostra/esconde a linha do tempo (painel inferior); o menu Animação
+    /// cria cenas no documento ativo.
+    void timelineDockAndAnimationMenu()
     {
         QTemporaryDir directory;
         const QString path = directory.filePath(QStringLiteral("walk.png"));
         io::ImageFile::save(path,
-            { core::IndexedImage({ 72, 128 }),
+            { core::IndexedImage({ 24, 32 }),
                 core::Palette::makeDefault(core::ColorDepth::Bits8) });
 
         MainWindow window;
+        window.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&window));
         QVERIFY(window.openFile(path));
-        window.actions()->action(ActionId::ViewAnimation)->trigger();
-        auto* animation = window.findChild<gui::AnimationWindow*>();
-        QVERIFY(animation != nullptr);
-        QVERIFY(animation->isVisible());
+        auto* dock = window.findChild<QDockWidget*>(QStringLiteral("TimelineDock"));
+        QVERIFY(dock != nullptr);
+        QVERIFY(dock->isVisible());
+        QAction* toggle = window.actions()->action(ActionId::ViewTimeline);
+        QVERIFY(toggle->isChecked());
+        toggle->trigger();
+        QVERIFY(!dock->isVisible());
+        toggle->trigger();
+        QVERIFY(dock->isVisible());
 
-        // Clique na imagem dentro da célula (24, 32) da sub-grade 24x32.
-        gui::CanvasEditor* editor = window.activeEditor();
-        window.session()->setToolKind(gui::ToolKind::Select); // não altera pixels
-        const QPoint inside = editor->viewportPointOf(QPointF(30.5, 40.5)).toPoint();
-        QTest::mouseClick(editor->viewport(), Qt::LeftButton, Qt::NoModifier, inside);
-        QCOMPARE(window.session()->lastCell().value(), (core::Rect { 24, 32, 24, 32 }));
-        animation->addWalkCycle();
-        QCOMPARE(animation->animation().size(), std::size_t { 4 });
-        QCOMPARE(animation->animation().frames().at(2), (core::Rect { 48, 32, 24, 32 }));
+        QVERIFY(!window.actions()->action(ActionId::FrameDelete)->isEnabled()); // só uma cena
+        window.actions()->action(ActionId::FrameNew)->trigger();
+        QCOMPARE(window.activeDocument()->frameCount(), 2);
+        QCOMPARE(window.activeDocument()->currentFrame(), 1);
+        QVERIFY(window.actions()->action(ActionId::FrameDelete)->isEnabled());
+        window.actions()->action(ActionId::LayerNew)->trigger();
+        QCOMPARE(window.activeDocument()->layerCount(), 2);
+        window.actions()->action(ActionId::EditUndo)->trigger();
+        QCOMPARE(window.activeDocument()->layerCount(), 1);
     }
 
     /// Gradação altera a paleta do documento com um passo de desfazer.

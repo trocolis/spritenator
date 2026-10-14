@@ -94,6 +94,14 @@ CanvasEditor::CanvasEditor(Document* document, EditorSession* session, QWidget* 
         viewport()->update();
     });
     connect(m_document, &Document::paletteChanged, viewport(), qOverload<>(&QWidget::update));
+    // Cenas e camadas: outra cena (ou outra estrutura) invalida o papel de seda.
+    const auto invalidateOnion = [this] {
+        m_onionFrame = -1;
+        viewport()->update();
+    };
+    connect(m_document, &Document::structureChanged, this, invalidateOnion);
+    connect(m_document, &Document::currentCelChanged, this, invalidateOnion);
+    connect(m_session, &EditorSession::onionSkinChanged, this, invalidateOnion);
     connect(m_document, &Document::selectionChanged, this, [this] {
         updateSelectionEdges();
         viewport()->update();
@@ -313,9 +321,9 @@ void CanvasEditor::paintEvent(QPaintEvent* event)
         return;
     }
 
-    // Em RGBA, um xadrez por baixo mostra a transparência (casas do tamanho
-    // de um pixel ampliado, entre 4 e 16 px de tela).
-    if (m_document->colorMode() == core::ColorMode::Rgba) {
+    // Em RGBA (ou com várias camadas), um xadrez por baixo mostra a
+    // transparência (casas do tamanho de um pixel ampliado, entre 4 e 16 px).
+    if (m_document->colorMode() == core::ColorMode::Rgba || m_document->layerCount() > 1) {
         const int cell = std::clamp(static_cast<int>(std::lround(m_zoom)), 4, 16);
         paintTransparencyGrid(painter, visible, cell);
     }
@@ -336,6 +344,7 @@ void CanvasEditor::paintEvent(QPaintEvent* event)
             QSizeF(source.width() * m_zoom, source.height() * m_zoom));
         painter.setRenderHint(QPainter::SmoothPixmapTransform, false);
         painter.drawImage(target, image, source);
+        paintOnionSkin(painter, target, source);
     }
 
     paintGrids(painter, visible);
@@ -344,6 +353,32 @@ void CanvasEditor::paintEvent(QPaintEvent* event)
     paintSelection(painter);
     paintToolPath(painter);
     paintTransformBox(painter);
+}
+
+// -----------------------------------------------------------------------------
+// Papel de seda: a cena anterior e a próxima, translúcidas, sobre a atual
+// -----------------------------------------------------------------------------
+void CanvasEditor::paintOnionSkin(QPainter& painter, const QRectF& target, const QRect& source)
+{
+    const int frames = m_document->frameCount();
+    if (!m_session->onionSkin() || frames < 2) {
+        return;
+    }
+    const int current = m_document->currentFrame();
+    if (m_onionFrame != current) { // cache: só recompõe ao mudar de cena
+        m_onionPrevious = current > 0 ? m_document->composite(current - 1) : QImage();
+        m_onionNext = current + 1 < frames ? m_document->composite(current + 1) : QImage();
+        m_onionFrame = current;
+    }
+    constexpr double kOpacity = 0.3;
+    painter.save();
+    painter.setOpacity(kOpacity);
+    for (const QImage& neighbour : { m_onionPrevious, m_onionNext }) {
+        if (!neighbour.isNull()) {
+            painter.drawImage(target, neighbour, source);
+        }
+    }
+    painter.restore();
 }
 
 // -----------------------------------------------------------------------------
@@ -893,9 +928,6 @@ void CanvasEditor::mousePressEvent(QMouseEvent* event)
         m_session->commitTransform();
     }
     const core::Point pixel = imagePointAt(position);
-    if (core::boundsOf(m_document->canvas()).contains(pixel)) {
-        m_session->setLastClickedPoint(pixel); // célula para a animação
-    }
     m_activeButton = event->button();
     m_session->setInputModifiers(event->modifiers());
     m_session->tool().press(*m_session, pixel, event->button());

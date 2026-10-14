@@ -10,11 +10,15 @@ add_library(spritenator_io STATIC
     Backup.h
     BmpWriter.cpp
     BmpWriter.h
+    GifFile.cpp
+    GifFile.h
     ImageFile.cpp
     ImageFile.h
     IoError.h
     PaletteFile.cpp
     PaletteFile.h
+    ProjectFile.cpp
+    ProjectFile.h
 )
 add_library(Spritenator::Io ALIAS spritenator_io)
 

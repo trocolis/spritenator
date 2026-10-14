@@ -117,7 +117,7 @@ private slots:
         core::RgbaImage canvas = std::get<core::RgbaImage>(document->canvas());
         canvas.setPixel({ 0, 0 }, kClear);
         canvas.setPixel({ 1, 0 }, kTranslucentBlue);
-        document->applyCanvas(canvas);
+        document->applyCelRegion(document->activeCel(), { 0, 0 }, canvas);
         document->setSelection(core::Rect { 0, 0, 2, 1 });
         operations.copy();
 
@@ -161,7 +161,7 @@ private slots:
         core::RgbaImage frame({ 48, 32 });
         frame.setPixel({ 0, 0 }, kTranslucentBlue);
         frame.setPixel({ 1, 0 }, kRed);
-        document->applyCanvas(frame);
+        document->applyCelRegion(document->activeCel(), { 0, 0 }, frame);
 
         // Sombra: cor primária, alfa original.
         session.setPrimaryRgba({ 10, 20, 30, 255 });

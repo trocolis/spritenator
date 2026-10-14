@@ -67,6 +67,24 @@ enum class ActionId : std::size_t {
     // --- Ferramentas ---
     PenSizeDecrease,
     PenSizeIncrease,
+    // --- Animação: cenas e camadas ---
+    FrameNew,
+    FrameDuplicate,
+    FrameDelete,
+    FrameMoveLeft,
+    FrameMoveRight,
+    FramePrevious,
+    FrameNext,
+    PlayPause,
+    OnionSkin,
+    LayerNew,
+    LayerDuplicate,
+    LayerDelete,
+    LayerMoveUp,
+    LayerMoveDown,
+    LayerMergeDown,
+    LayerAbove,
+    LayerBelow,
     // --- Exibir ---
     ViewGrids,
     ViewMainGrid,
@@ -75,7 +93,7 @@ enum class ActionId : std::size_t {
     ViewZoomOut,
     ViewZoomActual,
     ViewZoomFit,
-    ViewAnimation,
+    ViewTimeline,
     // --- Canvas ---
     CanvasResize,
     CanvasClearAll,

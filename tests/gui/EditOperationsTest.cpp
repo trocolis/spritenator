@@ -31,8 +31,8 @@ struct Fixture {
     void setPixel(core::Point point, int color)
     {
         // Região de 1x1 pixel: não copia a imagem inteira.
-        document->applyCanvasRegion(
-            point, core::IndexedImage({ 1, 1 }, static_cast<core::ColorIndex>(color)));
+        document->applyCelRegion(document->activeCel(), point,
+            core::IndexedImage({ 1, 1 }, static_cast<core::ColorIndex>(color)));
     }
 
     [[nodiscard]] int pixel(int x, int y) const { return document->indexedCanvas().pixel(x, y); }

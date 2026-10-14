@@ -264,8 +264,7 @@ private slots:
         QVERIFY(session.rgbaPasteRules().skipTransparent);
     }
 
-    /// Grades: valores vazios são rejeitados; o último clique define a célula
-    /// da sub-grade usada pela animação.
+    /// Grades: valores vazios são rejeitados.
     void gridLayoutAndLastCell()
     {
         EditorSession session;
@@ -275,15 +274,10 @@ private slots:
         session.setGridLayout(invalid);
         QCOMPARE(session.gridLayout(), core::GridLayout { });
 
-        QVERIFY(!session.lastCell().has_value());
-        session.setLastClickedPoint({ 30, 40 });
-        QCOMPARE(session.lastCell().value(), (core::Rect { 24, 32, 24, 32 }));
-
         core::GridLayout layout;
         layout.subGrid = { 16, 16 };
         session.setGridLayout(layout);
-        session.setLastClickedPoint({ 30, 40 });
-        QCOMPARE(session.lastCell().value(), (core::Rect { 16, 32, 16, 16 }));
+        QCOMPARE(session.gridLayout().subGrid, (core::Size { 16, 16 }));
     }
 
     /// Cores são limitadas ao tamanho da paleta do documento ativo.

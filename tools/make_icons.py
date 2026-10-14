@@ -1107,6 +1107,165 @@ def app_icon_scaled(size: int) -> Image.Image:
     return base.resize((size, size), Image.Resampling.NEAREST)
 
 
+# -----------------------------------------------------------------------------
+# Linha do tempo: cenas (quadro de filme) e camadas (pilha de folhas), 16x16
+# -----------------------------------------------------------------------------
+FRAME = """
+KKKKKKKKKK
+KwKwKwKwKK
+KKKKKKKKKK
+KbbbbbbbbK
+KbbbbbbbbK
+KbbbbbbbbK
+KbbbbbbbbK
+KKKKKKKKKK
+KwKwKwKwKK
+KKKKKKKKKK
+"""
+
+LAYERS = """
+.....KK.....
+...KKbbKK...
+.KKbbbbbbKK.
+KbbbbbbbbbbK
+.KKbbbbbbKK.
+.KwKKbbKKwK.
+KwwwwKKwwwwK
+.KKwwwwwwKK.
+...KKwwKK...
+.....KK.....
+"""
+
+BADGE_PLUS = """
+.KKK.
+KKGKK
+KGGGK
+KKGKK
+.KKK.
+"""
+
+BADGE_CROSS = """
+KK.KK
+KRKRK
+.KRK.
+KRKRK
+KK.KK
+"""
+
+
+def with_badge(base: str, badge: str, x: int = 0, y: int = 0) -> Image.Image:
+    image = new(16, 16)
+    paste(image, art(base), x, y)
+    mini = art(badge)
+    paste(image, mini, 16 - mini.width, 16 - mini.height)
+    return image
+
+
+def frame_new():
+    return with_badge(FRAME, BADGE_PLUS, 0, 1)
+
+
+def frame_duplicate():
+    image = new(16, 16)
+    paste(image, art(FRAME), 5, 5)
+    paste(image, art(FRAME), 0, 0)
+    return image
+
+
+def frame_delete():
+    return with_badge(FRAME, BADGE_CROSS, 0, 1)
+
+
+def frame_move(direction: int) -> Image.Image:
+    image = new(16, 16)
+    paste(image, art(FRAME), 3, 0)
+    # Seta horizontal (para a direita); a da esquerda é o espelho.
+    arrow = art("""
+.....K..
+.....KK.
+KKKKKKBK
+KBBBBBBK
+KKKKKKBK
+.....KK.
+.....K..
+""")
+    paste(image, arrow if direction > 0 else mirror(arrow), 4, 9)
+    return image
+
+
+def play():
+    return art("""
+................
+...KK...........
+...KGKK.........
+...KGGGKK.......
+...KGGGGGKK.....
+...KGGGGGGGKK...
+...KGGGGGGGGGK..
+...KGGGGGGGGGGK.
+...KGGGGGGGGGK..
+...KGGGGGGGKK...
+...KGGGGGKK.....
+...KGGGKK.......
+...KGKK.........
+...KK...........
+................
+................
+""", 16, 16)
+
+
+def onion_skin():
+    image = new(16, 16)
+    shape(image, ellipse_inside(0, 3, 9, 12), "g", "l")
+    shape(image, ellipse_inside(6, 3, 15, 12), "K", "b")
+    return image
+
+
+def layer_new():
+    return with_badge(LAYERS, BADGE_PLUS, 0, 1)
+
+
+def layer_duplicate():
+    image = new(16, 16)
+    paste(image, art(LAYERS), 4, 6)
+    paste(image, art(LAYERS), 0, 0)
+    return image
+
+
+def layer_delete():
+    return with_badge(LAYERS, BADGE_CROSS, 0, 1)
+
+
+def layer_move(direction: int) -> Image.Image:
+    image = new(16, 16)
+    paste(image, art(LAYERS), 0, 3)
+    arrow = art("""
+..K..
+.KBK.
+KBBBK
+KKBKK
+.KBK.
+.KBK.
+.KKK.
+""")
+    paste(image, arrow if direction < 0 else flip(arrow), 11, 1 if direction < 0 else 7)
+    return image
+
+
+def layer_merge():
+    image = new(16, 16)
+    paste(image, art(LAYERS), 0, 0)
+    paste(image, art("""
+.KBK.
+.KBK.
+KKBKK
+KBBBK
+.KBK.
+..K..
+"""), 11, 8)
+    return image
+
+
 def cursor_rotate():
     """Cursor de rotação das alças de transformação (o "ponto quente" é o centro)."""
     return art("""
@@ -1188,6 +1347,19 @@ ICONS = {
     "tone_shift": tone_shift,
     "app_icon": lambda: app_icon(32),
     "cursor_rotate": cursor_rotate,
+    "frame_new": frame_new,
+    "frame_duplicate": frame_duplicate,
+    "frame_delete": frame_delete,
+    "frame_move_left": lambda: frame_move(-1),
+    "frame_move_right": lambda: frame_move(1),
+    "play": play,
+    "onion_skin": onion_skin,
+    "layer_new": layer_new,
+    "layer_duplicate": layer_duplicate,
+    "layer_delete": layer_delete,
+    "layer_move_up": lambda: layer_move(-1),
+    "layer_move_down": lambda: layer_move(1),
+    "layer_merge": layer_merge,
 }
 for _index, _letter in enumerate("abcdefgh"):
     ICONS[f"tone_{_letter}"] = (lambda i: lambda: tone_icon(tone_patterns()[i]))(_index)

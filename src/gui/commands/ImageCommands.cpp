@@ -4,7 +4,6 @@
 #include "ImageCommands.h"
 
 #include "gui/Document.h"
-#include "gui/ImageTarget.h"
 
 #include <cassert>
 
@@ -27,10 +26,11 @@ void LabeledCommand::retranslate()
 // -----------------------------------------------------------------------------
 // RegionCommand
 // -----------------------------------------------------------------------------
-RegionCommand::RegionCommand(ImageTarget* target, core::Point origin, core::AnyImage before,
-    core::AnyImage after, const UndoLabel& label, bool alreadyApplied)
+RegionCommand::RegionCommand(Document* document, const CelKey& cel, core::Point origin,
+    core::AnyImage before, core::AnyImage after, const UndoLabel& label, bool alreadyApplied)
     : LabeledCommand(label)
-    , m_target(target)
+    , m_document(document)
+    , m_cel(cel)
     , m_origin(origin)
     , m_before(std::move(before))
     , m_after(std::move(after))
@@ -42,7 +42,7 @@ RegionCommand::RegionCommand(ImageTarget* target, core::Point origin, core::AnyI
 
 void RegionCommand::undo()
 {
-    m_target->applyRegion(m_origin, m_before);
+    m_document->applyCelRegion(m_cel, m_origin, m_before);
 }
 
 void RegionCommand::redo()
@@ -51,29 +51,7 @@ void RegionCommand::redo()
         m_skipNextRedo = false; // a edição já estava aplicada
         return;
     }
-    m_target->applyRegion(m_origin, m_after);
-}
-
-// -----------------------------------------------------------------------------
-// ReplaceImageCommand
-// -----------------------------------------------------------------------------
-ReplaceImageCommand::ReplaceImageCommand(
-    ImageTarget* target, core::AnyImage before, core::AnyImage after, const UndoLabel& label)
-    : LabeledCommand(label)
-    , m_target(target)
-    , m_before(std::move(before))
-    , m_after(std::move(after))
-{
-}
-
-void ReplaceImageCommand::undo()
-{
-    m_target->applyImage(m_before);
-}
-
-void ReplaceImageCommand::redo()
-{
-    m_target->applyImage(m_after);
+    m_document->applyCelRegion(m_cel, m_origin, m_after);
 }
 
 // -----------------------------------------------------------------------------
@@ -117,30 +95,42 @@ bool PaletteCommand::mergeWith(const QUndoCommand* other)
 }
 
 // -----------------------------------------------------------------------------
-// DocumentStateCommand
+// SpriteStateCommand
 // -----------------------------------------------------------------------------
-DocumentStateCommand::DocumentStateCommand(Document* document, core::AnyImage beforeImage,
-    core::Palette beforePalette, core::AnyImage afterImage, core::Palette afterPalette,
-    const UndoLabel& label)
+SpriteStateCommand::SpriteStateCommand(Document* document, SpriteState before, SpriteState after,
+    const UndoLabel& label, bool mergeable)
     : LabeledCommand(label)
     , m_document(document)
-    , m_beforeImage(std::move(beforeImage))
-    , m_beforePalette(std::move(beforePalette))
-    , m_afterImage(std::move(afterImage))
-    , m_afterPalette(std::move(afterPalette))
+    , m_mergeable(mergeable)
+    , m_before(std::move(before))
+    , m_after(std::move(after))
 {
 }
 
-void DocumentStateCommand::undo()
+void SpriteStateCommand::undo()
 {
-    m_document->applyPalette(m_beforePalette);
-    m_document->applyCanvas(m_beforeImage);
+    m_document->applyState(m_before);
 }
 
-void DocumentStateCommand::redo()
+void SpriteStateCommand::redo()
 {
-    m_document->applyPalette(m_afterPalette);
-    m_document->applyCanvas(m_afterImage);
+    m_document->applyState(m_after);
+}
+
+int SpriteStateCommand::id() const
+{
+    return m_mergeable ? kCommandId : -1;
+}
+
+bool SpriteStateCommand::mergeWith(const QUndoCommand* other)
+{
+    const auto* next = dynamic_cast<const SpriteStateCommand*>(other);
+    if (next == nullptr || !next->m_mergeable || next->m_document != m_document
+        || next->label().operation != label().operation) {
+        return false;
+    }
+    m_after = next->m_after; // mantém o "antes" original
+    return true;
 }
 
 } // namespace spritenator::gui

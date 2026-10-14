@@ -56,3 +56,7 @@ spritenator_add_test(test_selection_tools
 spritenator_add_test(test_tool_options
     SOURCES ToolOptionsTest.cpp
     LIBRARIES Spritenator::Gui)
+
+spritenator_add_test(test_timeline
+    SOURCES TimelineTest.cpp
+    LIBRARIES Spritenator::Gui)

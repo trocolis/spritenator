@@ -6,7 +6,6 @@
 // que não há aceleradores repetidos dentro de um mesmo menu traduzido.
 // =============================================================================
 #include "gui/ActionCatalog.h"
-#include "gui/AnimationWindow.h"
 #include "gui/CanvasEditor.h"
 #include "gui/Document.h"
 #include "gui/EditorSession.h"
@@ -20,6 +19,7 @@
 #include <QAbstractButton>
 #include <QAction>
 #include <QApplication>
+#include <QDockWidget>
 #include <QFile>
 #include <QGroupBox>
 #include <QLabel>
@@ -312,7 +312,6 @@ private slots:
         gui::MainWindow window;
         window.show();
         QVERIFY(QTest::qWaitForWindowExposed(&window));
-        window.actions()->action(ActionId::ViewAnimation)->trigger();
         window.actions()->action(ActionId::HelpContents)->trigger();
 
         // Um passo de desfazer criado em inglês ("Pen") num documento aberto.
@@ -342,9 +341,9 @@ private slots:
         QCOMPARE(window.actions()->action(ActionId::FileNew)->text(), QStringLiteral("&Novo..."));
         QCOMPARE(window.actions()->action(ActionId::EditUndo)->text(),
             QStringLiteral("&Desfazer Lápis"));
-        auto* animation = window.findChild<gui::AnimationWindow*>();
-        QVERIFY(animation != nullptr);
-        QCOMPARE(animation->windowTitle(), QStringLiteral("Animação"));
+        auto* timeline = window.findChild<QDockWidget*>(QStringLiteral("TimelineDock"));
+        QVERIFY(timeline != nullptr);
+        QCOMPARE(timeline->windowTitle(), QStringLiteral("Linha do tempo"));
         QVERIFY(canvas->windowTitle().startsWith(QStringLiteral("SemTitulo")));
 
         const QSet<QString> english = exclusiveTexts(false);

@@ -125,6 +125,8 @@ private:
 
     void paintGrids(QPainter& painter, const QRect& visible) const;
     void paintHighlight(QPainter& painter) const;
+    /// Papel de seda (se ligado): cenas vizinhas translúcidas.
+    void paintOnionSkin(QPainter& painter, const QRectF& target, const QRect& source);
     void paintSelection(QPainter& painter) const;
     /// Contorno em construção da ferramenta (polígono, laço).
     void paintToolPath(QPainter& painter) const;
@@ -162,6 +164,9 @@ private:
 
     std::optional<QPointF> m_mousePosition; ///< último ponto do mouse no viewport
     QList<QLine> m_selectionEdges; ///< bordas da seleção (coordenadas da imagem)
+    int m_onionFrame = -1; ///< cena para a qual o papel de seda foi composto
+    QImage m_onionPrevious; ///< cena anterior (papel de seda)
+    QImage m_onionNext; ///< próxima cena (papel de seda)
     bool m_hadToolPath = false;
     std::optional<core::Point> m_hoverPixel;
 

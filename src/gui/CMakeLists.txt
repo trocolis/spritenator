@@ -8,8 +8,6 @@
 add_library(spritenator_gui STATIC
     ActionCatalog.cpp
     ActionCatalog.h
-    AnimationWindow.cpp
-    AnimationWindow.h
     AppSettings.cpp
     AppSettings.h
     CanvasEditor.cpp
@@ -26,15 +24,17 @@ add_library(spritenator_gui STATIC
     IconProvider.h
     ImageRendering.cpp
     ImageRendering.h
-    ImageTarget.h
     IntegratorPanel.cpp
     IntegratorPanel.h
     MainWindow.cpp
     MainWindow.h
+    Sprite.h
     SelectionTransform.cpp
     SelectionTransform.h
     Theme.cpp
     Theme.h
+    TimelinePanel.cpp
+    TimelinePanel.h
     Translations.cpp
     Translations.h
     commands/ImageCommands.cpp

@@ -25,8 +25,8 @@ public:
         , m_after(core::Size { 1, 1 }, color)
     {
     }
-    void redo() override { m_document->applyCanvasRegion(m_point, m_after); }
-    void undo() override { m_document->applyCanvasRegion(m_point, m_before); }
+    void redo() override { m_document->applyCelRegion(m_document->activeCel(), m_point, m_after); }
+    void undo() override { m_document->applyCelRegion(m_document->activeCel(), m_point, m_before); }
 
 private:
     Document* m_document;
@@ -66,7 +66,9 @@ private slots:
         document->undoStack()->push(new PaintPixelCommand(document.get(), { 2, 1 }, 9));
         QVERIFY(document->isModified());
         QCOMPARE(int(document->indexedCanvas().pixel(2, 1)), 9);
-        QCOMPARE(document->renderedImage().pixelIndex(2, 1), 9); // cache atualizado
+        // Cache de exibição (composto em RGBA) atualizado com a cor 9.
+        const core::Rgb color = document->palette().color(9);
+        QCOMPARE(document->renderedImage().pixel(2, 1), qRgb(color.red, color.green, color.blue));
         QCOMPARE(changed.count(), 1);
         QCOMPARE(changed.first().first().value<core::Rect>(), (core::Rect { 2, 1, 1, 1 }));
 
@@ -149,20 +151,24 @@ private slots:
             io::IoError, std::ignore = Document::load(QStringLiteral("/nonexistent.png")));
     }
 
-    void paletteChangeUpdatesColorTable()
+    void paletteChangeUpdatesRenderedImage()
     {
         std::unique_ptr<Document> document(makeDocument());
         core::Palette palette = document->palette();
         palette.setColor(0, { 1, 2, 3 });
         document->applyPalette(palette);
-        QCOMPARE(document->renderedImage().color(0), qRgb(1, 2, 3));
+        QCOMPARE(document->renderedImage().pixel(0, 0), qRgb(1, 2, 3));
     }
 
     void resizingEmitsSignal()
     {
         std::unique_ptr<Document> document(makeDocument());
         QSignalSpy resized(document.get(), &Document::canvasResized);
-        document->applyCanvas(core::IndexedImage({ 3, 3 }));
+        document->transformCels(
+            [](const core::AnyImage& /*cel*/, int /*layer*/) -> core::AnyImage {
+                return core::IndexedImage({ 3, 3 });
+            },
+            document->palette(), gui::UndoLabel { gui::UndoOperation::CanvasSize });
         QCOMPARE(resized.count(), 1);
         QCOMPARE(document->renderedImage().size(), QSize(3, 3));
     }

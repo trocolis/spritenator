@@ -272,6 +272,126 @@
         <translation>Move só o contorno da seleção um pixel para baixo</translation>
     </message>
     <message>
+        <source>&amp;New Scene</source>
+        <translation>&amp;Nova cena</translation>
+    </message>
+    <message>
+        <source>Add an empty scene after the current one</source>
+        <translation>Acrescenta uma cena vazia depois da atual</translation>
+    </message>
+    <message>
+        <source>&amp;Duplicate Scene</source>
+        <translation>&amp;Duplicar cena</translation>
+    </message>
+    <message>
+        <source>Add a copy of the current scene after it</source>
+        <translation>Acrescenta uma cópia da cena atual depois dela</translation>
+    </message>
+    <message>
+        <source>Delete the current scene</source>
+        <translation>Apaga a cena atual</translation>
+    </message>
+    <message>
+        <source>Move Scene &amp;Left</source>
+        <translation>Mover cena para a &amp;esquerda</translation>
+    </message>
+    <message>
+        <source>Move the current scene one position to the left</source>
+        <translation>Move a cena atual uma posição para a esquerda</translation>
+    </message>
+    <message>
+        <source>Move Scene &amp;Right</source>
+        <translation>Mover cena para a direi&amp;ta</translation>
+    </message>
+    <message>
+        <source>Move the current scene one position to the right</source>
+        <translation>Move a cena atual uma posição para a direita</translation>
+    </message>
+    <message>
+        <source>&amp;Previous Scene</source>
+        <translation>Cena &amp;anterior</translation>
+    </message>
+    <message>
+        <source>Show the previous scene</source>
+        <translation>Mostra a cena anterior</translation>
+    </message>
+    <message>
+        <source>Ne&amp;xt Scene</source>
+        <translation>&amp;Próxima cena</translation>
+    </message>
+    <message>
+        <source>Show the next scene</source>
+        <translation>Mostra a próxima cena</translation>
+    </message>
+    <message>
+        <source>Play the animation in the image editor (press again to stop)</source>
+        <translation>Reproduz a animação no editor de imagem (de novo para parar)</translation>
+    </message>
+    <message>
+        <source>&amp;Onion Skin</source>
+        <translation>Papel de &amp;seda</translation>
+    </message>
+    <message>
+        <source>Show the previous and the next scenes faintly over the current one, to guide the drawing</source>
+        <translation>Mostra a cena anterior e a próxima, translúcidas, sobre a atual, para guiar o desenho</translation>
+    </message>
+    <message>
+        <source>New La&amp;yer</source>
+        <translation>Nova ca&amp;mada</translation>
+    </message>
+    <message>
+        <source>Add an empty layer above the current one</source>
+        <translation>Acrescenta uma camada vazia acima da atual</translation>
+    </message>
+    <message>
+        <source>Add a copy of the current layer above it</source>
+        <translation>Acrescenta uma cópia da camada atual acima dela</translation>
+    </message>
+    <message>
+        <source>Delete the current layer from all scenes</source>
+        <translation>Apaga a camada atual de todas as cenas</translation>
+    </message>
+    <message>
+        <source>Move Layer &amp;Up</source>
+        <translation>Su&amp;bir camada</translation>
+    </message>
+    <message>
+        <source>Move the current layer one position up</source>
+        <translation>Move a camada atual uma posição para cima</translation>
+    </message>
+    <message>
+        <source>Move Layer Do&amp;wn</source>
+        <translation>Desce&amp;r camada</translation>
+    </message>
+    <message>
+        <source>Move the current layer one position down</source>
+        <translation>Move a camada atual uma posição para baixo</translation>
+    </message>
+    <message>
+        <source>&amp;Merge Layer Down</source>
+        <translation>Mesc&amp;lar com a de baixo</translation>
+    </message>
+    <message>
+        <source>Merge the current layer into the one below it, in all scenes</source>
+        <translation>Junta a camada atual com a de baixo, em todas as cenas</translation>
+    </message>
+    <message>
+        <source>Select Layer Above</source>
+        <translation>Camada de cima</translation>
+    </message>
+    <message>
+        <source>Make the layer above the current one the active layer</source>
+        <translation>Passa a desenhar na camada acima da atual</translation>
+    </message>
+    <message>
+        <source>Select Layer Below</source>
+        <translation>Camada de baixo</translation>
+    </message>
+    <message>
+        <source>Make the layer below the current one the active layer</source>
+        <translation>Passa a desenhar na camada abaixo da atual</translation>
+    </message>
+    <message>
         <source>&amp;Grids...</source>
         <translation>&amp;Grades...</translation>
     </message>
@@ -318,6 +438,10 @@
     <message>
         <source>Choose the largest zoom that shows the whole image</source>
         <translation>Escolhe o maior zoom que mostra a imagem inteira</translation>
+    </message>
+    <message>
+        <source>Show or hide the timeline with the scenes and the layers</source>
+        <translation>Mostra ou oculta a linha do tempo, com as cenas e as camadas</translation>
     </message>
     <message>
         <source>Do not paste pixels of the background color (or fully transparent ones)</source>
@@ -368,6 +492,22 @@
         <translation>Aumenta a ponta (lápis e figuras) em um pixel</translation>
     </message>
     <message>
+        <source>Dele&amp;te Scene</source>
+        <translation>Apa&amp;gar cena</translation>
+    </message>
+    <message>
+        <source>Pl&amp;ay</source>
+        <translation>Reprod&amp;uzir</translation>
+    </message>
+    <message>
+        <source>Dupl&amp;icate Layer</source>
+        <translation>Dupl&amp;icar camada</translation>
+    </message>
+    <message>
+        <source>Delete Lay&amp;er</source>
+        <translation>Apagar &amp;camada</translation>
+    </message>
+    <message>
         <source>&amp;Main Grid</source>
         <translation>Grade &amp;principal</translation>
     </message>
@@ -376,12 +516,8 @@
         <translation>&amp;Sub-grade</translation>
     </message>
     <message>
-        <source>&amp;Animation...</source>
-        <translation>&amp;Animação...</translation>
-    </message>
-    <message>
-        <source>Open the window used to preview the character animation</source>
-        <translation>Abre a janela de prévia da animação do personagem</translation>
+        <source>Tim&amp;eline</source>
+        <translation>&amp;Linha do tempo</translation>
     </message>
     <message>
         <source>Set Canvas &amp;Size...</source>
@@ -493,76 +629,6 @@
     </message>
 </context>
 <context>
-    <name>spritenator::gui::AnimationPreview</name>
-    <message>
-        <source>No image open</source>
-        <translation>Nenhuma imagem aberta</translation>
-    </message>
-    <message>
-        <source>No frames</source>
-        <translation>Nenhum quadro</translation>
-    </message>
-</context>
-<context>
-    <name>spritenator::gui::AnimationWindow</name>
-    <message>
-        <source>&amp;Add Cell</source>
-        <translation>&amp;Adicionar célula</translation>
-    </message>
-    <message>
-        <source>Add the sub grid cell (character cell) last clicked on the image</source>
-        <translation>Adiciona a célula da sub-grade (célula do personagem) do último clique na imagem</translation>
-    </message>
-    <message>
-        <source>&amp;Walk Cycle</source>
-        <translation>Ciclo de &amp;caminhada</translation>
-    </message>
-    <message>
-        <source>Add the RPG Maker walk cycle (frames 1-2-3-2) starting at the last clicked cell</source>
-        <translation>Adiciona o ciclo de caminhada do RPG Maker (quadros 1-2-3-2) a partir da última célula clicada</translation>
-    </message>
-    <message>
-        <source>&amp;Pause</source>
-        <translation>&amp;Pausar</translation>
-    </message>
-    <message>
-        <source>Animation</source>
-        <translation>Animação</translation>
-    </message>
-    <message>
-        <source> ms</source>
-        <translation> ms</translation>
-    </message>
-    <message>
-        <source>&amp;Remove</source>
-        <translation>&amp;Remover</translation>
-    </message>
-    <message>
-        <source>&amp;Delete All</source>
-        <translation>Apagar &amp;tudo</translation>
-    </message>
-    <message>
-        <source>Wait:</source>
-        <translation>Espera:</translation>
-    </message>
-    <message>
-        <source>Zoom:</source>
-        <translation>Zoom:</translation>
-    </message>
-    <message>
-        <source>Frames</source>
-        <translation>Quadros</translation>
-    </message>
-    <message>
-        <source>%1: (%2, %3)</source>
-        <translation>%1: (%2, %3)</translation>
-    </message>
-    <message>
-        <source>&amp;Play</source>
-        <translation>&amp;Reproduzir</translation>
-    </message>
-</context>
-<context>
     <name>spritenator::gui::BackupFolderDialog</name>
     <message>
         <source>Keep a backup of the previous version when saving</source>
@@ -665,6 +731,18 @@ Botão esquerdo: cor primária. Botão direito: cor secundária.</translation>
     <message>
         <source>Untitled%1</source>
         <translation>SemTitulo%1</translation>
+    </message>
+    <message>
+        <source>The sprite sheet would be larger than %1 pixels. Use more columns or fewer scenes.</source>
+        <translation>A sprite sheet passaria de %1 pixels. Use mais colunas ou menos cenas.</translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <translation>%1 (cópia)</translation>
+    </message>
+    <message>
+        <source>Layer %1</source>
+        <translation>Camada %1</translation>
     </message>
 </context>
 <context>
@@ -906,6 +984,10 @@ Botão esquerdo: cor primária. Botão direito: cor secundária.</translation>
         <translation>&amp;Seleção</translation>
     </message>
     <message>
+        <source>&amp;Animation</source>
+        <translation>Ani&amp;mação</translation>
+    </message>
+    <message>
         <source>&amp;Undo %1</source>
         <translation>&amp;Desfazer %1</translation>
     </message>
@@ -920,6 +1002,18 @@ Botão esquerdo: cor primária. Botão direito: cor secundária.</translation>
     <message>
         <source>&amp;Redo</source>
         <translation>&amp;Refazer</translation>
+    </message>
+    <message>
+        <source>Supported files (*.sprn *.png *.bmp *.gif)</source>
+        <translation>Arquivos suportados (*.sprn *.png *.bmp *.gif)</translation>
+    </message>
+    <message>
+        <source>Spritenator project (*.sprn)</source>
+        <translation>Projeto do Spritenator (*.sprn)</translation>
+    </message>
+    <message>
+        <source>Animated GIF (*.gif)</source>
+        <translation>GIF animado (*.gif)</translation>
     </message>
     <message>
         <source>Open Image</source>
@@ -938,8 +1032,40 @@ Botão esquerdo: cor primária. Botão direito: cor secundária.</translation>
         <translation>%1 salvo</translation>
     </message>
     <message>
+        <source>Sprite sheet, PNG (*.png)</source>
+        <translation>Sprite sheet, PNG (*.png)</translation>
+    </message>
+    <message>
+        <source>Separate images, PNG (*.png)</source>
+        <translation>Imagens separadas, PNG (*.png)</translation>
+    </message>
+    <message>
         <source>Save Image As</source>
         <translation>Salvar imagem como</translation>
+    </message>
+    <message>
+        <source>The layers will be merged.</source>
+        <translation>As camadas serão mescladas.</translation>
+    </message>
+    <message>
+        <source>Only the current scene will be saved.</source>
+        <translation>Só a cena atual será gravada.</translation>
+    </message>
+    <message>
+        <source>
+
+To keep editing the scenes and layers later, also save the image as a Spritenator project (.sprn). Continue?</source>
+        <translation>
+
+Para continuar editando as cenas e as camadas depois, salve também como projeto do Spritenator (.sprn). Continuar?</translation>
+    </message>
+    <message>
+        <source>Sprite Sheet</source>
+        <translation>Sprite sheet</translation>
+    </message>
+    <message>
+        <source>Scenes per row:</source>
+        <translation>Cenas por linha:</translation>
     </message>
     <message>
         <source>Revert</source>
@@ -990,6 +1116,10 @@ Deseja salvar as alterações?</translation>
     <message>
         <source>&amp;Language</source>
         <translation>&amp;Idioma</translation>
+    </message>
+    <message>
+        <source>Timeline</source>
+        <translation>Linha do tempo</translation>
     </message>
     <message>
         <source>System Default</source>
@@ -1327,6 +1457,45 @@ R: %2  G: %3  B: %4</translation>
     </message>
 </context>
 <context>
+    <name>spritenator::gui::TimelinePanel</name>
+    <message>
+        <source>Scenes</source>
+        <translation>Cenas</translation>
+    </message>
+    <message>
+        <source>Layers</source>
+        <translation>Camadas</translation>
+    </message>
+    <message>
+        <source>Duration:</source>
+        <translation>Duração:</translation>
+    </message>
+    <message>
+        <source> ms</source>
+        <translation> ms</translation>
+    </message>
+    <message>
+        <source>How long the current scene is shown when playing</source>
+        <translation>Quanto tempo a cena atual fica na tela ao reproduzir</translation>
+    </message>
+    <message>
+        <source>Opacity:</source>
+        <translation>Opacidade:</translation>
+    </message>
+    <message>
+        <source>Opacity of the current layer (RGBA images only)</source>
+        <translation>Opacidade da camada atual (só em imagens RGBA)</translation>
+    </message>
+    <message>
+        <source>Click to choose the layer to draw on; the box shows or hides it; double click renames</source>
+        <translation>Clique para escolher a camada em que desenhar; a caixa mostra ou oculta; clique duplo renomeia</translation>
+    </message>
+    <message>
+        <source>Scene %1 (%2 ms)</source>
+        <translation>Cena %1 (%2 ms)</translation>
+    </message>
+</context>
+<context>
     <name>spritenator::gui::TonePanel</name>
     <message>
         <source>Draw with tone %1</source>
@@ -1515,6 +1684,54 @@ R: %2  G: %3  B: %4</translation>
         <translation>Transformar seleção</translation>
     </message>
     <message>
+        <source>Add Scene</source>
+        <translation>Nova cena</translation>
+    </message>
+    <message>
+        <source>Duplicate Scene</source>
+        <translation>Duplicar cena</translation>
+    </message>
+    <message>
+        <source>Delete Scene</source>
+        <translation>Apagar cena</translation>
+    </message>
+    <message>
+        <source>Move Scene</source>
+        <translation>Mover cena</translation>
+    </message>
+    <message>
+        <source>Scene Duration</source>
+        <translation>Duração da cena</translation>
+    </message>
+    <message>
+        <source>Add Layer</source>
+        <translation>Nova camada</translation>
+    </message>
+    <message>
+        <source>Duplicate Layer</source>
+        <translation>Duplicar camada</translation>
+    </message>
+    <message>
+        <source>Delete Layer</source>
+        <translation>Apagar camada</translation>
+    </message>
+    <message>
+        <source>Move Layer</source>
+        <translation>Mover camada</translation>
+    </message>
+    <message>
+        <source>Merge Layer Down</source>
+        <translation>Mesclar camada</translation>
+    </message>
+    <message>
+        <source>Layer Properties</source>
+        <translation>Propriedades da camada</translation>
+    </message>
+    <message>
+        <source>Layer Opacity</source>
+        <translation>Opacidade da camada</translation>
+    </message>
+    <message>
         <source>Canvas Size</source>
         <translation>Tamanho do canvas</translation>
     </message>
@@ -1571,6 +1788,25 @@ R: %2  G: %3  B: %4</translation>
     <message>
         <source>Cannot write the backup &quot;%1&quot;.</source>
         <translation>Não foi possível gravar o backup &quot;%1&quot;.</translation>
+    </message>
+</context>
+<context>
+    <name>spritenator::io::GifFile</name>
+    <message>
+        <source>There is nothing to save.</source>
+        <translation>Não há nada para salvar.</translation>
+    </message>
+    <message>
+        <source>Cannot write &quot;%1&quot;: %2</source>
+        <translation>Não foi possível gravar &quot;%1&quot;: %2</translation>
+    </message>
+    <message>
+        <source>&quot;%1&quot; has scenes of different sizes.</source>
+        <translation>&quot;%1&quot; tem cenas de tamanhos diferentes.</translation>
+    </message>
+    <message>
+        <source>Cannot open &quot;%1&quot;: %2</source>
+        <translation>Não foi possível abrir &quot;%1&quot;: %2</translation>
     </message>
 </context>
 <context>
@@ -1677,6 +1913,29 @@ R: %2  G: %3  B: %4</translation>
     <message>
         <source>Adobe color table (*.act)</source>
         <translation>Tabela de cores Adobe (*.act)</translation>
+    </message>
+</context>
+<context>
+    <name>spritenator::io::ProjectFile</name>
+    <message>
+        <source>&quot;%1&quot; is not a valid Spritenator project or is damaged.</source>
+        <translation>&quot;%1&quot; não é um projeto do Spritenator válido ou está danificado.</translation>
+    </message>
+    <message>
+        <source>There is nothing to save.</source>
+        <translation>Não há nada para salvar.</translation>
+    </message>
+    <message>
+        <source>Cannot write &quot;%1&quot;: %2</source>
+        <translation>Não foi possível gravar &quot;%1&quot;: %2</translation>
+    </message>
+    <message>
+        <source>Cannot open &quot;%1&quot;: %2</source>
+        <translation>Não foi possível abrir &quot;%1&quot;: %2</translation>
+    </message>
+    <message>
+        <source>&quot;%1&quot; was saved by a newer version of Spritenator.</source>
+        <translation>&quot;%1&quot; foi salvo por uma versão mais nova do Spritenator.</translation>
     </message>
 </context>
 </TS>

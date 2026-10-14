@@ -4,7 +4,6 @@
 #include "MainWindow.h"
 
 #include "ActionCatalog.h"
-#include "AnimationWindow.h"
 #include "CanvasEditor.h"
 #include "Document.h"
 #include "EditOperations.h"
@@ -14,6 +13,7 @@
 #include "IntegratorPanel.h"
 #include "SelectionTransform.h"
 #include "Theme.h"
+#include "TimelinePanel.h"
 #include "Translations.h"
 #include "commands/ImageCommands.h"
 #include "core/PaletteOps.h"
@@ -40,10 +40,12 @@
 #include <QCloseEvent>
 #include <QComboBox>
 #include <QDir>
+#include <QDockWidget>
 #include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMdiArea>
@@ -70,17 +72,6 @@ namespace {
 QString toQString(std::string_view text)
 {
     return QString::fromUtf8(text.data(), static_cast<qsizetype>(text.size()));
-}
-
-/// Garante que o caminho termine com a extensão do filtro escolhido no
-/// diálogo de salvar (ex.: usuário digitou "heroi" e escolheu PNG).
-QString ensureExtension(const QString& path, const QString& selectedFilter)
-{
-    if (!QFileInfo(path).suffix().isEmpty()) {
-        return path;
-    }
-    const bool isBmp = selectedFilter.contains(QLatin1String("*.bmp"));
-    return path + (isBmp ? QStringLiteral(".bmp") : QStringLiteral(".png"));
 }
 
 /// Formatação dos números do indicador de zoom: no idioma da interface, sem
@@ -128,6 +119,19 @@ MainWindow::MainWindow(QWidget* parent)
     m_mainSplitter->setStretchFactor(1, 1); // a imagem ocupa o restante
     m_mainSplitter->setChildrenCollapsible(false);
     setCentralWidget(m_mainSplitter);
+
+    // Linha do tempo (cenas e camadas) no painel inferior; F2 mostra/esconde.
+    m_timeline = new TimelinePanel(m_session, m_actions, this);
+    m_timelineDock = new QDockWidget(this);
+    m_timelineDock->setObjectName(QStringLiteral("TimelineDock")); // para salvar o estado
+    m_timelineDock->setWidget(m_timeline);
+    m_timelineDock->setAllowedAreas(Qt::BottomDockWidgetArea | Qt::TopDockWidgetArea);
+    m_timelineDock->setFeatures(QDockWidget::DockWidgetClosable | QDockWidget::DockWidgetMovable);
+    addDockWidget(Qt::BottomDockWidgetArea, m_timelineDock);
+    connect(m_timelineDock, &QDockWidget::visibilityChanged, action(ActionId::ViewTimeline),
+        &QAction::setChecked);
+    connect(action(ActionId::ViewTimeline), &QAction::triggered, m_timelineDock,
+        &QDockWidget::setVisible);
 
     // Tema das janelas (o do sistema, claro ou escuro), antes de exibir.
     if (const Theme theme = themeFromKey(m_settings.theme()); theme != currentTheme()) {
@@ -245,7 +249,7 @@ void MainWindow::createMenus()
     viewMenu->addAction(action(ActionId::ViewZoomActual));
     viewMenu->addAction(action(ActionId::ViewZoomFit));
     viewMenu->addSeparator();
-    viewMenu->addAction(action(ActionId::ViewAnimation));
+    viewMenu->addAction(action(ActionId::ViewTimeline));
     viewMenu->addSeparator();
     createLanguageMenu(viewMenu);
     createThemeMenu(viewMenu);
@@ -268,6 +272,26 @@ void MainWindow::createMenus()
     paletteMenu->addAction(action(ActionId::PaletteAutoMask));
     paletteMenu->addSeparator();
     paletteMenu->addAction(action(ActionId::PaletteGradation));
+
+    // Animação: cenas e camadas (os mesmos comandos da linha do tempo).
+    QMenu* animationMenu = addTranslatedMenu(menuBar(), QT_TR_NOOP("&Animation"));
+    for (const ActionId id : { ActionId::FrameNew, ActionId::FrameDuplicate, ActionId::FrameDelete,
+             ActionId::FrameMoveLeft, ActionId::FrameMoveRight }) {
+        animationMenu->addAction(action(id));
+    }
+    animationMenu->addSeparator();
+    for (const ActionId id : { ActionId::FramePrevious, ActionId::FrameNext, ActionId::PlayPause,
+             ActionId::OnionSkin }) {
+        animationMenu->addAction(action(id));
+    }
+    animationMenu->addSeparator();
+    for (const ActionId id : { ActionId::LayerNew, ActionId::LayerDuplicate, ActionId::LayerDelete,
+             ActionId::LayerMoveUp, ActionId::LayerMoveDown, ActionId::LayerMergeDown }) {
+        animationMenu->addAction(action(id));
+    }
+    // Trocar de camada pelo teclado (fora do menu: Alt+setas).
+    addAction(action(ActionId::LayerAbove));
+    addAction(action(ActionId::LayerBelow));
 
     QMenu* windowMenu = addTranslatedMenu(menuBar(), QT_TR_NOOP("&Window"));
     windowMenu->addAction(action(ActionId::WindowReverseCanvas));
@@ -305,7 +329,7 @@ void MainWindow::createToolBar()
     m_toolBar->addAction(action(ActionId::ViewMainGrid));
     m_toolBar->addAction(action(ActionId::ViewSubGrid));
     m_toolBar->addSeparator();
-    m_toolBar->addAction(action(ActionId::ViewAnimation));
+    m_toolBar->addAction(action(ActionId::ViewTimeline));
     m_toolBar->addSeparator();
     m_toolBar->addAction(action(ActionId::CanvasResize));
     m_toolBar->addSeparator();
@@ -486,8 +510,6 @@ void MainWindow::connectActions()
     // --- Canvas ---
     connect(action(ActionId::CanvasResize), &QAction::triggered, this, &MainWindow::resizeCanvas);
     connect(action(ActionId::CanvasClearAll), &QAction::triggered, this, &MainWindow::clearCanvas);
-    connect(action(ActionId::ViewAnimation), &QAction::triggered, this,
-        &MainWindow::showAnimationWindow);
 
     // --- Paleta ---
     connect(action(ActionId::PaletteTransparent), &QAction::toggled, m_session,
@@ -542,7 +564,7 @@ void MainWindow::updateActionStates()
         ActionId::ViewGrids,
         ActionId::ViewMainGrid,
         ActionId::ViewSubGrid,
-        ActionId::ViewAnimation,
+        ActionId::ViewTimeline,
         ActionId::PaletteTransparent,
         ActionId::WindowReverseCanvas,
         ActionId::HelpAbout,
@@ -615,6 +637,9 @@ void MainWindow::updateActionStates()
     action(ActionId::FileRevert)->setEnabled(document != nullptr && document->hasFilePath());
     action(ActionId::EditPaste)->setEnabled(EditOperations::canPaste());
     m_zoomCombo->setEnabled(document != nullptr);
+    // Reverter: só formatos que voltam como estão (não sprite sheet/quadros).
+    action(ActionId::FileRevert)->setEnabled(document != nullptr && document->canRevert());
+    m_timeline->updateActions(); // cenas e camadas dependem do documento
     updateUndoActions();
 }
 
@@ -667,8 +692,13 @@ void MainWindow::newImage()
 // -----------------------------------------------------------------------------
 void MainWindow::openImage()
 {
-    const QStringList paths = QFileDialog::getOpenFileNames(this, tr("Open Image"),
-        m_settings.lastDirectory(), io::ImageFile::openFilters().join(QStringLiteral(";;")));
+    // Projetos, imagens e GIFs animados (as cenas viram cenas do documento).
+    QStringList filters = io::ImageFile::openFilters();
+    filters.replace(0, tr("Supported files (*.sprn *.png *.bmp *.gif)"));
+    filters.insert(1, tr("Spritenator project (*.sprn)"));
+    filters.insert(filters.size() - 1, tr("Animated GIF (*.gif)"));
+    const QStringList paths = QFileDialog::getOpenFileNames(
+        this, tr("Open Image"), m_settings.lastDirectory(), filters.join(QStringLiteral(";;")));
     for (const QString& path : paths) {
         openFile(path);
     }
@@ -734,25 +764,91 @@ bool MainWindow::saveDocumentAs(Document* document)
     if (document == nullptr) {
         return false;
     }
+    // Formatos oferecidos: o projeto (sem perdas), os de animação e as
+    // imagens comuns (a cena atual).
+    struct Choice {
+        QString filter;
+        SaveFormat format;
+        QString extension;
+    };
+    QList<Choice> choices = {
+        { tr("Spritenator project (*.sprn)"), SaveFormat::Project, QStringLiteral("sprn") },
+        { tr("Animated GIF (*.gif)"), SaveFormat::Gif, QStringLiteral("gif") },
+        { tr("Sprite sheet, PNG (*.png)"), SaveFormat::SpriteSheet, QStringLiteral("png") },
+        { tr("Separate images, PNG (*.png)"), SaveFormat::Frames, QStringLiteral("png") },
+    };
+    for (const QString& filter : io::ImageFile::saveFilters(document->colorMode())) {
+        const bool bmp = filter.contains(QLatin1String("*.bmp"));
+        choices.append(
+            { filter, SaveFormat::Image, bmp ? QStringLiteral("bmp") : QStringLiteral("png") });
+    }
+    // Sugestão: o formato atual; sem arquivo, o projeto se houver cenas ou
+    // camadas, senão PNG.
+    const bool animated = document->frameCount() > 1 || document->layerCount() > 1;
+    SaveFormat preferred = document->hasFilePath()
+        ? document->saveOptions().format
+        : (animated ? SaveFormat::Project : SaveFormat::Image);
+    QString selectedFilter;
+    QString extension = QStringLiteral("png");
+    QStringList filters;
+    for (const Choice& choice : choices) {
+        filters.append(choice.filter);
+        if (choice.format == preferred && selectedFilter.isEmpty()) {
+            selectedFilter = choice.filter;
+            extension = choice.extension;
+        }
+    }
     const QString suggested = document->hasFilePath()
         ? document->filePath()
         : QDir(m_settings.lastDirectory())
-              .filePath(document->displayName() + QStringLiteral(".png"));
+              .filePath(document->displayName() + QLatin1Char('.') + extension);
 
-    QString selectedFilter;
-    QString path = QFileDialog::getSaveFileName(this, tr("Save Image As"), suggested,
-        io::ImageFile::saveFilters(document->colorMode()).join(QStringLiteral(";;")),
-        &selectedFilter);
+    QString path = QFileDialog::getSaveFileName(
+        this, tr("Save Image As"), suggested, filters.join(QStringLiteral(";;")), &selectedFilter);
     if (path.isEmpty()) {
         return false; // usuário cancelou
     }
-    path = ensureExtension(path, selectedFilter);
+    SaveOptions options;
+    for (const Choice& choice : choices) {
+        if (choice.filter == selectedFilter) {
+            options.format = choice.format;
+            if (QFileInfo(path).suffix().isEmpty()) {
+                path += QLatin1Char('.') + choice.extension;
+            }
+        }
+    }
+
+    // Formatos que mesclam as camadas (ou gravam só uma cena): avisa.
+    QStringList losses;
+    if (options.format != SaveFormat::Project && document->layerCount() > 1) {
+        losses.append(tr("The layers will be merged."));
+    }
+    if (options.format == SaveFormat::Image && document->frameCount() > 1) {
+        losses.append(tr("Only the current scene will be saved."));
+    }
+    if (!losses.isEmpty()) {
+        const auto answer = QMessageBox::question(this, tr("Save Image As"),
+            losses.join(QLatin1Char(' '))
+                + tr("\n\nTo keep editing the scenes and layers later, also save the image as a "
+                     "Spritenator project (.sprn). Continue?"));
+        if (answer != QMessageBox::Yes) {
+            return false;
+        }
+    }
+    if (options.format == SaveFormat::SpriteSheet) {
+        bool accepted = false;
+        options.sheetColumns = QInputDialog::getInt(this, tr("Sprite Sheet"), tr("Scenes per row:"),
+            document->frameCount(), 1, document->frameCount(), 1, &accepted);
+        if (!accepted) {
+            return false;
+        }
+    }
     if (!backupBeforeSaving(path)) {
         return false;
     }
 
     try {
-        document->saveAs(path);
+        document->saveAs(path, options);
     } catch (const io::IoError& error) {
         showError(error.message());
         return false;
@@ -760,7 +856,9 @@ bool MainWindow::saveDocumentAs(Document* document)
 
     const QFileInfo info(path);
     m_settings.setLastDirectory(info.absolutePath());
-    m_settings.addRecentFile(info.absoluteFilePath());
+    if (document->canRevert()) { // sprite sheet e imagens separadas não reabrem como cenas
+        m_settings.addRecentFile(info.absoluteFilePath());
+    }
     updateRecentFilesMenu();
     updateActionStates(); // "Reverter" passa a estar disponível
     statusBar()->showMessage(tr("Saved %1").arg(info.fileName()), 3000);
@@ -943,14 +1041,10 @@ void MainWindow::drawText()
 // -----------------------------------------------------------------------------
 // Paleta
 // -----------------------------------------------------------------------------
-void MainWindow::commitDocumentState(Document* document, const core::AnyImage& canvas,
+void MainWindow::commitDocumentState(Document* document, const Document::CelFunction& function,
     const core::Palette& palette, const UndoLabel& undoLabel)
 {
-    if (canvas == document->canvas() && palette == document->palette()) {
-        return; // nada mudou
-    }
-    document->undoStack()->push(new DocumentStateCommand(
-        document, document->canvas(), document->palette(), canvas, palette, undoLabel));
+    document->transformCels(function, palette, undoLabel); // não faz nada se nada mudou
 }
 
 void MainWindow::loadPalette()
@@ -967,9 +1061,14 @@ void MainWindow::loadPalette()
     const core::Palette newPalette = dialog.resultPalette();
     const core::PaletteApplyOptions options = dialog.applyOptions();
 
-    commitDocumentState(document,
-        core::applyPalette(document->indexedCanvas(), oldPalette, newPalette, options), newPalette,
-        UndoLabel { UndoOperation::LoadPalette });
+    // Todas as células, de todas as cenas e camadas, são convertidas.
+    commitDocumentState(
+        document,
+        [&](const core::AnyImage& cel, int /*layer*/) -> core::AnyImage {
+            return core::applyPalette(
+                std::get<core::IndexedImage>(cel), oldPalette, newPalette, options);
+        },
+        newPalette, UndoLabel { UndoOperation::LoadPalette });
     m_settings.setLastDirectory(QFileInfo(dialog.filePath()).absolutePath());
 }
 
@@ -1008,13 +1107,35 @@ void MainWindow::editPalette()
     if (document == nullptr || document->colorMode() != core::ColorMode::Indexed) {
         return; // paletas só existem em imagens indexadas
     }
-    PaletteEditDialog dialog(document->palette(), document->indexedCanvas(), this);
+    // O diálogo precisa saber quais cores estão em uso em TODAS as células
+    // (para "remover não usadas"): recebe uma imagem com uma de cada.
+    core::ColorSet used;
+    for (const auto& row : document->state().cels) {
+        for (const CelPtr& cel : row) {
+            used |= std::get<core::IndexedImage>(*cel).usedColors();
+        }
+    }
+    core::IndexedImage usage({ std::max(1, static_cast<int>(used.count())), 1 }, 0);
+    int column = 0;
+    for (int index = 0; index < core::Palette::kMaxColors; ++index) {
+        if (used.test(static_cast<std::size_t>(index))) {
+            usage.setPixel({ column++, 0 }, static_cast<core::ColorIndex>(index));
+        }
+    }
+    PaletteEditDialog dialog(document->palette(), usage, this);
     if (dialog.exec() != QDialog::Accepted) {
         return;
     }
-    // O diálogo já devolve a imagem remapeada se as cores foram reorganizadas.
+    // Se as cores foram reorganizadas, todas as células acompanham.
+    const core::RemapTable remap = dialog.remap();
     commitDocumentState(
-        document, dialog.canvas(), dialog.palette(), UndoLabel { UndoOperation::EditPalette });
+        document,
+        [&](const core::AnyImage& cel, int /*layer*/) -> core::AnyImage {
+            core::IndexedImage remapped = std::get<core::IndexedImage>(cel);
+            remapped.remap(remap);
+            return remapped;
+        },
+        dialog.palette(), UndoLabel { UndoOperation::EditPalette });
 }
 
 void MainWindow::applyGradation()
@@ -1045,20 +1166,26 @@ void MainWindow::resizeCanvas()
     if (dialog.exec() != QDialog::Accepted || dialog.newSize() == oldSize) {
         return;
     }
-    core::AnyImage resized;
-    if (dialog.scaleContents()) {
-        resized = std::visit(
-            [&](const auto& image) -> core::AnyImage {
-                return core::scaled(image, dialog.newSize());
-            },
-            document->canvas());
-    } else {
-        // Conteúdo ancorado no canto; áreas novas com o pixel de fundo do modo.
-        resized = m_session->blankLike(document->canvas(), dialog.newSize());
-        core::pasteImage(resized, document->canvas(), { 0, 0 });
-    }
-    document->undoStack()->push(new ReplaceImageCommand(
-        document, document->canvas(), resized, UndoLabel { UndoOperation::CanvasSize }));
+    const core::Size newSize = dialog.newSize();
+    const bool scale = dialog.scaleContents();
+    // Todas as células de todas as cenas e camadas mudam de tamanho.
+    document->transformCels(
+        [&](const core::AnyImage& cel, int layer) -> core::AnyImage {
+            if (scale) {
+                return std::visit(
+                    [&](const auto& image) -> core::AnyImage {
+                        return core::scaled(image, newSize);
+                    },
+                    cel);
+            }
+            // Conteúdo ancorado no canto. Áreas novas: na camada de baixo, o
+            // pixel de fundo do modo; nas de cima, transparente (índice 0).
+            core::AnyImage resized = layer == 0 ? m_session->blankLike(cel, newSize)
+                                                : core::blankImage(core::modeOf(cel), newSize);
+            core::pasteImage(resized, cel, { 0, 0 });
+            return resized;
+        },
+        document->palette(), UndoLabel { UndoOperation::CanvasSize });
 }
 
 void MainWindow::clearCanvas()
@@ -1067,12 +1194,15 @@ void MainWindow::clearCanvas()
     if (document == nullptr) {
         return;
     }
-    // Indexada: cor de fundo; RGBA: transparente.
-    const core::AnyImage cleared
-        = m_session->blankLike(document->canvas(), core::sizeOf(document->canvas()));
-    if (cleared != document->canvas()) {
-        document->undoStack()->push(new ReplaceImageCommand(
-            document, document->canvas(), cleared, UndoLabel { UndoOperation::ClearAll }));
+    // Só a célula ativa. Camada de baixo: cor de fundo (indexada) ou
+    // transparente (RGBA); camadas de cima: transparente (índice 0).
+    const core::AnyImage& canvas = document->canvas();
+    const core::AnyImage cleared = document->currentLayer() == 0
+        ? m_session->blankLike(canvas, core::sizeOf(canvas))
+        : core::blankImage(core::modeOf(canvas), core::sizeOf(canvas));
+    if (cleared != canvas) {
+        document->undoStack()->push(new RegionCommand(document, document->activeCel(), { 0, 0 },
+            canvas, cleared, UndoLabel { UndoOperation::ClearAll }));
     }
 }
 
@@ -1182,6 +1312,7 @@ void MainWindow::retranslateUi()
         themeAction->setText(tr(text));
     }
     m_toolBar->setWindowTitle(tr("Main"));
+    m_timelineDock->setWindowTitle(tr("Timeline"));
     if (m_systemLanguageAction != nullptr) {
         m_systemLanguageAction->setText(tr("System Default"));
     }
@@ -1198,20 +1329,6 @@ void MainWindow::retranslateUi()
     if (const CanvasEditor* editor = activeEditor()) {
         showZoom(editor->zoom());
     }
-}
-
-// -----------------------------------------------------------------------------
-// Exibir > Animação
-// -----------------------------------------------------------------------------
-void MainWindow::showAnimationWindow()
-{
-    if (m_animationWindow == nullptr) {
-        m_animationWindow = new AnimationWindow(m_session, this);
-        m_animationWindow->resize(420, 300);
-    }
-    m_animationWindow->show();
-    m_animationWindow->raise();
-    m_animationWindow->activateWindow();
 }
 
 // -----------------------------------------------------------------------------

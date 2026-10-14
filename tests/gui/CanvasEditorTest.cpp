@@ -156,8 +156,7 @@ private slots:
         QCOMPARE(editor.zoom(), 8.0);
     }
 
-    /// O lápis edita a imagem diretamente; o clique registra a célula da
-    /// sub-grade; Esc cancela o traço em andamento.
+    /// O lápis edita a imagem diretamente; Esc cancela o traço em andamento.
     void mouseEditsImageDirectly()
     {
         Fixture fixture;
@@ -169,7 +168,6 @@ private slots:
             fixture.editor.viewport(), Qt::LeftButton, Qt::NoModifier, fixture.centerOf(30, 40));
         QCOMPARE(fixture.pixel(30, 40), 9);
         QCOMPARE(fixture.document->undoStack()->count(), 1);
-        QCOMPARE(fixture.session.lastCell().value(), (core::Rect { 24, 32, 24, 32 }));
 
         // Esc durante o traço: nada fica na imagem.
         QTest::mousePress(

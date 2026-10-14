@@ -13,13 +13,13 @@
 #include "core/AnyImage.h"
 #include "core/Image.h"
 #include "core/Palette.h"
+#include "gui/Sprite.h"
 
 #include <QUndoCommand>
 
 namespace spritenator::gui {
 
 class Document;
-class ImageTarget;
 
 /// Base dos comandos do Spritenator: guarda a operação (UndoLabel) para que
 /// o nome exibido no menu possa ser retraduzido quando o idioma muda.
@@ -36,39 +36,26 @@ private:
     UndoLabel m_label;
 };
 
-/// Troca o conteúdo de uma região retangular de um ImageTarget.
+/// Troca o conteúdo de uma região retangular de uma célula do documento.
+/// Desfazer e refazer tornam essa célula a ativa (levam à cena dela).
 class RegionCommand final : public LabeledCommand {
 public:
     /// "before"/"after" devem ter o mesmo tamanho. Se "alreadyApplied" for
     /// verdadeiro, o primeiro redo() (chamado pelo QUndoStack::push) não faz
     /// nada — útil quando a edição já foi aplicada ao vivo (ex.: traço do lápis).
-    RegionCommand(ImageTarget* target, core::Point origin, core::AnyImage before,
+    RegionCommand(Document* document, const CelKey& cel, core::Point origin, core::AnyImage before,
         core::AnyImage after, const UndoLabel& label, bool alreadyApplied = false);
 
     void undo() override;
     void redo() override;
 
 private:
-    ImageTarget* m_target;
+    Document* m_document;
+    CelKey m_cel;
     core::Point m_origin;
     core::AnyImage m_before;
     core::AnyImage m_after;
     bool m_skipNextRedo;
-};
-
-/// Troca a imagem inteira de um ImageTarget (ex.: redimensionar, limpar tudo).
-class ReplaceImageCommand final : public LabeledCommand {
-public:
-    ReplaceImageCommand(
-        ImageTarget* target, core::AnyImage before, core::AnyImage after, const UndoLabel& label);
-
-    void undo() override;
-    void redo() override;
-
-private:
-    ImageTarget* m_target;
-    core::AnyImage m_before;
-    core::AnyImage m_after;
 };
 
 /// Troca a paleta de um documento. Comandos consecutivos com o mesmo
@@ -94,23 +81,29 @@ private:
     int m_mergeKey;
 };
 
-/// Troca canvas e paleta de um documento ao mesmo tempo (ex.: carregar uma
-/// paleta com remapeamento das cores da imagem).
-class DocumentStateCommand final : public LabeledCommand {
+/// Troca o conteúdo inteiro do documento (cenas, camadas, células e paleta):
+/// operações de linha do tempo, redimensionar o canvas, remapear a paleta.
+/// As células são compartilhadas entre os dois estados, então guardar o
+/// "antes" e o "depois" custa pouco.
+class SpriteStateCommand final : public LabeledCommand {
 public:
-    DocumentStateCommand(Document* document, core::AnyImage beforeImage,
-        core::Palette beforePalette, core::AnyImage afterImage, core::Palette afterPalette,
-        const UndoLabel& label);
+    /// Com "mergeable", comandos seguidos da mesma operação no mesmo
+    /// documento viram um só passo (ex.: arrastar a opacidade ou a duração).
+    SpriteStateCommand(Document* document, SpriteState before, SpriteState after,
+        const UndoLabel& label, bool mergeable = false);
 
     void undo() override;
     void redo() override;
+    [[nodiscard]] int id() const override;
+    bool mergeWith(const QUndoCommand* other) override;
 
 private:
+    static constexpr int kCommandId = 0x5353; // 'SS'
+
     Document* m_document;
-    core::AnyImage m_beforeImage;
-    core::Palette m_beforePalette;
-    core::AnyImage m_afterImage;
-    core::Palette m_afterPalette;
+    bool m_mergeable;
+    SpriteState m_before;
+    SpriteState m_after;
 };
 
 } // namespace spritenator::gui

@@ -417,6 +417,17 @@ void EditorSession::setBrushSize(int size)
 }
 
 // -----------------------------------------------------------------------------
+// Papel de seda
+// -----------------------------------------------------------------------------
+void EditorSession::setOnionSkin(bool enabled)
+{
+    if (enabled != m_onionSkin) {
+        m_onionSkin = enabled;
+        emit onionSkinChanged(enabled);
+    }
+}
+
+// -----------------------------------------------------------------------------
 // Varinha mágica
 // -----------------------------------------------------------------------------
 void EditorSession::setWandTolerance(int tolerance)
@@ -433,18 +444,6 @@ void EditorSession::setWandContiguous(bool contiguous)
     if (contiguous != m_wandContiguous) {
         m_wandContiguous = contiguous;
         emit wandOptionsChanged();
-    }
-}
-
-// -----------------------------------------------------------------------------
-// Célula para a animação
-// -----------------------------------------------------------------------------
-void EditorSession::setLastClickedPoint(core::Point point)
-{
-    const core::Rect cell = m_gridLayout.subGridCellAt(point);
-    if (cell != m_lastCell) {
-        m_lastCell = cell;
-        emit lastCellChanged(cell);
     }
 }
 

@@ -153,8 +153,8 @@ void EditOperations::applyToWorkArea(const UndoLabel& undoLabel,
     if (after == before) {
         return; // nada mudou: não polui o histórico
     }
-    document->undoStack()->push(new RegionCommand(
-        document, area.topLeft(), std::move(before), std::move(after), undoLabel));
+    document->undoStack()->push(new RegionCommand(document, document->activeCel(), area.topLeft(),
+        std::move(before), std::move(after), undoLabel));
 }
 
 /// Pixel usado para preencher lacunas (rotação) no modo do tipo informado.
@@ -260,8 +260,8 @@ void EditOperations::paste()
         std::get<core::RgbaImage>(after).paste(
             std::get<core::RgbaImage>(*pasted), offset, m_session->rgbaPasteRules());
     }
-    document->undoStack()->push(new RegionCommand(document, target.topLeft(), std::move(before),
-        std::move(after), UndoLabel { UndoOperation::Paste }));
+    document->undoStack()->push(new RegionCommand(document, document->activeCel(), target.topLeft(),
+        std::move(before), std::move(after), UndoLabel { UndoOperation::Paste }));
     document->setSelection(target); // o conteúdo colado fica selecionado
 }
 
@@ -483,8 +483,9 @@ void EditOperations::stretch(core::Size newSize)
     if (after == before) {
         return;
     }
-    document->undoStack()->push(new RegionCommand(document, affected.topLeft(), std::move(before),
-        std::move(after), UndoLabel { UndoOperation::Stretch }));
+    document->undoStack()->push(
+        new RegionCommand(document, document->activeCel(), affected.topLeft(), std::move(before),
+            std::move(after), UndoLabel { UndoOperation::Stretch }));
     document->setSelection(newArea);
 }
 

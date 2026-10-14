@@ -51,6 +51,19 @@ enum class UndoOperation {
     FreeRotation,
     Stretch,
     TransformSelection, ///< transformação livre da seleção (mover, escalar...)
+    // Linha do tempo
+    AddFrame,
+    DuplicateFrame,
+    DeleteFrame,
+    MoveFrame,
+    FrameDuration,
+    AddLayer,
+    DuplicateLayer,
+    DeleteLayer,
+    MoveLayer,
+    MergeLayer,
+    LayerProperties, ///< nome ou visibilidade
+    LayerOpacity,
     // Canvas e grade
     CanvasSize,
     ClearAll,

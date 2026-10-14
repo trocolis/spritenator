@@ -9,6 +9,7 @@
 #pragma once
 
 #include "AppSettings.h"
+#include "Document.h"
 #include "commands/UndoLabel.h"
 #include "core/AnyImage.h"
 #include "core/Geometry.h"
@@ -20,6 +21,7 @@
 #include <cstddef>
 
 class QComboBox;
+class QDockWidget;
 class QLabel;
 class QMdiArea;
 class QMdiSubWindow;
@@ -30,13 +32,13 @@ class QToolBar;
 namespace spritenator::gui {
 
 class ActionCatalog;
-class AnimationWindow;
 class CanvasEditor;
 class Document;
 class HelpWindow;
 class EditOperations;
 class EditorSession;
 class IntegratorPanel;
+class TimelinePanel;
 enum class ActionId : std::size_t;
 
 /// Janela principal da aplicação.
@@ -119,8 +121,9 @@ private:
     void savePalette();
     void editPalette();
     void applyGradation();
-    /// Aplica imagem + paleta novas ao documento como um passo de desfazer.
-    void commitDocumentState(Document* document, const core::AnyImage& canvas,
+    /// Aplica uma função a todas as células e a paleta nova, como um passo
+    /// de desfazer.
+    void commitDocumentState(Document* document, const Document::CelFunction& function,
         const core::Palette& palette, const UndoLabel& undoLabel);
 
     // --- Canvas ---
@@ -137,7 +140,6 @@ private:
     QMenu* addTranslatedMenu(QWidget* parent, const char* title);
     /// Reaplica todos os textos da janela no idioma atual.
     void retranslateUi();
-    void showAnimationWindow();
     void editGrids();
     /// Editar > Atalhos de teclado.
     void editShortcuts();
@@ -181,8 +183,9 @@ private:
     QList<QAction*> m_recentFileActions; ///< Entradas de arquivos recentes.
     QLabel* m_positionLabel = nullptr; ///< Posição do mouse na imagem.
     QComboBox* m_zoomCombo = nullptr; ///< Zoom do editor ativo, em %.
+    TimelinePanel* m_timeline = nullptr; ///< Cenas e camadas (painel inferior).
+    QDockWidget* m_timelineDock = nullptr;
     QMetaObject::Connection m_zoomConnection; ///< editor ativo -> indicador
-    AnimationWindow* m_animationWindow = nullptr; ///< Criada sob demanda (F2).
     HelpWindow* m_helpWindow = nullptr; ///< Criada sob demanda (F1).
     QList<QPair<QMenu*, const char*>> m_translatedMenus; ///< menu e título-fonte
     QAction* m_systemLanguageAction = nullptr; ///< item "padrão do sistema"
