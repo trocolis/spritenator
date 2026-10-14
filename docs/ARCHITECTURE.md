@@ -15,7 +15,7 @@ a quem vai manter ou estender o projeto.
 │ io    arquivos: imagens (BMP/PNG), paletas, backups        │
 ├────────────────────────────────────────────────────────────┤
 │ core  C++20 puro: imagem indexada, paleta, rasterização,   │
-│       transformações, tons, operações de paleta, animação  │
+│       transformações, tons, paleta, seleções, pontas       │
 └────────────────────────────────────────────────────────────┘
 ```
 
@@ -37,7 +37,8 @@ Cada camada depende apenas das camadas abaixo dela.
 | `core::Selection` | Seleção de forma livre: máscara de um byte por pixel dentro do retângulo envolvente (sempre normalizada). Formas (retângulo, oval, polígono, pontos), combinações (somar, subtrair, inverter, recortar, deslocar) e a varinha mágica (`magicWand`). |
 | `core::FreeTransform` | `Affine`, `TransformParams` e `transformFloating`: transforma pixels + máscara por vizinho mais próximo; com ângulos retos, encaixa o resultado na grade (espelhar e girar 90° são exatos). |
 | `core::GridLayout` | Espaçamentos da grade principal (padrão 1×1) e da sub-grade ("tamanho do personagem", padrão 24×32); célula da sub-grade sob um ponto. |
-| `gui::Document` | Canvas + paleta + caminho + `QUndoStack` próprio + seleção + edição ao vivo. |
+| `gui::SpriteState` (`Sprite.h`) | Cenas e camadas: camadas comuns a todas as cenas, uma célula (imagem) por cena x camada. As células são `shared_ptr` compartilhados entre instantâneos: guardar o estado inteiro no histórico custa só ponteiros; antes de alterar, o `Document` separa a célula (cópia ao escrever). |
+| `gui::Document` | `SpriteState` + cena/camada atuais + paleta + caminho + `QUndoStack` próprio + seleção + edição ao vivo. `canvas()` é a célula ativa (é ela que as ferramentas editam); `renderedImage()` é a cena atual composta (índice 0 transparente nas camadas de cima das indexadas; alfa e opacidade nas RGBA). |
 | `gui::SelectionTransform` | Transformação "flutuante" da seleção (setas, R/E, botões, alças): prévia ao vivo pela edição ao vivo do `Document`; vira um único passo de desfazer ao aplicar. |
 | `gui::CanvasEditor` | Editor de um documento (uma aba): exibe a imagem inteira com zoom próprio, grades, seleção e destaque; repassa o mouse à ferramenta atual. É dono do `Document`. |
 | `gui::ColorRole` | Papel da cor (primária/secundária). As ferramentas pedem um papel e a `EditorSession::plot` decide o pixel conforme o modo. |
@@ -58,16 +59,16 @@ partir da 2.0 a imagem inteira é editada diretamente:
 
 - O `CanvasEditor` converte posições do viewport em pixels da imagem (`imagePointAt`) e trata sozinho o que é só de exibição: zoom (roda, lupa), rolagem (Ctrl+roda, botão do meio) e a pintura de fundo xadrez, grades, seleção e destaque.
 - `Tool::footprint` diz quais pixels a ferramenta afetaria num ponto (lápis grosso: o "+"; balde: a região, até 262144 pixels). O editor filtra o resultado por `EditorSession::canPlot` (imagem, tom e máscara) e o desenha em destaque.
-- O clique registra, na sessão, a célula da sub-grade (`setLastClickedPoint`), usada pela janela de animação.
 
 ## 3. Padrões de projeto
 
 - **Command** (`QUndoCommand`, em `gui/commands`): toda alteração passa por um comando.
-  - `RegionCommand` guarda apenas o retângulo afetado (antes/depois).
+  - `RegionCommand` guarda apenas o retângulo afetado (antes/depois) e qual célula (identificadores estáveis da cena e da camada); desfazer leva à cena dela.
+  - `SpriteStateCommand` guarda o estado inteiro antes/depois (operações de linha do tempo, redimensionar, remapear a paleta); ajustes seguidos de duração ou opacidade viram um passo só.
   - `PaletteCommand` funde ajustes seguidos da mesma cor (`mergeWith`), de modo que arrastar um controle deslizante gera um único passo.
 - **Strategy** (`gui/tools`): o `CanvasEditor` só converte coordenadas e repassa os eventos à ferramenta atual, que edita o documento ativo da sessão. Para criar uma ferramenta nova, basta implementar `Tool` (e, se preciso, `footprint`) e registrá-la na `EditorSession`.
 - **Observer** (sinais e slots): as views observam a `EditorSession` e o `Document`, e nenhuma delas guarda cópia do estado.
-- **Interface mínima** (`ImageTarget`): os comandos de desfazer dependem só da interface de edição de imagem que o `Document` implementa.
+- **Formatos** (`io/`): `ProjectFile` (.sprn, sem perdas), `GifFile` (codificador LZW próprio; RGBA reduzido por corte mediano em `core/Quantize`) e `ImageFile` (PNG/BMP). Sprite sheet e imagens separadas são montadas pelo `Document` a partir das cenas mescladas.
 
 ### Edição ao vivo
 
@@ -92,7 +93,7 @@ documento da aba ativa. Trocar de aba no meio de um traço cancela o traço
 `Translations::apply()` substitui os tradutores instalados. O Qt então envia
 `QEvent::LanguageChange` a cada janela, e o evento se propaga aos filhos.
 
-- Cada componente que permanece aberto (janela principal, painel lateral, janela de animação, ajuda e editores de imagem) reaplica seus textos em `retranslate()`.
+- Cada componente que permanece aberto (janela principal, painel lateral, linha do tempo, ajuda e editores de imagem) reaplica seus textos em `retranslate()`.
 - Diálogos modais não precisam disso: enquanto um deles está aberto, não há como trocar o idioma.
 - O histórico de desfazer também é retraduzido, porque cada comando guarda um `UndoLabel` (a operação), e não o texto já traduzido.
 
@@ -114,7 +115,7 @@ documento da aba ativa. Trocar de aba no meio de um traço cancela o traço
 Os testes ficam em `tests/<camada>`, um executável Qt Test por assunto,
 registrados no CTest:
 
-- **core**: geometria, paleta, imagem, rasterização, transformações, operações de paleta e animação;
+- **core**: geometria, paleta, imagem, rasterização, transformações, operações de paleta, seleções, pontas e redução de cores;
 - **io**: ida e volta de todos os formatos, entradas inválidas e backups;
 - **gui**: documento, sessão (ferramentas, pegadas, regras, desfazer), editor de imagem (zoom, roda do mouse, lupa, edição com o mouse, destaque, grades), operações de edição, configurações, ajuda e testes de **integração** da `MainWindow`, que disparam as ações reais dos menus.
 

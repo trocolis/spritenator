@@ -16,7 +16,7 @@ original, mas edita a imagem inteira diretamente, com zoom livre.
   - zoom de 12,5% a 3200% pela roda do mouse (ancorado no ponteiro), pela lupa, pelo menu *Exibir* ou digitando o valor em % na barra de status;
   - Ctrl+roda rola a imagem (Ctrl+Shift+roda na horizontal) e o botão do meio arrasta a vista;
   - **destaque** dos pixels que a ferramenta atual afetaria, sob o mouse (inclusive a região do balde), respeitando o tom e a máscara.
-- **Grades**: a principal tem padrão 1×1 (a grade de pixels), é configurável e some quando ficaria densa demais; a sub-grade tem o "tamanho do personagem" (ex.: 24×32) e define os quadros da animação.
+- **Grades**: a principal tem padrão 1×1 (a grade de pixels), é configurável e some quando ficaria densa demais; a sub-grade tem o "tamanho do personagem" (ex.: 24×32).
 - **14 ferramentas**: seleções retangular, oval, ponto a ponto, livre (laço) e varinha mágica (com tolerância), balde, lápis (ponta quadrada ou redonda, de 1 a 64 px), reta, retângulo, retângulo arredondado e elipse (contorno ou preenchidos).
 - **Painel lateral em seções** (ferramentas e suas opções, preenchimento, transformações e cores), separadas por linhas, que quebram linha conforme a largura.
 - A ponta do lápis vale também para a reta e as figuras.
@@ -29,7 +29,8 @@ original, mas edita a imagem inteira diretamente, com zoom livre.
   - efeito de cor transparente;
   - editor de paleta (troca de cores, remoção de cores não usadas, 15 bits);
   - carga de paletas (`.pal` RIFF/JASC, `.act`, imagens), com remapeamento por cor mais próxima ou pontilhamento Floyd–Steinberg.
-- **Janela de animação**, com prévia ao vivo e gerador do ciclo de caminhada 1-2-3-2.
+- **Linha do tempo com cenas e camadas** (como no Aseprite): miniaturas das cenas, duração de cada uma, reprodução no próprio editor, papel de seda (*onion skin*) e camadas comuns a todas as cenas, com visibilidade, opacidade e mesclagem.
+- **Salvar** como projeto (`.sprn`, sem perdas), **GIF animado**, **sprite sheet** ou **imagens separadas**; abrir GIFs animados importa as cenas.
 - Desfazer/refazer ilimitado por documento, área de transferência (com o efeito de cor transparente ao colar) e entrada de texto sem suavização.
 - Várias imagens abertas em abas, arquivos recentes, arrastar e soltar, backup automático ao salvar e ajuda embutida (F1).
 

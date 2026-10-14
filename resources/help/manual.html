@@ -21,7 +21,7 @@ sets and chip sets, but it works for any pixel art: true color with transparency
   <li><a href="#tools">Drawing tools and tones</a></li>
   <li><a href="#transforms">Transformations</a></li>
   <li><a href="#palette">Palette, mask and transparency</a></li>
-  <li><a href="#animation">Animation preview</a></li>
+  <li><a href="#animation">Timeline: scenes and layers</a></li>
   <li><a href="#files">Files and backups</a></li>
   <li><a href="#sizes">Common RPG Maker sizes</a></li>
   <li><a href="#shortcuts">Keyboard shortcuts</a></li>
@@ -178,16 +178,30 @@ selected pixels:</p>
       color to the nearest new color, or reproduce the colors by dithering.</li>
 </ul>
 
-<h2 id="animation">6. Animation preview</h2>
-<p>Open it with F2:</p>
-<ol>
-  <li>Click the image inside a cell of the <b>sub grid</b> (any tool will do; the
-      selection tool does not change pixels).</li>
-  <li>Press <b>Add Cell</b> to add that cell as a frame, or press <b>Walk Cycle</b>
-      to add the RPG Maker walking sequence (frames 1-2-3-2) of that cell's
-      direction.</li>
-</ol>
-<p>The preview shows the current image, so your edits appear immediately.</p>
+<h2 id="animation">6. Timeline: scenes and layers</h2>
+<p>An image can have several <b>scenes</b> (the frames of an animation) and several
+<b>layers</b>, as in Aseprite: the layers are the same in every scene, and each
+scene has one picture per layer. The tools always draw on the <b>current scene and
+layer</b>; the image shows the current scene with all the visible layers.</p>
+<p>The <b>timeline</b>, at the bottom of the window (F2 shows or hides it), has two bars:</p>
+<ul>
+  <li><b>Scenes</b>: a thumbnail of each scene, in order. Click one to show it.
+      The buttons add an empty scene, duplicate, delete and move the current
+      one; <b>Duration</b> is how long it stays on screen when playing.
+      <img src=":/icons/play.png"> <b>Play</b> shows the animation in the image
+      editor, in a loop (P); <img src=":/icons/onion_skin.png"> <b>Onion skin</b>
+      shows the previous and the next scenes faintly over the current one, to
+      guide the drawing.</li>
+  <li><b>Layers</b>: the top layer comes first. Click a layer to draw on it;
+      the box shows or hides it; a double click renames it. The buttons add,
+      duplicate, delete, move up/down and merge the current layer with the one
+      below. <b>Opacity</b> exists only in RGBA images.</li>
+</ul>
+<p>In <b>indexed</b> images, the color with index 0 is transparent in the upper
+layers (the bottom layer shows it normally). Everything is also in the
+<i>Animation</i> menu; <b>,</b> and <b>.</b> go to the previous and next
+scenes, Alt+&uarr;/&darr; to the layer above/below, and all of these shortcuts can be
+changed. Every operation can be undone.</p>
 
 <h2 id="files">7. Files and backups</h2>
 <p><b>New images.</b> In <i>File &gt; New</i>, choose the size and the colors:
@@ -208,6 +222,22 @@ latest one.</p>
 </ul>
 <p>Copying from an image and pasting into an image of the other mode converts
 the pasted pixels.</p>
+<p><b>Saving.</b> <i>File &gt; Save As</i> offers:</p>
+<ul>
+  <li><b>Spritenator project (.sprn)</b>: keeps everything (scenes, layers,
+      durations, palette). It is the only format that reopens without losses;</li>
+  <li><b>Animated GIF</b>: the scenes, with their durations, in a loop. RGBA
+      images are reduced to 256 colors, and each pixel is either transparent or
+      opaque;</li>
+  <li><b>Sprite sheet (PNG)</b>: the scenes side by side, with the number of
+      scenes per row you choose;</li>
+  <li><b>Separate images (PNG)</b>: one file per scene, <i>name_001.png</i>,
+      <i>name_002.png</i>...;</li>
+  <li><b>PNG or BMP</b>: only the current scene.</li>
+</ul>
+<p>Except for the project, the visible layers are merged; Spritenator warns
+before saving. Animated GIFs can also be opened: each image of the GIF becomes a
+scene.</p>
 <p>Indexed images are opened and saved as PNG or BMP files; files in true color
 open as RGBA. BMP files are written
 with 1, 4 or 8 bits per pixel, according to the number of colors. You can also drag files onto the window to open

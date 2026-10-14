@@ -5,6 +5,39 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [3.0.0] - 2026-10-13
+
+O documento deixa de ser uma imagem só: passa a ter **cenas e camadas**.
+
+### Adicionado
+- **Cenas e camadas** (`gui::SpriteState`, como no Aseprite):
+  - as camadas são comuns a todas as cenas;
+  - cada par cena x camada tem uma imagem (célula), compartilhada com cópia ao escrever;
+  - as ferramentas editam a célula ativa, e o editor mostra a cena atual com as camadas visíveis compostas;
+  - nas imagens indexadas, o índice 0 é transparente nas camadas de cima.
+- **Linha do tempo** no painel inferior (F2 mostra ou oculta), com duas barras:
+  - **cenas**: miniaturas, nova, duplicar, apagar, mover, duração (ms), **reproduzir** em laço no editor e **papel de seda** (cenas vizinhas translúcidas);
+  - **camadas**: lista com visibilidade, renomear (clique duplo), nova, duplicar, apagar, subir/descer, mesclar com a de baixo e opacidade (só RGBA).
+- Menu **Animação** e atalhos configuráveis: Alt+N (nova cena), Alt+D (duplicar), , e . (cena anterior/próxima), P (reproduzir), Alt+Shift+N (nova camada), Alt+↑/↓ (trocar de camada).
+- Tudo é desfazível (`SpriteStateCommand`, com fusão de ajustes seguidos de duração e opacidade). Desfazer um traço leva à cena dele.
+- **Formatos**:
+  - **Projeto Spritenator (.sprn)**, que guarda tudo sem perdas (`io::ProjectFile`);
+  - **GIF animado**, com codificador LZW próprio, durações e laço; imagens RGBA são reduzidas por corte mediano (`core::Quantize`) e a transparência fica com 1 bit;
+  - **sprite sheet** (PNG, com o número de colunas escolhido);
+  - **imagens separadas** (`nome_001.png`...).
+  - Abrir GIF animado importa as cenas.
+- Testes do modelo (operações, composição, cópia ao escrever, desfazer), dos formatos (ida e volta do .sprn e do GIF, inclusive um teste de estresse do LZW lido pelo Qt) e do painel (listas, visibilidade, reprodução).
+
+### Alterado
+- **Salvar como** oferece projeto, GIF, sprite sheet, imagens separadas e PNG/BMP (a cena atual), e avisa quando as camadas serão mescladas.
+- **Redimensionar o canvas**, **carregar paleta** e **editar paleta** valem para todas as células.
+- **Limpar tudo** limpa a célula ativa.
+- **Reverter** fica desabilitado depois de salvar como sprite sheet ou imagens separadas, que não voltam como cenas.
+
+### Removido
+- A **janela de Animação** (e o gerador de ciclo de caminhada), substituída pela linha do tempo.
+- `ImageTarget`, `ReplaceImageCommand` e `DocumentStateCommand`, substituídos pelos comandos por célula e por estado.
+
 ## [2.5.0] - 2026-10-13
 
 ### Adicionado
