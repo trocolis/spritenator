@@ -5,6 +5,24 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [2.4.0] - 2026-10-13
+
+### Adicionado
+- **Ponta do lápis configurável** (`core::Brush`): quadrada ou redonda, de 1 a 64 pixels.
+  - Fica numa barra de opções abaixo das ferramentas, que só aparece com o lápis ativo, e é gravada nas preferências.
+  - Em tamanhos pares, o ponteiro fica no pixel de cima e da esquerda do centro.
+  - O destaque sob o mouse mostra a ponta inteira.
+- Atalhos **[** e **]** para diminuir e aumentar a ponta, configuráveis em *Editar > Atalhos de teclado*.
+- `FlowLayout`: ferramentas, tons e transformações ficam numa linha com o painel largo e quebram linha conforme ele estreita.
+- Testes das pontas, do lápis com ponta, das opções, dos atalhos, da quebra de linha e da ordem do painel.
+
+### Alterado
+- O painel lateral segue a ordem: ferramentas (e as opções da ferramenta atual), preenchimento (tons), transformações e cores. Os tons saíram de ao lado das ferramentas para uma seção própria.
+
+### Removido
+- A **lupa** (o zoom continua na roda do mouse, no menu Exibir e na caixa de %).
+- O **lápis grosso**: equivale ao lápis com ponta redonda de 3 px.
+
 ## [2.3.0] - 2026-10-13
 
 ### Adicionado
