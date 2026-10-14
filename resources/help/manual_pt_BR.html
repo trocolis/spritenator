@@ -84,7 +84,10 @@ destacados.</p>
 
 <h2 id="tools">3. Ferramentas de desenho e tons</h2>
 <table cellpadding="3">
-<tr><td><img src=":/icons/tool_select.png"></td><td>Seleciona um retângulo. Um clique simples remove a seleção.</td></tr>
+<tr><td><img src=":/icons/tool_select.png"> <img src=":/icons/tool_select_ellipse.png"></td><td>Seleções retangular e oval (Shift: quadrado ou círculo). Um clique simples remove a seleção.</td></tr>
+<tr><td><img src=":/icons/tool_select_polygon.png"></td><td>Seleção ponto a ponto: clique em cada canto. Feche com clique duplo, com um clique no primeiro ponto, com o botão direito ou Enter; Backspace remove o último ponto.</td></tr>
+<tr><td><img src=":/icons/tool_select_lasso.png"></td><td>Seleção livre: desenhe o contorno segurando o botão.</td></tr>
+<tr><td><img src=":/icons/tool_magic_wand.png"></td><td>Varinha mágica: seleciona a área de cor parecida. Abaixo das ferramentas, ajuste a <b>tolerância</b> (0% = só a mesma cor) e <b>Contígua</b> (só a área ligada ao pixel clicado).</td></tr>
 <tr><td><img src=":/icons/tool_zoom.png"></td><td>Lupa: o botão esquerdo amplia e o direito reduz.</td></tr>
 <tr><td><img src=":/icons/tool_fill.png"></td><td>Preenche a área vizinha da mesma cor.</td></tr>
 <tr><td><img src=":/icons/tool_pen_thin.png"> <img src=":/icons/tool_pen_thick.png"></td><td>Lápis fino (1 px) e grosso (3 px).</td></tr>
@@ -99,9 +102,38 @@ andamento.</p>
 recebem a cor, o que simula tons intermediários. O tom A é sólido. O botão
 <img src=":/icons/tone_shift.png"> desloca a origem do padrão.</p>
 
+<h3>Trabalhando com seleções</h3>
+<ul>
+  <li>Ao começar uma seleção, <b>Shift</b> soma à atual e <b>Ctrl</b> subtrai
+      dela.</li>
+  <li>Havendo seleção, as ferramentas de desenho só pintam dentro dela.</li>
+  <li><b>Esc</b> cancela o que está em andamento (um contorno ponto a ponto, uma
+      transformação); sem nada em andamento, desfaz a seleção.</li>
+  <li>Com uma ferramenta de seleção ativa, uma caixa com 8 alças envolve a
+      seleção, como nos editores de imagem modernos:
+      <ul>
+        <li>arraste <b>dentro</b> da seleção para mover os pixels;</li>
+        <li>arraste uma <b>alça</b> para escalar (Shift num canto mantém a
+            proporção);</li>
+        <li>arraste logo <b>fora de um canto</b> para girar (Shift: passos de
+            15&deg;).</li>
+      </ul>
+      Os pixels ficam flutuando até você pressionar <b>Enter</b>, clicar fora da
+      seleção ou trocar de ferramenta; a transformação inteira vira então um só
+      passo de desfazer. Esc ou Desfazer a cancelam.</li>
+  <li>Teclado (todos os atalhos podem ser trocados em <i>Editar &gt; Atalhos de
+      teclado</i>): as <b>setas</b> movem os pixels selecionados (Shift: 8
+      pixels; Ctrl: só o contorno); <b>R</b> / <b>Shift+R</b> giram 90&deg; para
+      a direita / esquerda; <b>E</b> / <b>Shift+E</b> espelham na horizontal /
+      vertical; <b>Del</b> limpa; <b>Ctrl+A</b>, <b>Ctrl+Shift+A</b> e
+      <b>Ctrl+I</b> selecionam tudo, desfazem e invertem a seleção.</li>
+</ul>
+
 <h2 id="transforms">4. Transformações</h2>
 <p>Os botões de transformação do painel lateral agem sobre a seleção ou, se não
-houver seleção, sobre a imagem inteira:</p>
+houver seleção, sobre a imagem inteira. Com seleção, girar e espelhar levam a
+forma da seleção junto; deslocar e a simetria mudam só os pixels
+selecionados:</p>
 <ul>
   <li>deslocar um pixel para cima, direita, baixo ou esquerda (o que sai por um
       lado entra pelo outro);</li>
@@ -121,6 +153,7 @@ houver seleção, sobre a imagem inteira:</p>
 <ul>
   <li><b>Efeito de cor transparente</b> (F8): ao colar, os pixels da cor de fundo
       são ignorados e não cobrem a imagem.</li>
+  <li><b>Editar paleta</b> abre com Shift+P (Shift+E espelha a seleção).</li>
   <li><b>Máscara</b>: as cores mascaradas ficam protegidas, e pixels dessas cores
       nunca são alterados. No <b>modo máscara</b> (F5):
       <ul>

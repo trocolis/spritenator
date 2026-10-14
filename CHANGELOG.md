@@ -5,6 +5,32 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [2.3.0] - 2026-10-13
+
+### Adicionado
+- **Seleções de forma livre** (`core::Selection`, uma máscara de pixels): o contorno ("formigas") segue a forma exata.
+- **Ferramentas de seleção novas**:
+  - **oval**;
+  - **ponto a ponto**: fecha com clique duplo, clique no primeiro ponto, botão direito ou Enter; Backspace remove o último ponto;
+  - **livre (laço)**;
+  - **varinha mágica**, com barra de **tolerância** (0–100%) e opção **Contígua** abaixo das ferramentas. Em imagens indexadas compara as cores da paleta. As opções ficam gravadas.
+- Ao começar uma seleção, **Shift soma** e **Ctrl subtrai**; Shift durante o arraste faz quadrado/círculo.
+- **Transformação livre** da seleção (`core::FreeTransform`, `gui::SelectionTransform`):
+  - caixa com 8 alças: arrastar dentro move; as alças escalam (Shift mantém a proporção); logo fora dos cantos gira (Shift: passos de 15°);
+  - os pixels flutuam com prévia ao vivo e viram um único passo de desfazer ao aplicar (Enter, clique fora ou troca de ferramenta); Esc ou Desfazer cancelam;
+  - amostragem por vizinho mais próximo; espelhar e girar 90° são exatos.
+- **Teclado**: setas movem os pixels selecionados (Shift: 8 px; Ctrl: só o contorno); R/Shift+R giram; E/Shift+E espelham; Esc cancela o que está em andamento ou desfaz a seleção.
+- Menu **Seleção**: selecionar tudo, desfazer seleção (Ctrl+Shift+A), inverter seleção (Ctrl+I), girar, espelhar e aplicar transformação.
+- **Atalhos configuráveis** (*Editar > Atalhos de teclado*): todas as ações, com aviso de conflito, restauração dos padrões e gravação nas preferências; a tabela de atalhos da ajuda acompanha.
+- Ícones das novas ferramentas e cursor de rotação.
+- Testes das seleções, da varinha, da transformação afim, das ferramentas, do teclado, das alças e dos atalhos.
+
+### Alterado
+- **Pintar com seleção**: lápis, balde, figuras e texto só pintam dentro dela.
+- **Operações respeitam a forma da seleção**: limpar, recortar, copiar (o que fica fora vai como fundo/transparente), sombra, deslocar e simetria mudam só os pixels selecionados; girar, espelhar, rotação livre e esticar levam a forma junto.
+- "Selecionar tudo" saiu do menu Editar para o menu Seleção.
+- **Editar paleta** passou de Shift+E para **Shift+P** (Shift+E agora espelha a seleção na vertical).
+
 ## [2.2.0] - 2026-10-13
 
 ### Alterado

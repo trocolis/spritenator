@@ -34,8 +34,11 @@ Cada camada depende apenas das camadas abaixo dela.
 | `core::WriteRulesFor<Pixel>` | Regras de escrita. Indexada: cor transparente na origem e máscara de cores protegidas no destino. RGBA: ignora pixels de origem com alfa 0. |
 | `core::AnyImage` | `std::variant<IndexedImage, RgbaImage>` + `ColorMode`: o tipo usado pelo documento e pelos comandos de desfazer. O compilador obriga a tratar os dois modos (`std::visit`). |
 | `core::ColorConversion` | Conversões indexada → RGBA (exata) e RGBA → indexada (cor mais próxima ou Floyd–Steinberg; quase transparente → índice 0). |
+| `core::Selection` | Seleção de forma livre: máscara de um byte por pixel dentro do retângulo envolvente (sempre normalizada). Formas (retângulo, oval, polígono, pontos), combinações (somar, subtrair, inverter, recortar, deslocar) e a varinha mágica (`magicWand`). |
+| `core::FreeTransform` | `Affine`, `TransformParams` e `transformFloating`: transforma pixels + máscara por vizinho mais próximo; com ângulos retos, encaixa o resultado na grade (espelhar e girar 90° são exatos). |
 | `core::GridLayout` | Espaçamentos da grade principal (padrão 1×1) e da sub-grade ("tamanho do personagem", padrão 24×32); célula da sub-grade sob um ponto. |
 | `gui::Document` | Canvas + paleta + caminho + `QUndoStack` próprio + seleção + edição ao vivo. |
+| `gui::SelectionTransform` | Transformação "flutuante" da seleção (setas, R/E, botões, alças): prévia ao vivo pela edição ao vivo do `Document`; vira um único passo de desfazer ao aplicar. |
 | `gui::CanvasEditor` | Editor de um documento (uma aba): exibe a imagem inteira com zoom próprio, grades, seleção e destaque; repassa o mouse à ferramenta atual. É dono do `Document`. |
 | `gui::ColorRole` | Papel da cor (primária/secundária). As ferramentas pedem um papel e a `EditorSession::plot` decide o pixel conforme o modo. |
 | `gui::EditorSession` | Estado central: documento ativo, cores, grades, ferramenta, tom, máscara e a célula do último clique. O zoom fica em cada `CanvasEditor`. |

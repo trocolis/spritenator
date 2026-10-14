@@ -85,7 +85,10 @@ are not highlighted.</p>
 
 <h2 id="tools">3. Drawing tools and tones</h2>
 <table cellpadding="3">
-<tr><td><img src=":/icons/tool_select.png"></td><td>Select a rectangle. A simple click removes the selection.</td></tr>
+<tr><td><img src=":/icons/tool_select.png"> <img src=":/icons/tool_select_ellipse.png"></td><td>Rectangular and oval selections (Shift: square or circle). A simple click removes the selection.</td></tr>
+<tr><td><img src=":/icons/tool_select_polygon.png"></td><td>Point-to-point selection: click each corner. Close it with a double click, a click on the first point, the right button or Enter; Backspace removes the last point.</td></tr>
+<tr><td><img src=":/icons/tool_select_lasso.png"></td><td>Freehand selection: draw the outline while holding the button.</td></tr>
+<tr><td><img src=":/icons/tool_magic_wand.png"></td><td>Magic wand: selects the area of similar color. Below the tools, set the <b>tolerance</b> (0% = only the same color) and <b>Contiguous</b> (only the area connected to the clicked pixel).</td></tr>
 <tr><td><img src=":/icons/tool_zoom.png"></td><td>Zoom: the left button magnifies and the right button reduces.</td></tr>
 <tr><td><img src=":/icons/tool_fill.png"></td><td>Fill the adjacent area of the same color.</td></tr>
 <tr><td><img src=":/icons/tool_pen_thin.png"> <img src=":/icons/tool_pen_thick.png"></td><td>Thin (1 px) and thick (3 px) pens.</td></tr>
@@ -100,9 +103,37 @@ being drawn.</p>
 pattern receive the color, which simulates intermediate shades. Tone A is solid.
 The <img src=":/icons/tone_shift.png"> button shifts the origin of the pattern.</p>
 
+<h3>Working with selections</h3>
+<ul>
+  <li>When starting a selection, <b>Shift</b> adds to the current one and
+      <b>Ctrl</b> subtracts from it.</li>
+  <li>While there is a selection, drawing tools only paint inside it.</li>
+  <li><b>Esc</b> cancels what is in progress (a point-to-point outline, a
+      transformation); with nothing in progress, it removes the selection.</li>
+  <li>With a selection tool active, a box with 8 handles surrounds the
+      selection, as in modern image editors:
+      <ul>
+        <li>drag <b>inside</b> the selection to move the pixels;</li>
+        <li>drag a <b>handle</b> to scale (Shift on a corner keeps the
+            proportion);</li>
+        <li>drag just <b>outside a corner</b> to rotate (Shift: steps of 15&deg;).</li>
+      </ul>
+      The pixels float until you press <b>Enter</b>, click outside the
+      selection or change to another tool; the whole transformation is then a
+      single undo step. Esc or Undo cancels it.</li>
+  <li>Keyboard (all shortcuts can be changed in <i>Edit &gt; Keyboard
+      Shortcuts</i>): the <b>arrows</b> move the selected pixels (Shift: 8
+      pixels; Ctrl: only the outline); <b>R</b> / <b>Shift+R</b> rotate 90&deg;
+      right / left; <b>E</b> / <b>Shift+E</b> flip horizontally / vertically;
+      <b>Del</b> clears; <b>Ctrl+A</b>, <b>Ctrl+Shift+A</b> and <b>Ctrl+I</b>
+      select all, deselect and invert the selection.</li>
+</ul>
+
 <h2 id="transforms">4. Transformations</h2>
 <p>The transformation buttons of the side panel act on the selection, or on the
-whole image when there is no selection:</p>
+whole image when there is no selection. With a selection, rotating and flipping
+take the shape of the selection along; shifting and symmetry change only the
+selected pixels:</p>
 <ul>
   <li>shift up, right, down or left by one pixel (what leaves one side enters on
       the other);</li>
@@ -121,6 +152,8 @@ whole image when there is no selection:</p>
 <ul>
   <li><b>Transparent Color Effect</b> (F8): when pasting, pixels of the
       background color are skipped, so they do not cover the image.</li>
+  <li><b>Edit Palette</b> is opened with Shift+P (Shift+E flips the
+      selection).</li>
   <li><b>Mask</b>: masked colors are protected, so pixels of those colors are
       never changed. In <b>Mask Mode</b> (F5):
       <ul>
