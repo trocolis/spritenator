@@ -100,11 +100,111 @@ const std::vector<ActionSpec>& actionSpecs()
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Text &Input..."),
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Render text into the image"),
             "edit_draw_text", Seq(Qt::CTRL | Qt::Key_T) },
+        { ActionId::EditShortcuts,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Keyboard Shortcuts..."),
+            QT_TRANSLATE_NOOP(
+                "spritenator::gui::ActionCatalog", "Change the keyboard shortcut of any command"),
+            nullptr, Seq() },
         { ActionId::EditShadow,
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Prepare &Shadow"),
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
                 "Replace every non-background color with the drawing color"),
             nullptr, Seq(Qt::CTRL | Qt::Key_Q) },
+        // --- Seleção ---
+        { ActionId::SelectNone, QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Deselect"),
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Remove the selection"), nullptr,
+            Seq(Qt::CTRL | Qt::SHIFT | Qt::Key_A) },
+        { ActionId::SelectInvert,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Invert Selection"),
+            QT_TRANSLATE_NOOP(
+                "spritenator::gui::ActionCatalog", "Select everything that is not selected"),
+            nullptr, Seq(Qt::CTRL | Qt::Key_I) },
+        { ActionId::SelectRotateClockwise,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Rotate Right"),
+            QT_TRANSLATE_NOOP(
+                "spritenator::gui::ActionCatalog", "Rotate the selection 90 degrees clockwise"),
+            "rotate_cw", Seq(Qt::Key_R) },
+        { ActionId::SelectRotateCounterClockwise,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Rotate &Left"),
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
+                "Rotate the selection 90 degrees counterclockwise"),
+            "rotate_ccw", Seq(Qt::SHIFT | Qt::Key_R) },
+        { ActionId::SelectFlipHorizontal,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Flip &Horizontally"),
+            QT_TRANSLATE_NOOP(
+                "spritenator::gui::ActionCatalog", "Mirror the selection from left to right"),
+            "flip_horizontal", Seq(Qt::Key_E) },
+        { ActionId::SelectFlipVertical,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Flip &Vertically"),
+            QT_TRANSLATE_NOOP(
+                "spritenator::gui::ActionCatalog", "Mirror the selection from top to bottom"),
+            "flip_vertical", Seq(Qt::SHIFT | Qt::Key_E) },
+        { ActionId::SelectApplyTransform,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "A&pply Transformation"),
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
+                "Apply the pending move, scale or rotation of the selection (Enter in the image)"),
+            nullptr, Seq() },
+        // Mover: setas (1 px), Shift+setas (8 px) e Ctrl+setas (só o contorno).
+        { ActionId::SelectMoveLeft,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Move Selection Left"),
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
+                "Move the selected pixels one pixel to the left"),
+            nullptr, Seq(Qt::Key_Left) },
+        { ActionId::SelectMoveRight,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Move Selection Right"),
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
+                "Move the selected pixels one pixel to the right"),
+            nullptr, Seq(Qt::Key_Right) },
+        { ActionId::SelectMoveUp,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Move Selection Up"),
+            QT_TRANSLATE_NOOP(
+                "spritenator::gui::ActionCatalog", "Move the selected pixels one pixel up"),
+            nullptr, Seq(Qt::Key_Up) },
+        { ActionId::SelectMoveDown,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Move Selection Down"),
+            QT_TRANSLATE_NOOP(
+                "spritenator::gui::ActionCatalog", "Move the selected pixels one pixel down"),
+            nullptr, Seq(Qt::Key_Down) },
+        { ActionId::SelectMoveLeftFast,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Move Selection Left (8 px)"),
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
+                "Move the selected pixels eight pixels to the left"),
+            nullptr, Seq(Qt::SHIFT | Qt::Key_Left) },
+        { ActionId::SelectMoveRightFast,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Move Selection Right (8 px)"),
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
+                "Move the selected pixels eight pixels to the right"),
+            nullptr, Seq(Qt::SHIFT | Qt::Key_Right) },
+        { ActionId::SelectMoveUpFast,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Move Selection Up (8 px)"),
+            QT_TRANSLATE_NOOP(
+                "spritenator::gui::ActionCatalog", "Move the selected pixels eight pixels up"),
+            nullptr, Seq(Qt::SHIFT | Qt::Key_Up) },
+        { ActionId::SelectMoveDownFast,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Move Selection Down (8 px)"),
+            QT_TRANSLATE_NOOP(
+                "spritenator::gui::ActionCatalog", "Move the selected pixels eight pixels down"),
+            nullptr, Seq(Qt::SHIFT | Qt::Key_Down) },
+        { ActionId::SelectOutlineLeft,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Move Outline Left"),
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
+                "Move only the selection outline one pixel to the left"),
+            nullptr, Seq(Qt::CTRL | Qt::Key_Left) },
+        { ActionId::SelectOutlineRight,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Move Outline Right"),
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
+                "Move only the selection outline one pixel to the right"),
+            nullptr, Seq(Qt::CTRL | Qt::Key_Right) },
+        { ActionId::SelectOutlineUp,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Move Outline Up"),
+            QT_TRANSLATE_NOOP(
+                "spritenator::gui::ActionCatalog", "Move only the selection outline one pixel up"),
+            nullptr, Seq(Qt::CTRL | Qt::Key_Up) },
+        { ActionId::SelectOutlineDown,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Move Outline Down"),
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
+                "Move only the selection outline one pixel down"),
+            nullptr, Seq(Qt::CTRL | Qt::Key_Down) },
         // --- Exibir ---
         { ActionId::ViewGrids, QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Grids..."),
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
@@ -166,7 +266,7 @@ const std::vector<ActionSpec>& actionSpecs()
         { ActionId::PaletteEdit,
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Edit Palette..."),
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Open the palette editor"),
-            "palette_edit", Seq(Qt::SHIFT | Qt::Key_E) },
+            "palette_edit", Seq(Qt::SHIFT | Qt::Key_P) }, // Shift+E: espelhar a seleção
         { ActionId::PaletteClearMask,
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Clear &Mask"),
             QT_TRANSLATE_NOOP(
@@ -228,6 +328,11 @@ ActionCatalog::ActionCatalog(QObject* parent)
     // Estados iniciais.
     action(ActionId::ViewMainGrid)->setChecked(true);
 
+    // Setas: só com o editor de imagem em foco (ver editorActions).
+    for (QAction* editorAction : editorActions()) {
+        editorAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+    }
+
     // Garante, em builds de depuração, que a tabela cobre todas as ações.
     for ([[maybe_unused]] QAction* created : m_actions) {
         assert(created != nullptr && "ActionCatalog: ação ausente da tabela");
@@ -244,6 +349,47 @@ void ActionCatalog::retranslate()
         target->setStatusTip(tip);
         target->setToolTip(tip);
     }
+}
+
+QString ActionCatalog::settingsKey(ActionId id)
+{
+    // Nomes estáveis (não mudam com o idioma nem com o texto do menu), na
+    // ordem de ActionId.
+    static constexpr const char* kKeys[] = { "FileNew", "FileOpen", "FileRevert", "FileSave",
+        "FileSaveAs", "FileClose", "FileSetBackupFolder", "FileExit", "EditUndo", "EditRedo",
+        "EditCut", "EditCopy", "EditPaste", "EditClear", "EditSelectAll", "EditDrawText",
+        "EditShadow", "EditShortcuts", "SelectNone", "SelectInvert", "SelectRotateClockwise",
+        "SelectRotateCounterClockwise", "SelectFlipHorizontal", "SelectFlipVertical",
+        "SelectApplyTransform", "SelectMoveLeft", "SelectMoveRight", "SelectMoveUp",
+        "SelectMoveDown", "SelectMoveLeftFast", "SelectMoveRightFast", "SelectMoveUpFast",
+        "SelectMoveDownFast", "SelectOutlineLeft", "SelectOutlineRight", "SelectOutlineUp",
+        "SelectOutlineDown", "ViewGrids", "ViewMainGrid", "ViewSubGrid", "ViewZoomIn",
+        "ViewZoomOut", "ViewZoomActual", "ViewZoomFit", "ViewAnimation", "CanvasResize",
+        "CanvasClearAll", "PaletteTransparent", "PaletteLoad", "PaletteSave", "PaletteEdit",
+        "PaletteClearMask", "PaletteInvertMask", "PaletteAutoMask", "PaletteMaskMode",
+        "PaletteGradation", "WindowReverseCanvas", "HelpContents", "HelpAbout" };
+    static_assert(std::size(kKeys) == kActionCount, "ActionCatalog: falta a chave de uma ação");
+    return QString::fromLatin1(kKeys[static_cast<std::size_t>(id)]);
+}
+
+QKeySequence ActionCatalog::defaultShortcut(ActionId id)
+{
+    for (const ActionSpec& spec : actionSpecs()) {
+        if (spec.id == id) {
+            return spec.shortcut;
+        }
+    }
+    return { };
+}
+
+QList<QAction*> ActionCatalog::editorActions() const
+{
+    QList<QAction*> result;
+    for (std::size_t index = static_cast<std::size_t>(ActionId::SelectMoveLeft);
+        index <= static_cast<std::size_t>(ActionId::SelectOutlineDown); ++index) {
+        result.append(m_actions.at(index));
+    }
+    return result;
 }
 
 QAction* ActionCatalog::action(ActionId id) const

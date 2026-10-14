@@ -49,6 +49,7 @@ constexpr std::array kSources = {
     QT_TRANSLATE_NOOP("spritenator::gui::UndoLabel", "Rotate Left"),
     QT_TRANSLATE_NOOP("spritenator::gui::UndoLabel", "Free Rotation"),
     QT_TRANSLATE_NOOP("spritenator::gui::UndoLabel", "Stretch"),
+    QT_TRANSLATE_NOOP("spritenator::gui::UndoLabel", "Transform Selection"),
     QT_TRANSLATE_NOOP("spritenator::gui::UndoLabel", "Canvas Size"),
     QT_TRANSLATE_NOOP("spritenator::gui::UndoLabel", "Clear All"),
     QT_TRANSLATE_NOOP("spritenator::gui::UndoLabel", "Character Size"),

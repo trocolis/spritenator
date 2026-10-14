@@ -11,6 +11,8 @@
 // =============================================================================
 #pragma once
 
+#include <QKeySequence>
+#include <QList>
 #include <QObject>
 
 #include <array>
@@ -41,6 +43,27 @@ enum class ActionId : std::size_t {
     EditSelectAll,
     EditDrawText,
     EditShadow,
+    EditShortcuts,
+    // --- Seleção ---
+    SelectNone,
+    SelectInvert,
+    SelectRotateClockwise,
+    SelectRotateCounterClockwise,
+    SelectFlipHorizontal,
+    SelectFlipVertical,
+    SelectApplyTransform,
+    SelectMoveLeft,
+    SelectMoveRight,
+    SelectMoveUp,
+    SelectMoveDown,
+    SelectMoveLeftFast,
+    SelectMoveRightFast,
+    SelectMoveUpFast,
+    SelectMoveDownFast,
+    SelectOutlineLeft,
+    SelectOutlineRight,
+    SelectOutlineUp,
+    SelectOutlineDown,
     // --- Exibir ---
     ViewGrids,
     ViewMainGrid,
@@ -92,6 +115,15 @@ public:
     /// Reaplica textos e dicas no idioma atual (chamado na criação e quando o
     /// idioma muda com o programa aberto).
     void retranslate();
+
+    // --- Atalhos configuráveis ---
+    /// Nome estável da ação, usado para gravar o atalho nas preferências.
+    [[nodiscard]] static QString settingsKey(ActionId id);
+    /// Atalho padrão da ação.
+    [[nodiscard]] static QKeySequence defaultShortcut(ActionId id);
+    /// Ações cujo atalho só vale com o editor de imagem em foco (as setas,
+    /// que de outro modo roubariam as teclas de caixas numéricas e listas).
+    [[nodiscard]] QList<QAction*> editorActions() const;
 
 private:
     std::array<QAction*, kActionCount> m_actions { };

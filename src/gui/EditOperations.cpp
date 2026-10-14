@@ -10,6 +10,7 @@
 
 #include "Document.h"
 #include "EditorSession.h"
+#include "SelectionTransform.h"
 #include "commands/ImageCommands.h"
 #include "core/ColorConversion.h"
 #include "core/Transform.h"
@@ -98,6 +99,28 @@ core::AnyImage importForeignImage(
     return core::convertImage(asRgba, mode, palette);
 }
 
+/// Fora da seleção, devolve os pixels originais: "after" e "before" cobrem o
+/// retângulo "area", e só os pixels selecionados ficam com o valor novo.
+void keepOutside(core::AnyImage& after, const core::AnyImage& before, const core::Rect& area,
+    const core::Selection& selection)
+{
+    if (selection.isEmpty() || selection.isRectangular()) {
+        return; // retângulo: toda a área é selecionada
+    }
+    std::visit(
+        [&](auto& target) {
+            const auto& source = std::get<std::decay_t<decltype(target)>>(before);
+            for (int y = 0; y < area.height; ++y) {
+                for (int x = 0; x < area.width; ++x) {
+                    if (!selection.contains({ area.x + x, area.y + y })) {
+                        target.setPixel({ x, y }, source.pixel(x, y));
+                    }
+                }
+            }
+        },
+        after);
+}
+
 /// Aplica uma transformação genérica (template) ao tipo concreto da imagem.
 template <typename Function>
 core::AnyImage mapImage(const core::AnyImage& image, Function&& function)
@@ -118,6 +141,7 @@ void EditOperations::applyToWorkArea(const UndoLabel& undoLabel,
     const std::function<core::AnyImage(const core::AnyImage&)>& function)
 {
     m_session->cancelTool();
+    m_session->commitTransform();
     Document* document = m_session->activeDocument();
     if (document == nullptr) {
         return;
@@ -125,6 +149,7 @@ void EditOperations::applyToWorkArea(const UndoLabel& undoLabel,
     const core::Rect area = document->workArea();
     core::AnyImage before = core::copyRegion(document->canvas(), area);
     core::AnyImage after = function(before);
+    keepOutside(after, before, area, document->selection());
     if (after == before) {
         return; // nada mudou: não polui o histórico
     }
@@ -151,7 +176,25 @@ void EditOperations::copy()
     if (document == nullptr) {
         return;
     }
-    const core::AnyImage region = core::copyRegion(document->canvas(), document->workArea());
+    const core::Rect area = document->workArea();
+    core::AnyImage region = core::copyRegion(document->canvas(), area);
+    // Seleção de forma livre: o que fica fora dela vai como "vazio" (fundo
+    // na indexada, transparente na RGBA).
+    const core::Selection& selection = document->selection();
+    if (!selection.isEmpty() && !selection.isRectangular()) {
+        std::visit(
+            [&](auto& image) {
+                using Pixel = typename std::decay_t<decltype(image)>::PixelType;
+                for (int y = 0; y < area.height; ++y) {
+                    for (int x = 0; x < area.width; ++x) {
+                        if (!selection.contains({ area.x + x, area.y + y })) {
+                            image.setPixel({ x, y }, fillPixel<Pixel>());
+                        }
+                    }
+                }
+            },
+            region);
+    }
 
     auto* mime = new QMimeData;
     mime->setData(mimeType(), encodeImage(region));
@@ -199,8 +242,9 @@ void EditOperations::paste()
     }
 
     m_session->cancelTool();
+    m_session->commitTransform();
     const core::Point origin
-        = document->selection() ? document->selection()->topLeft() : core::Point { };
+        = document->hasSelection() ? document->selection().bounds().topLeft() : core::Point { };
     const core::Rect target = core::Rect::fromPointAndSize(origin, core::sizeOf(*pasted))
                                   .intersected(core::boundsOf(document->canvas()));
     if (target.isEmpty()) {
@@ -238,9 +282,67 @@ void EditOperations::clear()
 
 void EditOperations::selectAll()
 {
+    m_session->commitTransform();
     if (Document* document = m_session->activeDocument()) {
         document->setSelection(core::boundsOf(document->canvas()));
     }
+}
+
+void EditOperations::deselect()
+{
+    m_session->cancelTool();
+    m_session->commitTransform();
+    if (Document* document = m_session->activeDocument()) {
+        document->clearSelection();
+    }
+}
+
+void EditOperations::invertSelection()
+{
+    m_session->commitTransform();
+    if (Document* document = m_session->activeDocument()) {
+        document->setSelection(document->selection().inverted(core::boundsOf(document->canvas())));
+    }
+}
+
+void EditOperations::moveSelection(int dx, int dy)
+{
+    const Document* document = m_session->activeDocument();
+    if (document == nullptr || !document->hasSelection()) {
+        return;
+    }
+    SelectionTransform* transform = m_session->selectionTransform();
+    if (transform->begin()) {
+        transform->translate(dx, dy); // fica flutuando até ser aplicada
+    }
+}
+
+void EditOperations::moveSelectionOutline(int dx, int dy)
+{
+    m_session->commitTransform();
+    if (Document* document = m_session->activeDocument(); document && document->hasSelection()) {
+        // Sem recorte ao canvas no meio do caminho: só a parte visível fica.
+        document->setSelection(document->selection().translated({ dx, dy }));
+    }
+}
+
+bool EditOperations::transformSelection(
+    UndoOperation operation, const std::function<void(SelectionTransform&)>& change)
+{
+    const Document* document = m_session->activeDocument();
+    if (document == nullptr || !document->hasSelection()) {
+        return false;
+    }
+    SelectionTransform* transform = m_session->selectionTransform();
+    const bool alreadyActive = transform->isActive() && transform->document() == document;
+    if (!transform->begin()) {
+        return false;
+    }
+    change(*transform);
+    if (!alreadyActive) {
+        transform->commit(operation); // operação avulsa: um passo de desfazer
+    }
+    return true;
 }
 
 // -----------------------------------------------------------------------------
@@ -259,6 +361,35 @@ void EditOperations::transform(TransformKind kind)
             return core::rotated90(image, clockwise, fillPixel<Pixel>());
         };
     };
+    // Com seleção, giros e espelhos levam a forma junto (transformação livre).
+    switch (kind) {
+    case TransformKind::FlipVertical:
+        if (transformSelection(UndoOperation::FlipVertically,
+                [](SelectionTransform& transform) { transform.flip(false); })) {
+            return;
+        }
+        break;
+    case TransformKind::FlipHorizontal:
+        if (transformSelection(UndoOperation::FlipHorizontally,
+                [](SelectionTransform& transform) { transform.flip(true); })) {
+            return;
+        }
+        break;
+    case TransformKind::RotateClockwise:
+        if (transformSelection(UndoOperation::RotateRight,
+                [](SelectionTransform& transform) { transform.rotate90(true); })) {
+            return;
+        }
+        break;
+    case TransformKind::RotateCounterClockwise:
+        if (transformSelection(UndoOperation::RotateLeft,
+                [](SelectionTransform& transform) { transform.rotate90(false); })) {
+            return;
+        }
+        break;
+    default: break;
+    }
+
     switch (kind) {
     case TransformKind::ShiftUp:
         apply(
@@ -301,6 +432,10 @@ void EditOperations::transform(TransformKind kind)
 
 void EditOperations::rotate(double degrees)
 {
+    if (transformSelection(UndoOperation::FreeRotation,
+            [degrees](SelectionTransform& transform) { transform.rotateBy(degrees); })) {
+        return;
+    }
     applyToWorkArea(UndoLabel { UndoOperation::FreeRotation }, [&](const core::AnyImage& region) {
         return mapImage(region, [&](const auto& image) {
             using Pixel = typename std::decay_t<decltype(image)>::PixelType;
@@ -314,7 +449,19 @@ void EditOperations::stretch(core::Size newSize)
     if (newSize.isEmpty()) {
         return;
     }
+    // Com seleção: escala a forma junto, mantendo o canto superior esquerdo.
+    if (transformSelection(UndoOperation::Stretch, [newSize](SelectionTransform& transform) {
+            const core::Rect bounds = transform.originalBounds();
+            transform.scaleTo(newSize);
+            core::TransformParams params = transform.params();
+            params.dx = (newSize.width - bounds.width) / 2.0;
+            params.dy = (newSize.height - bounds.height) / 2.0;
+            transform.setParams(params);
+        })) {
+        return;
+    }
     m_session->cancelTool();
+    m_session->commitTransform();
     Document* document = m_session->activeDocument();
     if (document == nullptr) {
         return;
@@ -401,6 +548,7 @@ void EditOperations::drawText(const QString& text, const QFont& font)
         return;
     }
     m_session->cancelTool();
+    m_session->commitTransform();
     Document* document = m_session->activeDocument();
     if (document == nullptr) {
         return;

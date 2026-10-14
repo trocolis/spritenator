@@ -162,6 +162,31 @@ QList<NewImageEntry> AppSettings::withEntry(
 }
 
 // -----------------------------------------------------------------------------
+// Atalhos personalizados (grupo "shortcuts", formato portável do Qt)
+// -----------------------------------------------------------------------------
+QHash<QString, QKeySequence> AppSettings::customShortcuts() const
+{
+    QSettings settings;
+    settings.beginGroup(QStringLiteral("shortcuts"));
+    QHash<QString, QKeySequence> result;
+    for (const QString& name : settings.childKeys()) {
+        result.insert(name,
+            QKeySequence::fromString(settings.value(name).toString(), QKeySequence::PortableText));
+    }
+    return result;
+}
+
+void AppSettings::setCustomShortcuts(const QHash<QString, QKeySequence>& shortcuts)
+{
+    QSettings settings;
+    settings.beginGroup(QStringLiteral("shortcuts"));
+    settings.remove(QString()); // apaga o grupo inteiro antes de regravar
+    for (auto it = shortcuts.constBegin(); it != shortcuts.constEnd(); ++it) {
+        settings.setValue(it.key(), it.value().toString(QKeySequence::PortableText));
+    }
+}
+
+// -----------------------------------------------------------------------------
 // Grades
 // -----------------------------------------------------------------------------
 core::GridLayout AppSettings::gridLayout() const
@@ -230,6 +255,8 @@ ViewSettings AppSettings::viewSettings() const
     view.transparentEffect
         = settings.value("transparentEffect", defaults.transparentEffect).toBool();
     view.canvasReversed = settings.value("canvasReversed", defaults.canvasReversed).toBool();
+    view.wandTolerance = settings.value("wandTolerance", defaults.wandTolerance).toInt();
+    view.wandContiguous = settings.value("wandContiguous", defaults.wandContiguous).toBool();
     // Chave nova na 2.0: o painel mudou de largura e a proporção antiga não
     // serve mais.
     view.splitterState = settings.value("panelSplitter").toByteArray();
@@ -245,6 +272,8 @@ void AppSettings::setViewSettings(const ViewSettings& view)
     settings.setValue("subGrid", view.subGridVisible);
     settings.setValue("transparentEffect", view.transparentEffect);
     settings.setValue("canvasReversed", view.canvasReversed);
+    settings.setValue("wandTolerance", view.wandTolerance);
+    settings.setValue("wandContiguous", view.wandContiguous);
     settings.setValue("panelSplitter", view.splitterState);
     settings.endGroup();
 }

@@ -26,13 +26,14 @@ public:
     /// HTML completo exibido (exposto para testes).
     [[nodiscard]] static QString buildHtml(const ActionCatalog* actions);
 
+    /// Reaplica título e conteúdo no idioma atual (também depois de mudar
+    /// atalhos: a tabela de atalhos é gerada a partir das ações).
+    void retranslate();
+
 protected:
     void changeEvent(QEvent* event) override;
 
 private:
-    /// Reaplica título e conteúdo no idioma atual.
-    void retranslate();
-
     const ActionCatalog* m_actions;
     QTextBrowser* m_browser = nullptr;
 };

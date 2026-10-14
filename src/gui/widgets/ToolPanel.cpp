@@ -25,8 +25,24 @@ struct ToolSpec {
 
 // Mesma ordem dos botões do original (4 colunas x 3 linhas).
 constexpr ToolSpec kToolSpecs[] = {
+    // Linha 1: seleções; Shift soma e Ctrl subtrai da seleção existente.
     { ToolKind::Select, "tool_select",
-        QT_TRANSLATE_NOOP("spritenator::gui::ToolPanel", "Select a rectangular area") },
+        QT_TRANSLATE_NOOP("spritenator::gui::ToolPanel",
+            "Rectangular selection (Shift: square; when starting, Shift adds and Ctrl "
+            "subtracts)") },
+    { ToolKind::SelectEllipse, "tool_select_ellipse",
+        QT_TRANSLATE_NOOP("spritenator::gui::ToolPanel",
+            "Oval selection (Shift: circle; when starting, Shift adds and Ctrl subtracts)") },
+    { ToolKind::SelectPolygon, "tool_select_polygon",
+        QT_TRANSLATE_NOOP("spritenator::gui::ToolPanel",
+            "Point-to-point selection: click each corner; close with a double click, "
+            "the first point, the right button or Enter. Backspace removes the last point") },
+    { ToolKind::SelectLasso, "tool_select_lasso",
+        QT_TRANSLATE_NOOP("spritenator::gui::ToolPanel",
+            "Freehand selection: draw the outline while holding the button") },
+    { ToolKind::MagicWand, "tool_magic_wand",
+        QT_TRANSLATE_NOOP("spritenator::gui::ToolPanel",
+            "Magic wand: select the area of similar color (tolerance below the tools)") },
     { ToolKind::Zoom, "tool_zoom",
         QT_TRANSLATE_NOOP(
             "spritenator::gui::ToolPanel", "Zoom: left button magnifies, right button reduces") },

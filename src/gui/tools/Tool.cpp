@@ -17,6 +17,30 @@ void Tool::cancel(EditorSession& session)
     }
 }
 
+void Tool::hover(EditorSession& /*session*/, core::Point /*point*/)
+{
+}
+
+bool Tool::keyPress(EditorSession& /*session*/, int /*key*/)
+{
+    return false;
+}
+
+bool Tool::isBusy() const
+{
+    return false;
+}
+
+std::vector<core::Point> Tool::previewPath() const
+{
+    return { };
+}
+
+bool Tool::paints() const
+{
+    return true;
+}
+
 std::vector<core::Point> Tool::footprint(const EditorSession& /*session*/, core::Point point) const
 {
     return { point };

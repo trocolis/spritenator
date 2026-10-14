@@ -54,55 +54,6 @@ void FillTool::release(EditorSession& /*session*/, core::Point /*point*/)
 }
 
 // -----------------------------------------------------------------------------
-// SelectTool
-// -----------------------------------------------------------------------------
-void SelectTool::press(EditorSession& session, core::Point point, Qt::MouseButton button)
-{
-    if (button != Qt::LeftButton && button != Qt::RightButton) {
-        return;
-    }
-    Document* document = session.activeDocument();
-    if (document == nullptr) {
-        return;
-    }
-    m_active = true;
-    m_dragged = false;
-    m_anchor = point;
-    document->setSelection(core::Rect::fromCorners(point, point));
-}
-
-void SelectTool::move(EditorSession& session, core::Point point)
-{
-    if (!m_active) {
-        return;
-    }
-    m_dragged = m_dragged || point != m_anchor;
-    if (Document* document = session.activeDocument()) {
-        document->setSelection(core::Rect::fromCorners(m_anchor, point));
-    }
-}
-
-void SelectTool::release(EditorSession& session, core::Point /*point*/)
-{
-    if (!m_active) {
-        return;
-    }
-    m_active = false;
-    Document* document = session.activeDocument();
-    if (!m_dragged && document != nullptr) {
-        document->setSelection(std::nullopt); // clique simples: limpa
-    }
-}
-
-void SelectTool::cancel(EditorSession& session)
-{
-    m_active = false;
-    if (Document* document = session.activeDocument()) {
-        document->setSelection(std::nullopt);
-    }
-}
-
-// -----------------------------------------------------------------------------
 // ZoomTool
 // -----------------------------------------------------------------------------
 // O zoom pertence a cada editor de imagem (CanvasEditor), que trata os cliques

@@ -50,6 +50,7 @@ enum class UndoOperation {
     RotateLeft,
     FreeRotation,
     Stretch,
+    TransformSelection, ///< transformação livre da seleção (mover, escalar...)
     // Canvas e grade
     CanvasSize,
     ClearAll,

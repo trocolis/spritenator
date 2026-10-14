@@ -11,6 +11,8 @@
 #include "core/Palette.h"
 
 #include <QByteArray>
+#include <QHash>
+#include <QKeySequence>
 #include <QList>
 #include <QString>
 #include <QStringList>
@@ -23,6 +25,8 @@ struct ViewSettings {
     bool subGridVisible = false;
     bool transparentEffect = false;
     bool canvasReversed = false;
+    int wandTolerance = 15; ///< tolerância da varinha mágica (0..100)
+    bool wandContiguous = true; ///< varinha: só a região conectada
     QByteArray splitterState; ///< proporção Integrator | área MDI
 };
 
@@ -72,6 +76,12 @@ public:
     /// saem e a lista é limitada a kMaxNewImageHistory.
     [[nodiscard]] static QList<NewImageEntry> withEntry(
         QList<NewImageEntry> history, const NewImageEntry& entry);
+
+    // --- Atalhos de teclado personalizados ---
+    /// Atalhos que diferem do padrão: chave estável da ação -> atalho (um
+    /// atalho vazio significa "sem atalho").
+    [[nodiscard]] QHash<QString, QKeySequence> customShortcuts() const;
+    void setCustomShortcuts(const QHash<QString, QKeySequence>& shortcuts);
 
     // --- Grades (principal e sub-grade) ---
     [[nodiscard]] core::GridLayout gridLayout() const;

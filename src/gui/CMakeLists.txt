@@ -31,6 +31,8 @@ add_library(spritenator_gui STATIC
     IntegratorPanel.h
     MainWindow.cpp
     MainWindow.h
+    SelectionTransform.cpp
+    SelectionTransform.h
     Translations.cpp
     Translations.h
     commands/ImageCommands.cpp
@@ -49,12 +51,16 @@ add_library(spritenator_gui STATIC
     dialogs/NewImageDialog.h
     dialogs/PaletteEditDialog.cpp
     dialogs/PaletteEditDialog.h
+    dialogs/ShortcutsDialog.cpp
+    dialogs/ShortcutsDialog.h
     dialogs/StretchDialog.cpp
     dialogs/StretchDialog.h
     dialogs/TextInputDialog.cpp
     dialogs/TextInputDialog.h
     tools/PenTool.cpp
     tools/PenTool.h
+    tools/SelectionTools.cpp
+    tools/SelectionTools.h
     tools/ShapeTool.cpp
     tools/ShapeTool.h
     tools/SimpleTools.cpp
@@ -73,6 +79,8 @@ add_library(spritenator_gui STATIC
     widgets/PaletteView.h
     widgets/ToolPanel.cpp
     widgets/ToolPanel.h
+    widgets/WandOptions.cpp
+    widgets/WandOptions.h
 )
 add_library(Spritenator::Gui ALIAS spritenator_gui)
 

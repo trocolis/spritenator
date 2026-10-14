@@ -4,7 +4,9 @@
 #include "EditorSession.h"
 
 #include "Document.h"
+#include "SelectionTransform.h"
 #include "tools/PenTool.h"
+#include "tools/SelectionTools.h"
 #include "tools/ShapeTool.h"
 #include "tools/SimpleTools.h"
 
@@ -20,10 +22,15 @@ namespace spritenator::gui {
 EditorSession::EditorSession(QObject* parent)
     : QObject(parent)
     , m_undoGroup(new QUndoGroup(this))
+    , m_transform(new SelectionTransform(this))
     , m_defaultPalette(core::Palette::makeDefault(core::ColorDepth::Bits8))
 {
     // Registro das ferramentas disponíveis (uma instância de cada).
-    m_tools.emplace(ToolKind::Select, std::make_unique<SelectTool>());
+    m_tools.emplace(ToolKind::Select, std::make_unique<RectSelectTool>());
+    m_tools.emplace(ToolKind::SelectEllipse, std::make_unique<EllipseSelectTool>());
+    m_tools.emplace(ToolKind::SelectPolygon, std::make_unique<PolygonSelectTool>());
+    m_tools.emplace(ToolKind::SelectLasso, std::make_unique<LassoSelectTool>());
+    m_tools.emplace(ToolKind::MagicWand, std::make_unique<MagicWandTool>());
     m_tools.emplace(ToolKind::Zoom, std::make_unique<ZoomTool>());
     m_tools.emplace(ToolKind::Fill, std::make_unique<FillTool>());
     m_tools.emplace(ToolKind::PenThin, std::make_unique<PenTool>(false));
@@ -54,6 +61,7 @@ void EditorSession::setActiveDocument(Document* document)
     if (document == m_activeDocument) {
         return;
     }
+    commitTransform(); // a transformação em andamento é da imagem anterior
     if (Document* previous = activeDocument()) {
         previous->cancelEdit(); // não deixa um traço pela metade
         disconnect(previous, nullptr, this, nullptr);
@@ -267,6 +275,11 @@ bool EditorSession::plot(core::AnyImage& image, core::Point point, ColorRole rol
     if (!core::toneCovers(m_tone, point, m_toneShift)) {
         return false;
     }
+    // Havendo seleção, só se pinta dentro dela.
+    if (const Document* document = activeDocument();
+        document != nullptr && document->hasSelection() && !document->selection().contains(point)) {
+        return false;
+    }
     if (auto* indexed = std::get_if<core::IndexedImage>(&image)) {
         const core::ColorIndex color = role == ColorRole::Primary ? m_drawColor : m_backgroundColor;
         return indexed->setPixel(point, color, drawingRules());
@@ -278,6 +291,10 @@ bool EditorSession::plot(core::AnyImage& image, core::Point point, ColorRole rol
 bool EditorSession::canPlot(const core::AnyImage& image, core::Point point) const
 {
     if (!core::boundsOf(image).contains(point) || !core::toneCovers(m_tone, point, m_toneShift)) {
+        return false;
+    }
+    if (const Document* document = activeDocument();
+        document != nullptr && document->hasSelection() && !document->selection().contains(point)) {
         return false;
     }
     // Máscara: pixels de cores protegidas não podem ser alterados.
@@ -356,6 +373,10 @@ void EditorSession::setToolKind(ToolKind kind)
         return;
     }
     cancelTool();
+    // Ao trocar para uma ferramenta que pinta, a transformação é aplicada.
+    if (!isSelectionTool(kind)) {
+        commitTransform();
+    }
     m_toolKind = kind;
     emit toolChanged(kind);
 }
@@ -370,6 +391,31 @@ Tool& EditorSession::tool() const
 void EditorSession::cancelTool()
 {
     tool().cancel(*this);
+}
+
+void EditorSession::commitTransform()
+{
+    m_transform->commit();
+}
+
+// -----------------------------------------------------------------------------
+// Varinha mágica
+// -----------------------------------------------------------------------------
+void EditorSession::setWandTolerance(int tolerance)
+{
+    tolerance = std::clamp(tolerance, 0, 100);
+    if (tolerance != m_wandTolerance) {
+        m_wandTolerance = tolerance;
+        emit wandOptionsChanged();
+    }
+}
+
+void EditorSession::setWandContiguous(bool contiguous)
+{
+    if (contiguous != m_wandContiguous) {
+        m_wandContiguous = contiguous;
+        emit wandOptionsChanged();
+    }
 }
 
 // -----------------------------------------------------------------------------

@@ -57,7 +57,7 @@ private slots:
         fixture.document->setSelection(core::Rect { 10, 10, 1, 1 });
         fixture.operations.paste();
         QCOMPARE(fixture.pixel(10, 10), 200);
-        QCOMPARE(fixture.document->selection().value(), (core::Rect { 10, 10, 2, 2 }));
+        QCOMPARE(fixture.document->selection().bounds(), (core::Rect { 10, 10, 2, 2 }));
         QCOMPARE(fixture.document->undoStack()->count(), 1);
     }
 
@@ -85,7 +85,7 @@ private slots:
         Fixture fixture;
         fixture.session.setBackgroundColor(3);
         fixture.operations.selectAll();
-        QCOMPARE(fixture.document->selection().value(), (core::Rect { 0, 0, 24, 32 }));
+        QCOMPARE(fixture.document->selection().bounds(), (core::Rect { 0, 0, 24, 32 }));
         fixture.operations.cut();
         QCOMPARE(fixture.pixel(0, 0), 3);
         QCOMPARE(fixture.document->undoStack()->undoText(), QStringLiteral("Clear"));
@@ -118,7 +118,7 @@ private slots:
         fixture.document->setSelection(core::Rect { 0, 0, 2, 2 });
         fixture.operations.stretch({ 4, 4 });
         QCOMPARE(fixture.pixel(1, 1), 4);
-        QCOMPARE(fixture.document->selection().value(), (core::Rect { 0, 0, 4, 4 }));
+        QCOMPARE(fixture.document->selection().bounds(), (core::Rect { 0, 0, 4, 4 }));
     }
 
     /// Sombra: tudo que não é fundo vira a cor de desenho.

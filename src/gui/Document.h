@@ -16,6 +16,7 @@
 #include "core/AnyImage.h"
 #include "core/Image.h"
 #include "core/Palette.h"
+#include "core/Selection.h"
 
 #include <QImage>
 #include <QObject>
@@ -104,10 +105,17 @@ public:
     /// Desfaz a edição em andamento sem registrar nada.
     void cancelEdit();
 
-    // --- Seleção retangular (coordenadas do canvas) ---
-    [[nodiscard]] const std::optional<core::Rect>& selection() const { return m_selection; }
-    void setSelection(const std::optional<core::Rect>& selection);
-    /// Região de trabalho das operações: a seleção, ou o canvas inteiro.
+    // --- Seleção de forma livre (coordenadas do canvas) ---
+    /// Seleção atual (vazia = nada selecionado).
+    [[nodiscard]] const core::Selection& selection() const { return m_selection; }
+    [[nodiscard]] bool hasSelection() const { return !m_selection.isEmpty(); }
+    /// Define a seleção (recortada ao canvas).
+    void setSelection(const core::Selection& selection);
+    /// Atalho: seleção retangular.
+    void setSelection(const core::Rect& area) { setSelection(core::Selection::rectangle(area)); }
+    void clearSelection() { setSelection(core::Selection { }); }
+    /// Região de trabalho das operações: o retângulo envolvente da seleção,
+    /// ou o canvas inteiro.
     [[nodiscard]] core::Rect workArea() const;
 
     // --- Aplicação de alterações (usado pelos comandos de undo) ---
@@ -160,7 +168,7 @@ private:
     core::AnyImage m_snapshot;
     core::Rect m_dirty;
 
-    std::optional<core::Rect> m_selection;
+    core::Selection m_selection;
 
     /// Número sequencial para nomes "Untitled1", "Untitled2"...
     int m_untitledNumber = 0;

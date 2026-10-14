@@ -25,6 +25,7 @@
 namespace spritenator::gui {
 
 class EditorSession;
+class SelectionTransform;
 
 /// Transformações disponíveis nos botões do Integrator.
 enum class TransformKind {
@@ -60,10 +61,22 @@ public:
     /// Preenche a região de trabalho com a cor de fundo.
     void clear();
     void selectAll();
+    /// Desfaz a seleção.
+    void deselect();
+    /// Seleciona tudo o que não está selecionado (e vice-versa).
+    void invertSelection();
+    /// Move os pixels selecionados (transformação livre: só vira um passo de
+    /// desfazer ao aplicar, com Enter ou ao trocar de ferramenta).
+    void moveSelection(int dx, int dy);
+    /// Move só o contorno da seleção, sem os pixels.
+    void moveSelectionOutline(int dx, int dy);
     /// Verdadeiro se a área de transferência tiver algo colável.
     [[nodiscard]] static bool canPaste();
 
     // --- Transformações ---
+    /// Com seleção, giros e espelhos levam os pixels selecionados junto com
+    /// a forma da seleção (transformação livre); deslocar e simetria agem só
+    /// sobre os pixels selecionados. Sem seleção, agem sobre a imagem toda.
     void transform(TransformKind kind);
     /// Rotação livre (graus, sentido horário).
     void rotate(double degrees);
@@ -82,13 +95,21 @@ public:
     [[nodiscard]] static core::IndexedImage renderText(const QString& text, const QFont& font);
 
 private:
-    /// Aplica "function" à região de trabalho, registrando um passo de desfazer.
+    /// Aplica "function" à região de trabalho, registrando um passo de
+    /// desfazer. Com seleção de forma livre, só os pixels dentro dela mudam.
     void applyToWorkArea(const UndoLabel& undoLabel,
         const std::function<core::AnyImage(const core::AnyImage&)>& function);
 
     /// Pixel de preenchimento de lacunas no modo do tipo "Pixel": o índice
     /// da cor de fundo (indexada) ou transparente (RGBA).
     template <typename Pixel> [[nodiscard]] Pixel fillPixel() const;
+
+    /// Aplica uma operação à transformação livre da seleção. Se nenhuma
+    /// estava em andamento, ela começa e já é aplicada (um passo de
+    /// desfazer com o nome informado); senão, a operação se acumula nela.
+    /// Devolve false se não há seleção.
+    bool transformSelection(
+        UndoOperation operation, const std::function<void(SelectionTransform&)>& change);
 
     EditorSession* m_session;
 };

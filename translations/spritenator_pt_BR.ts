@@ -112,6 +112,166 @@
         <translation>Desenha um texto na imagem</translation>
     </message>
     <message>
+        <source>&amp;Keyboard Shortcuts...</source>
+        <translation>&amp;Atalhos de teclado...</translation>
+    </message>
+    <message>
+        <source>Change the keyboard shortcut of any command</source>
+        <translation>Muda o atalho de teclado de qualquer comando</translation>
+    </message>
+    <message>
+        <source>&amp;Deselect</source>
+        <translation>&amp;Desfazer seleção</translation>
+    </message>
+    <message>
+        <source>Remove the selection</source>
+        <translation>Remove a seleção</translation>
+    </message>
+    <message>
+        <source>&amp;Invert Selection</source>
+        <translation>&amp;Inverter seleção</translation>
+    </message>
+    <message>
+        <source>Select everything that is not selected</source>
+        <translation>Seleciona tudo o que não está selecionado</translation>
+    </message>
+    <message>
+        <source>&amp;Rotate Right</source>
+        <translation>&amp;Girar para a direita</translation>
+    </message>
+    <message>
+        <source>Rotate the selection 90 degrees clockwise</source>
+        <translation>Gira a seleção 90 graus no sentido horário</translation>
+    </message>
+    <message>
+        <source>Rotate &amp;Left</source>
+        <translation>Girar para a &amp;esquerda</translation>
+    </message>
+    <message>
+        <source>Rotate the selection 90 degrees counterclockwise</source>
+        <translation>Gira a seleção 90 graus no sentido anti-horário</translation>
+    </message>
+    <message>
+        <source>Flip &amp;Horizontally</source>
+        <translation>Espelhar &amp;horizontalmente</translation>
+    </message>
+    <message>
+        <source>Mirror the selection from left to right</source>
+        <translation>Espelha a seleção da esquerda para a direita</translation>
+    </message>
+    <message>
+        <source>Flip &amp;Vertically</source>
+        <translation>Espelhar &amp;verticalmente</translation>
+    </message>
+    <message>
+        <source>Mirror the selection from top to bottom</source>
+        <translation>Espelha a seleção de cima para baixo</translation>
+    </message>
+    <message>
+        <source>A&amp;pply Transformation</source>
+        <translation>&amp;Aplicar transformação</translation>
+    </message>
+    <message>
+        <source>Apply the pending move, scale or rotation of the selection (Enter in the image)</source>
+        <translation>Aplica o movimento, a escala ou a rotação pendente da seleção (Enter na imagem)</translation>
+    </message>
+    <message>
+        <source>Move Selection Left</source>
+        <translation>Mover seleção para a esquerda</translation>
+    </message>
+    <message>
+        <source>Move the selected pixels one pixel to the left</source>
+        <translation>Move os pixels selecionados um pixel para a esquerda</translation>
+    </message>
+    <message>
+        <source>Move Selection Right</source>
+        <translation>Mover seleção para a direita</translation>
+    </message>
+    <message>
+        <source>Move the selected pixels one pixel to the right</source>
+        <translation>Move os pixels selecionados um pixel para a direita</translation>
+    </message>
+    <message>
+        <source>Move Selection Up</source>
+        <translation>Mover seleção para cima</translation>
+    </message>
+    <message>
+        <source>Move the selected pixels one pixel up</source>
+        <translation>Move os pixels selecionados um pixel para cima</translation>
+    </message>
+    <message>
+        <source>Move Selection Down</source>
+        <translation>Mover seleção para baixo</translation>
+    </message>
+    <message>
+        <source>Move the selected pixels one pixel down</source>
+        <translation>Move os pixels selecionados um pixel para baixo</translation>
+    </message>
+    <message>
+        <source>Move Selection Left (8 px)</source>
+        <translation>Mover seleção para a esquerda (8 px)</translation>
+    </message>
+    <message>
+        <source>Move the selected pixels eight pixels to the left</source>
+        <translation>Move os pixels selecionados oito pixels para a esquerda</translation>
+    </message>
+    <message>
+        <source>Move Selection Right (8 px)</source>
+        <translation>Mover seleção para a direita (8 px)</translation>
+    </message>
+    <message>
+        <source>Move the selected pixels eight pixels to the right</source>
+        <translation>Move os pixels selecionados oito pixels para a direita</translation>
+    </message>
+    <message>
+        <source>Move Selection Up (8 px)</source>
+        <translation>Mover seleção para cima (8 px)</translation>
+    </message>
+    <message>
+        <source>Move the selected pixels eight pixels up</source>
+        <translation>Move os pixels selecionados oito pixels para cima</translation>
+    </message>
+    <message>
+        <source>Move Selection Down (8 px)</source>
+        <translation>Mover seleção para baixo (8 px)</translation>
+    </message>
+    <message>
+        <source>Move the selected pixels eight pixels down</source>
+        <translation>Move os pixels selecionados oito pixels para baixo</translation>
+    </message>
+    <message>
+        <source>Move Outline Left</source>
+        <translation>Mover contorno para a esquerda</translation>
+    </message>
+    <message>
+        <source>Move only the selection outline one pixel to the left</source>
+        <translation>Move só o contorno da seleção um pixel para a esquerda</translation>
+    </message>
+    <message>
+        <source>Move Outline Right</source>
+        <translation>Mover contorno para a direita</translation>
+    </message>
+    <message>
+        <source>Move only the selection outline one pixel to the right</source>
+        <translation>Move só o contorno da seleção um pixel para a direita</translation>
+    </message>
+    <message>
+        <source>Move Outline Up</source>
+        <translation>Mover contorno para cima</translation>
+    </message>
+    <message>
+        <source>Move only the selection outline one pixel up</source>
+        <translation>Move só o contorno da seleção um pixel para cima</translation>
+    </message>
+    <message>
+        <source>Move Outline Down</source>
+        <translation>Mover contorno para baixo</translation>
+    </message>
+    <message>
+        <source>Move only the selection outline one pixel down</source>
+        <translation>Move só o contorno da seleção um pixel para baixo</translation>
+    </message>
+    <message>
         <source>&amp;Grids...</source>
         <translation>&amp;Grades...</translation>
     </message>
@@ -726,6 +886,10 @@ Botão esquerdo: cor primária. Botão direito: cor secundária.</translation>
         <translation>Pronto</translation>
     </message>
     <message>
+        <source>&amp;Select</source>
+        <translation>&amp;Seleção</translation>
+    </message>
+    <message>
         <source>&amp;Undo %1</source>
         <translation>&amp;Desfazer %1</translation>
     </message>
@@ -995,6 +1159,41 @@ R: %2  G: %3  B: %4</translation>
     </message>
 </context>
 <context>
+    <name>spritenator::gui::ShortcutsDialog</name>
+    <message>
+        <source>&amp;Remove</source>
+        <translation>&amp;Remover</translation>
+    </message>
+    <message>
+        <source>&amp;Default</source>
+        <translation>&amp;Padrão</translation>
+    </message>
+    <message>
+        <source>Restore &amp;All Defaults</source>
+        <translation>Restaurar &amp;todos os padrões</translation>
+    </message>
+    <message>
+        <source>Keyboard Shortcuts</source>
+        <translation>Atalhos de teclado</translation>
+    </message>
+    <message>
+        <source>Command</source>
+        <translation>Comando</translation>
+    </message>
+    <message>
+        <source>Shortcut</source>
+        <translation>Atalho</translation>
+    </message>
+    <message>
+        <source>Shortcut:</source>
+        <translation>Atalho:</translation>
+    </message>
+    <message>
+        <source>%1 is already the shortcut of &quot;%2&quot;. Use it for &quot;%3&quot; instead?</source>
+        <translation>%1 já é o atalho de &quot;%2&quot;. Usá-lo em &quot;%3&quot; no lugar?</translation>
+    </message>
+</context>
+<context>
     <name>spritenator::gui::StretchDialog</name>
     <message>
         <source>Keep aspect ratio</source>
@@ -1071,8 +1270,24 @@ R: %2  G: %3  B: %4</translation>
 <context>
     <name>spritenator::gui::ToolPanel</name>
     <message>
-        <source>Select a rectangular area</source>
-        <translation>Seleciona uma área retangular</translation>
+        <source>Rectangular selection (Shift: square; when starting, Shift adds and Ctrl subtracts)</source>
+        <translation>Seleção retangular (Shift: quadrado; ao começar, Shift soma e Ctrl subtrai)</translation>
+    </message>
+    <message>
+        <source>Oval selection (Shift: circle; when starting, Shift adds and Ctrl subtracts)</source>
+        <translation>Seleção oval (Shift: círculo; ao começar, Shift soma e Ctrl subtrai)</translation>
+    </message>
+    <message>
+        <source>Point-to-point selection: click each corner; close with a double click, the first point, the right button or Enter. Backspace removes the last point</source>
+        <translation>Seleção ponto a ponto: clique em cada canto; feche com clique duplo, no primeiro ponto, com o botão direito ou Enter. Backspace remove o último ponto</translation>
+    </message>
+    <message>
+        <source>Freehand selection: draw the outline while holding the button</source>
+        <translation>Seleção livre: desenhe o contorno segurando o botão</translation>
+    </message>
+    <message>
+        <source>Magic wand: select the area of similar color (tolerance below the tools)</source>
+        <translation>Varinha mágica: seleciona a área de cor parecida (tolerância abaixo das ferramentas)</translation>
     </message>
     <message>
         <source>Zoom: left button magnifies, right button reduces</source>
@@ -1242,6 +1457,10 @@ R: %2  G: %3  B: %4</translation>
         <translation>Esticar</translation>
     </message>
     <message>
+        <source>Transform Selection</source>
+        <translation>Transformar seleção</translation>
+    </message>
+    <message>
         <source>Canvas Size</source>
         <translation>Tamanho do canvas</translation>
     </message>
@@ -1268,6 +1487,25 @@ R: %2  G: %3  B: %4</translation>
     <message>
         <source>Edit Palette</source>
         <translation>Editar paleta</translation>
+    </message>
+</context>
+<context>
+    <name>spritenator::gui::WandOptions</name>
+    <message>
+        <source>Tolerance:</source>
+        <translation>Tolerância:</translation>
+    </message>
+    <message>
+        <source>How different a color may be to be selected by the magic wand (0% = only the same color)</source>
+        <translation>Quanto uma cor pode ser diferente para entrar na seleção da varinha mágica (0% = só a mesma cor)</translation>
+    </message>
+    <message>
+        <source>Contiguous</source>
+        <translation>Contígua</translation>
+    </message>
+    <message>
+        <source>Select only the area connected to the clicked pixel (otherwise, the whole image)</source>
+        <translation>Seleciona só a área ligada ao pixel clicado (senão, a imagem inteira)</translation>
     </message>
 </context>
 <context>

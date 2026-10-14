@@ -14,6 +14,7 @@
 #include "widgets/ColorWheel.h"
 #include "widgets/PaletteView.h"
 #include "widgets/ToolPanel.h"
+#include "widgets/WandOptions.h"
 
 #include <QEvent>
 #include <QGridLayout>
@@ -61,6 +62,8 @@ void IntegratorPanel::buildColumn(ActionCatalog* actions)
 
     // --- 1. Ferramentas e tons ---
     layout->addWidget(new ToolPanel(m_session, column));
+    // Opções da varinha mágica: só aparecem com ela ativa.
+    layout->addWidget(new WandOptions(m_session, column));
     layout->addSpacing(kSectionSpacing);
 
     // --- 2. Transformações (seleção ou imagem inteira) ---

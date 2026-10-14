@@ -19,10 +19,13 @@
 // =============================================================================
 #pragma once
 
+#include "core/FreeTransform.h"
 #include "core/Geometry.h"
 
 #include <QAbstractScrollArea>
 #include <QImage>
+#include <QLine>
+#include <QList>
 #include <QPointF>
 
 #include <optional>
@@ -64,6 +67,16 @@ public:
     [[nodiscard]] core::Point imagePointAt(const QPointF& viewportPosition) const;
     /// Ponto do viewport correspondente a uma coordenada da imagem.
     [[nodiscard]] QPointF viewportPointOf(const QPointF& imagePosition) const;
+
+    // --- Alças de transformação da seleção (expostas para testes) ---
+    /// O que um clique do botão esquerdo em "position" faria com a seleção.
+    enum class TransformHit { None, Move, Scale, Rotate };
+    [[nodiscard]] TransformHit transformHitAt(const QPointF& position) const;
+    /// Cantos da caixa de transformação na tela (superior esquerdo, superior
+    /// direito, inferior direito, inferior esquerdo); vazio se não há caixa.
+    [[nodiscard]] QList<QPointF> transformBox() const;
+    /// Pontos das 8 alças na tela: os 4 cantos e os meios dos 4 lados.
+    [[nodiscard]] QList<QPointF> transformHandles() const;
 
     /// Pixels destacados sob o mouse (expostos para testes).
     [[nodiscard]] const std::vector<core::Point>& highlightedPixels() const { return m_highlight; }
@@ -113,6 +126,27 @@ private:
 
     void paintGrids(QPainter& painter, const QRect& visible) const;
     void paintHighlight(QPainter& painter) const;
+    void paintSelection(QPainter& painter) const;
+    /// Contorno em construção da ferramenta (polígono, laço).
+    void paintToolPath(QPainter& painter) const;
+    /// Recalcula as bordas da seleção (cache usado na pintura).
+    void updateSelectionEdges();
+    /// Redesenha se o contorno em construção da ferramenta mudou.
+    void refreshToolPath();
+
+    // --- Alças de transformação ---
+    /// Coordenadas da imagem (com frações) de um ponto do viewport.
+    [[nodiscard]] QPointF imageCoordinatesAt(const QPointF& viewportPosition) const;
+    /// Verdadeiro se a caixa de transformação deve aparecer.
+    [[nodiscard]] bool showsTransformBox() const;
+    /// Índice da alça sob o ponto (0..7) ou -1.
+    [[nodiscard]] int handleAt(const QPointF& position) const;
+    void paintTransformBox(QPainter& painter) const;
+    /// Começa a arrastar (mover, escalar ou girar); false se não há o que fazer.
+    bool beginTransformDrag(const QPointF& position, Qt::KeyboardModifiers modifiers);
+    void continueTransformDrag(const QPointF& position, Qt::KeyboardModifiers modifiers);
+    /// Cursor conforme o que está sob o mouse (alças, rotação, mover).
+    void updateTransformCursor(const QPointF& position);
 
     Document* m_document;
     EditorSession* m_session;
@@ -128,7 +162,17 @@ private:
     double m_wheelRemainder = 0; ///< frações de "clique" da roda (touchpads)
 
     std::optional<QPointF> m_mousePosition; ///< último ponto do mouse no viewport
+    QList<QLine> m_selectionEdges; ///< bordas da seleção (coordenadas da imagem)
+    bool m_hadToolPath = false;
     std::optional<core::Point> m_hoverPixel;
+
+    // Arraste das alças de transformação.
+    TransformHit m_drag = TransformHit::None;
+    int m_dragHandle = -1; ///< alça arrastada (escala)
+    int m_dragDirX = 0; ///< lado da alça no eixo local x (-1, 0 ou 1)
+    int m_dragDirY = 0; ///< lado da alça no eixo local y (-1, 0 ou 1)
+    QPointF m_dragStart; ///< ponto inicial, em coordenadas da imagem
+    core::TransformParams m_dragParams; ///< parâmetros no início do arraste
     std::vector<core::Point> m_highlight;
     QImage m_highlightImage; ///< sobreposição do destaque (só a área envolvente)
     core::Rect m_highlightBounds;

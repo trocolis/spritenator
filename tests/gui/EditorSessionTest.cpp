@@ -184,11 +184,11 @@ private slots:
         tool.press(session, { 5, 6 }, Qt::LeftButton);
         tool.move(session, { 2, 3 });
         tool.release(session, { 2, 3 });
-        QCOMPARE(document->selection().value(), (core::Rect { 2, 3, 4, 4 }));
+        QCOMPARE(document->selection().bounds(), (core::Rect { 2, 3, 4, 4 }));
         QCOMPARE(document->workArea(), (core::Rect { 2, 3, 4, 4 }));
         tool.press(session, { 1, 1 }, Qt::LeftButton);
         tool.release(session, { 1, 1 });
-        QVERIFY(!document->selection().has_value());
+        QVERIFY(!document->hasSelection());
         QCOMPARE(document->workArea(), (core::Rect { 0, 0, 24, 32 }));
     }
 

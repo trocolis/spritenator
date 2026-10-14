@@ -170,7 +170,7 @@ private slots:
         QVERIFY(window.openFile(path));
         gui::Document* document = window.activeDocument();
         window.actions()->action(ActionId::EditSelectAll)->trigger();
-        QCOMPARE(document->selection().value(), document->indexedCanvas().bounds());
+        QCOMPARE(document->selection().bounds(), document->indexedCanvas().bounds());
 
         window.session()->setBackgroundColor(5);
         window.actions()->action(ActionId::EditClear)->trigger();

@@ -137,6 +137,10 @@ private:
     void retranslateUi();
     void showAnimationWindow();
     void editGrids();
+    /// Editar > Atalhos de teclado.
+    void editShortcuts();
+    /// Aplica os atalhos personalizados gravados nas preferências.
+    void applyCustomShortcuts();
     /// Liga o indicador de zoom ao editor ativo.
     void trackActiveEditorZoom();
     /// Mostra o zoom (fator) no indicador da barra de status.

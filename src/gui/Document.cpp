@@ -169,15 +169,9 @@ void Document::cancelEdit()
 // -----------------------------------------------------------------------------
 // Seleção
 // -----------------------------------------------------------------------------
-void Document::setSelection(const std::optional<core::Rect>& selection)
+void Document::setSelection(const core::Selection& selection)
 {
-    std::optional<core::Rect> clipped;
-    if (selection) {
-        const core::Rect area = selection->intersected(core::boundsOf(m_canvas));
-        if (!area.isEmpty()) {
-            clipped = area;
-        }
-    }
+    const core::Selection clipped = selection.intersected(core::boundsOf(m_canvas));
     if (clipped != m_selection) {
         m_selection = clipped;
         emit selectionChanged();
@@ -186,7 +180,7 @@ void Document::setSelection(const std::optional<core::Rect>& selection)
 
 core::Rect Document::workArea() const
 {
-    return m_selection.value_or(core::boundsOf(m_canvas));
+    return hasSelection() ? m_selection.bounds() : core::boundsOf(m_canvas);
 }
 
 // -----------------------------------------------------------------------------
@@ -208,7 +202,7 @@ void Document::applyCanvas(const core::AnyImage& canvas)
     m_canvas = canvas;
     rebuildRendered();
     if (resized) {
-        setSelection(std::nullopt); // a seleção antiga pode não caber mais
+        clearSelection(); // a seleção antiga pode não caber mais
         emit canvasResized(core::sizeOf(m_canvas));
     }
     if (modeChanged) {

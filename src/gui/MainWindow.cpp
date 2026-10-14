@@ -12,6 +12,7 @@
 #include "HelpWindow.h"
 #include "IconProvider.h"
 #include "IntegratorPanel.h"
+#include "SelectionTransform.h"
 #include "Translations.h"
 #include "commands/ImageCommands.h"
 #include "core/PaletteOps.h"
@@ -22,6 +23,7 @@
 #include "dialogs/LoadPaletteDialog.h"
 #include "dialogs/NewImageDialog.h"
 #include "dialogs/PaletteEditDialog.h"
+#include "dialogs/ShortcutsDialog.h"
 #include "dialogs/TextInputDialog.h"
 #include "io/Backup.h"
 #include "io/ImageFile.h"
@@ -129,6 +131,7 @@ MainWindow::MainWindow(QWidget* parent)
     // Preferências persistentes das grades.
     m_session->setGridLayout(m_settings.gridLayout());
 
+    applyCustomShortcuts();
     createMenus();
     createToolBar();
     createStatusBar();
@@ -205,11 +208,26 @@ void MainWindow::createMenus()
     editMenu->addAction(action(ActionId::EditCopy));
     editMenu->addAction(action(ActionId::EditPaste));
     editMenu->addAction(action(ActionId::EditClear));
-    editMenu->addAction(action(ActionId::EditSelectAll));
     editMenu->addSeparator();
     editMenu->addAction(action(ActionId::EditDrawText));
     editMenu->addSeparator();
     editMenu->addAction(action(ActionId::EditShadow));
+    editMenu->addSeparator();
+    editMenu->addAction(action(ActionId::EditShortcuts));
+
+    // Seleção: as ações de mover (setas) não aparecem no menu, mas estão no
+    // diálogo de atalhos.
+    QMenu* selectMenu = addTranslatedMenu(menuBar(), QT_TR_NOOP("&Select"));
+    selectMenu->addAction(action(ActionId::EditSelectAll));
+    selectMenu->addAction(action(ActionId::SelectNone));
+    selectMenu->addAction(action(ActionId::SelectInvert));
+    selectMenu->addSeparator();
+    selectMenu->addAction(action(ActionId::SelectRotateClockwise));
+    selectMenu->addAction(action(ActionId::SelectRotateCounterClockwise));
+    selectMenu->addAction(action(ActionId::SelectFlipHorizontal));
+    selectMenu->addAction(action(ActionId::SelectFlipVertical));
+    selectMenu->addSeparator();
+    selectMenu->addAction(action(ActionId::SelectApplyTransform));
 
     QMenu* viewMenu = addTranslatedMenu(menuBar(), QT_TR_NOOP("&View"));
     viewMenu->addAction(action(ActionId::ViewGrids));
@@ -336,10 +354,16 @@ void MainWindow::connectActions()
     QUndoGroup* undoGroup = m_session->undoGroup();
     connect(action(ActionId::EditUndo), &QAction::triggered, this, [this, undoGroup] {
         m_session->cancelTool(); // não desfazer no meio de um traço
+        // Transformação da seleção ainda não aplicada: desfazer = cancelá-la.
+        if (m_session->selectionTransform()->isActive()) {
+            m_session->selectionTransform()->cancel();
+            return;
+        }
         undoGroup->undo();
     });
     connect(action(ActionId::EditRedo), &QAction::triggered, this, [this, undoGroup] {
         m_session->cancelTool();
+        m_session->selectionTransform()->cancel();
         undoGroup->redo();
     });
     connect(undoGroup, &QUndoGroup::canUndoChanged, this, &MainWindow::updateUndoActions);
@@ -358,6 +382,57 @@ void MainWindow::connectActions()
     connect(action(ActionId::EditShadow), &QAction::triggered, m_operations,
         &EditOperations::prepareShadow);
     connect(action(ActionId::EditDrawText), &QAction::triggered, this, &MainWindow::drawText);
+    connect(action(ActionId::EditShortcuts), &QAction::triggered, this, &MainWindow::editShortcuts);
+
+    // --- Seleção ---
+    connect(
+        action(ActionId::SelectNone), &QAction::triggered, m_operations, &EditOperations::deselect);
+    connect(action(ActionId::SelectInvert), &QAction::triggered, m_operations,
+        &EditOperations::invertSelection);
+    const auto connectTransform = [this](ActionId id, TransformKind kind) {
+        connect(action(id), &QAction::triggered, this, [this, kind] {
+            // Os atalhos (R, E...) só agem havendo seleção.
+            if (const Document* document = activeDocument(); document && document->hasSelection()) {
+                m_operations->transform(kind);
+            }
+        });
+    };
+    connectTransform(ActionId::SelectRotateClockwise, TransformKind::RotateClockwise);
+    connectTransform(ActionId::SelectRotateCounterClockwise, TransformKind::RotateCounterClockwise);
+    connectTransform(ActionId::SelectFlipHorizontal, TransformKind::FlipHorizontal);
+    connectTransform(ActionId::SelectFlipVertical, TransformKind::FlipVertical);
+    connect(action(ActionId::SelectApplyTransform), &QAction::triggered, m_session,
+        &EditorSession::commitTransform);
+    struct Move {
+        ActionId id;
+        int dx;
+        int dy;
+        bool outline;
+    };
+    constexpr int kFast = 8; // Shift+setas
+    const Move moves[] = {
+        { ActionId::SelectMoveLeft, -1, 0, false },
+        { ActionId::SelectMoveRight, 1, 0, false },
+        { ActionId::SelectMoveUp, 0, -1, false },
+        { ActionId::SelectMoveDown, 0, 1, false },
+        { ActionId::SelectMoveLeftFast, -kFast, 0, false },
+        { ActionId::SelectMoveRightFast, kFast, 0, false },
+        { ActionId::SelectMoveUpFast, 0, -kFast, false },
+        { ActionId::SelectMoveDownFast, 0, kFast, false },
+        { ActionId::SelectOutlineLeft, -1, 0, true },
+        { ActionId::SelectOutlineRight, 1, 0, true },
+        { ActionId::SelectOutlineUp, 0, -1, true },
+        { ActionId::SelectOutlineDown, 0, 1, true },
+    };
+    for (const Move& move : moves) {
+        connect(action(move.id), &QAction::triggered, this, [this, move] {
+            if (move.outline) {
+                m_operations->moveSelectionOutline(move.dx, move.dy);
+            } else {
+                m_operations->moveSelection(move.dx, move.dy);
+            }
+        });
+    }
     // "Colar" só fica ativo quando há algo colável na área de transferência.
     connect(QApplication::clipboard(), &QClipboard::dataChanged, this,
         [this] { action(ActionId::EditPaste)->setEnabled(EditOperations::canPaste()); });
@@ -446,6 +521,7 @@ void MainWindow::updateActionStates()
         ActionId::EditSelectAll,
         ActionId::EditDrawText,
         ActionId::EditShadow,
+        ActionId::EditShortcuts,
         ActionId::ViewGrids,
         ActionId::ViewMainGrid,
         ActionId::ViewSubGrid,
@@ -479,6 +555,25 @@ void MainWindow::updateActionStates()
         ActionId::ViewZoomOut,
         ActionId::ViewZoomActual,
         ActionId::ViewZoomFit,
+        ActionId::SelectNone,
+        ActionId::SelectInvert,
+        ActionId::SelectRotateClockwise,
+        ActionId::SelectRotateCounterClockwise,
+        ActionId::SelectFlipHorizontal,
+        ActionId::SelectFlipVertical,
+        ActionId::SelectApplyTransform,
+        ActionId::SelectMoveLeft,
+        ActionId::SelectMoveRight,
+        ActionId::SelectMoveUp,
+        ActionId::SelectMoveDown,
+        ActionId::SelectMoveLeftFast,
+        ActionId::SelectMoveRightFast,
+        ActionId::SelectMoveUpFast,
+        ActionId::SelectMoveDownFast,
+        ActionId::SelectOutlineLeft,
+        ActionId::SelectOutlineRight,
+        ActionId::SelectOutlineUp,
+        ActionId::SelectOutlineDown,
     };
 
     for (std::size_t index = 0; index < kActionCount; ++index) {
@@ -600,6 +695,7 @@ bool MainWindow::saveDocument(Document* document)
     if (document == nullptr) {
         return false;
     }
+    m_session->commitTransform(); // a transformação em andamento entra no arquivo
     if (!document->hasFilePath()) {
         return saveDocumentAs(document);
     }
@@ -708,6 +804,7 @@ bool MainWindow::backupBeforeSaving(const QString& path)
 
 bool MainWindow::maybeSave(Document* document)
 {
+    m_session->commitTransform(); // conta como alteração a salvar
     if (document == nullptr || !document->isModified()) {
         return true;
     }
@@ -739,6 +836,8 @@ CanvasEditor* MainWindow::addDocumentWindow(Document* document)
 
     // Barra de status: posição do pixel sob o mouse.
     connect(editor, &CanvasEditor::pixelHovered, this, &MainWindow::showPosition);
+    // Setas (mover a seleção): só com o editor em foco.
+    editor->addActions(m_actions->editorActions());
     connect(document, &Document::filePathChanged, this, &MainWindow::updateActionStates);
 
     subWindow->show();
@@ -1085,6 +1184,41 @@ void MainWindow::editGrids()
 }
 
 // -----------------------------------------------------------------------------
+// Editar > Atalhos de teclado
+// -----------------------------------------------------------------------------
+void MainWindow::applyCustomShortcuts()
+{
+    const QHash<QString, QKeySequence> custom = m_settings.customShortcuts();
+    for (std::size_t index = 0; index < kActionCount; ++index) {
+        const auto id = static_cast<ActionId>(index);
+        action(id)->setShortcut(
+            custom.value(ActionCatalog::settingsKey(id), ActionCatalog::defaultShortcut(id)));
+    }
+}
+
+void MainWindow::editShortcuts()
+{
+    ShortcutsDialog dialog(m_actions, this);
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
+    }
+    // Grava só o que difere do padrão (o resto acompanha futuras versões).
+    QHash<QString, QKeySequence> custom;
+    for (std::size_t index = 0; index < kActionCount; ++index) {
+        const auto id = static_cast<ActionId>(index);
+        const QKeySequence& chosen = dialog.shortcuts().at(static_cast<qsizetype>(index));
+        if (chosen != ActionCatalog::defaultShortcut(id)) {
+            custom.insert(ActionCatalog::settingsKey(id), chosen);
+        }
+    }
+    m_settings.setCustomShortcuts(custom);
+    applyCustomShortcuts();
+    if (m_helpWindow != nullptr) {
+        m_helpWindow->retranslate(); // a tabela de atalhos da ajuda acompanha
+    }
+}
+
+// -----------------------------------------------------------------------------
 // Barra de status: posição e zoom
 // -----------------------------------------------------------------------------
 void MainWindow::showPosition(const core::Point& pixel)
@@ -1220,6 +1354,8 @@ void MainWindow::restoreViewSettings()
     action(ActionId::ViewSubGrid)->setChecked(view.subGridVisible);
     action(ActionId::PaletteTransparent)->setChecked(view.transparentEffect);
     action(ActionId::WindowReverseCanvas)->setChecked(view.canvasReversed);
+    m_session->setWandTolerance(view.wandTolerance);
+    m_session->setWandContiguous(view.wandContiguous);
     if (!view.splitterState.isEmpty()) {
         m_mainSplitter->restoreState(view.splitterState);
     }
@@ -1232,6 +1368,8 @@ void MainWindow::saveViewSettings()
     view.subGridVisible = m_session->subGridVisible();
     view.transparentEffect = m_session->transparentEffect();
     view.canvasReversed = action(ActionId::WindowReverseCanvas)->isChecked();
+    view.wandTolerance = m_session->wandTolerance();
+    view.wandContiguous = m_session->wandContiguous();
     view.splitterState = m_mainSplitter->saveState();
     m_settings.setViewSettings(view);
 }

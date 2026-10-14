@@ -36,6 +36,7 @@ class QUndoStack;
 namespace spritenator::gui {
 
 class Document;
+class SelectionTransform;
 
 /// Papel de uma cor: primária (desenho, botão esquerdo) ou secundária
 /// (fundo, botão direito). As ferramentas pedem um papel, e a sessão decide o
@@ -138,13 +139,14 @@ public:
     /// Avança para o próximo deslocamento (botão "tone shift").
     void cycleToneShift();
 
-    /// Pinta um pixel com a cor do papel informado, respeitando o tom e as
-    /// regras de desenho. Ponto central por onde TODAS as ferramentas
+    /// Pinta um pixel com a cor do papel informado, respeitando o tom, as
+    /// regras de desenho e a seleção do documento ativo (havendo seleção, só
+    /// os pixels dentro dela mudam). Ponto central por onde TODAS as ferramentas
     /// desenham, em qualquer modo de cor. Devolve true se o pixel mudou.
     bool plot(core::AnyImage& image, core::Point point, ColorRole role) const;
 
-    /// Verifica se uma ferramenta PODERIA pintar o pixel (dentro da imagem,
-    /// coberto pelo tom e não protegido pela máscara). Usado no destaque dos
+    /// Verifica se uma ferramenta PODERIA pintar o pixel (dentro da imagem e
+    /// da seleção, coberto pelo tom e não protegido pela máscara). Usado no destaque dos
     /// pixels sob o mouse.
     [[nodiscard]] bool canPlot(const core::AnyImage& image, core::Point point) const;
 
@@ -159,6 +161,27 @@ public:
     [[nodiscard]] Tool& tool() const;
     /// Interrompe a operação em andamento da ferramenta atual.
     void cancelTool();
+
+    // --- Transformação livre da seleção ---
+    /// Transformação flutuante (mover, escalar, girar, espelhar) da seleção.
+    [[nodiscard]] SelectionTransform* selectionTransform() const { return m_transform; }
+    /// Aplica a transformação em andamento, se houver (antes de outras edições).
+    void commitTransform();
+
+    // --- Modificadores do mouse ---
+    /// Teclas Shift/Ctrl/Alt do evento de mouse em tratamento (o editor as
+    /// informa antes de chamar a ferramenta; as de seleção as usam para
+    /// somar/subtrair e para restringir a forma).
+    [[nodiscard]] Qt::KeyboardModifiers inputModifiers() const { return m_inputModifiers; }
+    void setInputModifiers(Qt::KeyboardModifiers modifiers) { m_inputModifiers = modifiers; }
+
+    // --- Varinha mágica ---
+    /// Tolerância de cor: 0 (só a mesma cor) a 100 (qualquer cor).
+    [[nodiscard]] int wandTolerance() const { return m_wandTolerance; }
+    void setWandTolerance(int tolerance);
+    /// Só a região conectada ao ponto clicado (senão, a imagem toda).
+    [[nodiscard]] bool wandContiguous() const { return m_wandContiguous; }
+    void setWandContiguous(bool contiguous);
 
     // --- Célula para a animação ---
     /// Célula da sub-grade sob o último clique na imagem (usada pela janela
@@ -180,6 +203,8 @@ signals:
     void maskModeChanged(bool enabled);
     void autoMaskChanged(bool enabled);
     void lastCellChanged(const core::Rect& cell);
+    /// Tolerância ou modo "contígua" da varinha mudaram.
+    void wandOptionsChanged();
     /// O modo de cor em uso mudou (troca de documento ou "Reverter").
     void colorModeChanged(core::ColorMode mode);
     /// O mostrador ativo mudou.
@@ -193,6 +218,7 @@ private:
 
     QPointer<Document> m_activeDocument;
     QUndoGroup* m_undoGroup = nullptr;
+    SelectionTransform* m_transform = nullptr;
     core::Palette m_defaultPalette;
 
     core::ColorIndex m_drawColor = 15;
@@ -208,6 +234,9 @@ private:
     bool m_transparentEffect = false;
 
     std::optional<core::Rect> m_lastCell;
+    Qt::KeyboardModifiers m_inputModifiers;
+    int m_wandTolerance = 15;
+    bool m_wandContiguous = true;
 
     core::ColorSet m_mask;
     core::ColorSet m_maskBeforeAuto; ///< restaurada ao desligar a máscara automática

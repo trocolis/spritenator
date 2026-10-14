@@ -633,6 +633,92 @@ def tool_select():
     return image
 
 
+def ants(image: Image.Image, points) -> Image.Image:
+    """Pinta pontos de contorno com o tracejado preto/branco das seleções."""
+    for x, y in points:
+        image.putpixel((x, y), color("K" if ((x + y) // 2) % 2 == 0 else "w"))
+    return image
+
+
+def outline_points(inside, width: int, height: int) -> list[tuple[int, int]]:
+    """Pixels internos de uma forma vizinhos de um pixel externo."""
+    return [(x, y) for y in range(height) for x in range(width)
+            if inside(x, y) and any(not inside(x + dx, y + dy)
+                                    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))]
+
+
+def tool_select_ellipse():
+    return ants(new(20, 20), outline_points(ellipse_inside(1, 3, 18, 16), 20, 20))
+
+
+def tool_select_polygon():
+    image = new(20, 20)
+    vertices = [(3, 15), (2, 6), (9, 2), (17, 7), (13, 17)]
+    points = []
+    for (x0, y0), (x1, y1) in zip(vertices, vertices[1:] + vertices[:1]):
+        segment = new(20, 20)
+        line(segment, x0, y0, x1, y1, "K")
+        points += [(x, y) for y in range(20) for x in range(20) if segment.getpixel((x, y))[3]]
+    ants(image, points)
+    for x, y in vertices:  # vértices: quadradinhos azuis
+        for dx, dy in ((0, 0), (1, 0), (0, 1), (1, 1)):
+            if 0 <= x + dx < 20 and 0 <= y + dy < 20:
+                image.putpixel((x + dx - (1 if x > 10 else 0), y + dy - (1 if y > 10 else 0)),
+                               color("B"))
+    return image
+
+
+def tool_select_lasso():
+    image = art("""
+....................
+.......KwwKKww......
+.....wK......Kw.....
+....K..........K....
+...w............w...
+..K..............K..
+..w..............w..
+..K..............K..
+...w............w...
+....Kw........wK....
+......KKww.wKK......
+..........K.........
+.........dd.........
+........dd..........
+.......ddK..........
+......ddKK..........
+.......KK...........
+....................
+....................
+....................
+""", 20, 20)
+    return image
+
+
+def tool_magic_wand():
+    return art("""
+....................
+.............K......
+............KyK.....
+.........KKKYYYKKK..
+..........KYYYYYK...
+...........KYyYK....
+..........KYK.KYK...
+..........KK...KK...
+.........KdK.....y..
+........KdK.........
+.......KdK....y.....
+......KdK...........
+.....KdK............
+....KlK.............
+...KlK..............
+..KdK...............
+..KK................
+....................
+....................
+....................
+""", 20, 20)
+
+
 def tool_zoom():
     image = new(20, 20)
     shape(image, ellipse_inside(1, 1, 12, 12), "K", "b")
@@ -1040,6 +1126,28 @@ def app_icon_scaled(size: int) -> Image.Image:
     return base.resize((size, size), Image.Resampling.NEAREST)
 
 
+def cursor_rotate():
+    """Cursor de rotação das alças de transformação (o "ponto quente" é o centro)."""
+    return art("""
+................
+.....KKKKKK.....
+...KKwwwwwwKK...
+..KwwKKKKKKwwK..
+.KwKK......KKwK.
+.KwK........KwK.
+KwK..........KwK
+KwK........KKwKK
+KwK........KwwwK
+KwK.........KwK.
+.KwK.........K..
+.KwKK...........
+..KwwKK.........
+...KKwwK........
+.....KK.........
+................
+""", 16, 16)
+
+
 # -----------------------------------------------------------------------------
 # Catálogo: nome lógico -> função (ver IconProvider e ActionCatalog)
 # -----------------------------------------------------------------------------
@@ -1069,6 +1177,10 @@ ICONS = {
     "mask_auto": mask_auto,
     "help_contents": help_contents,
     "tool_select": tool_select,
+    "tool_select_ellipse": tool_select_ellipse,
+    "tool_select_polygon": tool_select_polygon,
+    "tool_select_lasso": tool_select_lasso,
+    "tool_magic_wand": tool_magic_wand,
     "tool_zoom": tool_zoom,
     "tool_fill": tool_fill,
     "tool_pen_thin": tool_pen_thin,
@@ -1094,6 +1206,7 @@ ICONS = {
     "stretch": stretch,
     "tone_shift": tone_shift,
     "app_icon": lambda: app_icon(32),
+    "cursor_rotate": cursor_rotate,
 }
 for _index, _letter in enumerate("abcdefgh"):
     ICONS[f"tone_{_letter}"] = (lambda i: lambda: tone_icon(tone_patterns()[i]))(_index)
@@ -1143,7 +1256,7 @@ def main() -> int:
         old.unlink()
     for name, image in images.items():
         image.save(ICONS_DIR / f"{name}.png")
-        if name != "app_icon":
+        if name not in ("app_icon", "cursor_rotate"):
             disabled(image).save(ICONS_DIR / f"{name}_disabled.png")
 
     # Ícone do aplicativo em vários tamanhos (Windows, macOS e Linux).

@@ -136,10 +136,10 @@ private slots:
         QCOMPARE(document->workArea(), (core::Rect { 0, 0, 8, 4 }));
         QSignalSpy changed(document.get(), &Document::selectionChanged);
         document->setSelection(core::Rect { 6, 2, 10, 10 });
-        QCOMPARE(document->selection().value(), (core::Rect { 6, 2, 2, 2 }));
+        QCOMPARE(document->selection().bounds(), (core::Rect { 6, 2, 2, 2 }));
         QCOMPARE(document->workArea(), (core::Rect { 6, 2, 2, 2 }));
         document->setSelection(core::Rect { 20, 20, 1, 1 }); // fora: sem seleção
-        QVERIFY(!document->selection().has_value());
+        QVERIFY(!document->hasSelection());
         QCOMPARE(changed.count(), 2);
     }
 
