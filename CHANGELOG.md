@@ -5,6 +5,25 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [2.5.0] - 2026-10-13
+
+### Adicionado
+- **Tema das janelas** (*Exibir > Tema*): Sistema, Claro ou Escuro, com troca imediata e gravado nas preferências (`gui/Theme`).
+  - Claro e Escuro usam o estilo Fusion com paletas próprias, iguais em todas as plataformas.
+  - Sistema devolve o estilo e as cores nativas.
+  - A partir do Qt 6.8, avisa também a plataforma (ex.: barra de título escura no Windows).
+- Ícones desenhados por um `QIconEngine` próprio: ampliação inteira sem suavização e, no tema escuro, o contorno escuro dos ícones vira um cinza claro.
+- `core::strokePixels`: carimba a ponta ao longo de um caminho sem repetir pixels.
+- Testes da ponta nas figuras, dos separadores e da troca de tema.
+
+### Alterado
+- A **ponta do lápis** (formato e tamanho) vale também para a **reta e as figuras**.
+  - O contorno é carimbado com a ponta, centrado na figura.
+  - Nas preenchidas, o interior também é pintado.
+  - A barra "Ponta" aparece também com as figuras.
+  - Os atalhos [ e ] passaram a se chamar "Ponta menor" e "Ponta maior".
+- Uma **linha com mais espaço** separa as seções do painel lateral.
+
 ## [2.4.0] - 2026-10-13
 
 ### Adicionado

@@ -18,7 +18,9 @@ original, mas edita a imagem inteira diretamente, com zoom livre.
   - **destaque** dos pixels que a ferramenta atual afetaria, sob o mouse (inclusive a região do balde), respeitando o tom e a máscara.
 - **Grades**: a principal tem padrão 1×1 (a grade de pixels), é configurável e some quando ficaria densa demais; a sub-grade tem o "tamanho do personagem" (ex.: 24×32) e define os quadros da animação.
 - **14 ferramentas**: seleções retangular, oval, ponto a ponto, livre (laço) e varinha mágica (com tolerância), balde, lápis (ponta quadrada ou redonda, de 1 a 64 px), reta, retângulo, retângulo arredondado e elipse (contorno ou preenchidos).
-- **Painel lateral em seções** (ferramentas e suas opções, preenchimento, transformações e cores) que quebram linha conforme a largura.
+- **Painel lateral em seções** (ferramentas e suas opções, preenchimento, transformações e cores), separadas por linhas, que quebram linha conforme a largura.
+- A ponta do lápis vale também para a reta e as figuras.
+- **Tema** das janelas: o do sistema, claro ou escuro (*Exibir > Tema*), com os ícones ajustados ao fundo escuro.
 - **Seleções de forma livre**: Shift soma e Ctrl subtrai; a pintura fica restrita à seleção; transformação livre com alças (mover, escalar, girar), setas do teclado e atalhos (R, E, Del...) configuráveis em *Editar > Atalhos de teclado*.
 - **8 tons de retícula** (A–H), copiados pixel a pixel do original, com deslocamento de fase.
 - **12 transformações**: deslocar, espelhar, simetria, girar 90°, rotação livre e esticar.
