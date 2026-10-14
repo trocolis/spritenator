@@ -23,7 +23,11 @@ add_library(spritenator_core STATIC
     PaletteOps.cpp
     PaletteOps.h
     Raster.cpp
+    FreeTransform.cpp
+    FreeTransform.h
     Raster.h
+    Selection.cpp
+    Selection.h
     Tone.h
     Transform.cpp
     Transform.h
