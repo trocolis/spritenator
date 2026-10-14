@@ -263,7 +263,12 @@ private slots:
         QSignalSpy changes(document.get(), &Document::currentCelChanged);
         actions.action(ActionId::PlayPause)->trigger();
         QVERIFY(panel.isPlaying());
-        QTRY_VERIFY_WITH_TIMEOUT(changes.count() >= 2, 2000);
+        // Espera com QSignalSpy::wait (os macros QTRY_* geram avisos de
+        // conversão no Qt 6.9 com -Werror).
+        for (int attempt = 0; attempt < 20 && changes.count() < 2; ++attempt) {
+            changes.wait(100);
+        }
+        QVERIFY(changes.count() >= 2);
         QCOMPARE(changes.at(0).at(0).toInt(), 1);
         QCOMPARE(changes.at(1).at(0).toInt(), 0); // em laço
         actions.action(ActionId::PlayPause)->trigger();
