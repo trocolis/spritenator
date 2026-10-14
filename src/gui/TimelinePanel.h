@@ -1,26 +1,27 @@
 // =============================================================================
 // TimelinePanel.h
 //
-// Linha do tempo (painel inferior), com duas barras:
-//   - CENAS: miniaturas em ordem; nova, duplicar, apagar, mover; duração da
-//     cena atual; reproduzir/pausar (o editor mostra a animação em laço) e
-//     papel de seda;
-//   - CAMADAS: da de cima para a de baixo; caixa = visível; clique duplo
-//     renomeia; nova, duplicar, apagar, subir, descer, mesclar com a de
-//     baixo; opacidade (só em RGBA).
+// Linha do tempo (painel inferior), unificada como no Pixelorama:
 //
-// Age sempre sobre o documento ativo da sessão. Os comandos são as ações do
-// catálogo (com atalhos configuráveis e também no menu Animação).
+//   [camadas: nova, apagar, subir, descer, duplicar, mesclar]   [cenas: nova,
+//   apagar, duplicar, mover | primeira, anterior, reproduzir, próxima,
+//   última | papel de seda, vai e volta, FPS]
+//   ┌ olho │ cadeado │ Opacidade ┬ 1  2  3 ... (cenas)
+//   │  👁  │   🔒   │ Camada 2  ┤ ▢  ▣  ▢     (células)
+//   │  👁  │   🔒   │ Camada 1  ┤ ▢  ▢  ▢
+//
+// A grade (TimelineGrid) só desenha e avisa os cliques; este painel aplica as
+// mudanças ao documento ativo da sessão. Os comandos são as ações do catálogo
+// (com atalhos configuráveis e também no menu Animação).
+//
+// Reprodução: todas as cenas com a mesma duração, definida em FPS; repete do
+// começo ou vai e volta ("ping-pong").
 // =============================================================================
 #pragma once
 
 #include <QPointer>
 #include <QWidget>
 
-class QLabel;
-class QListWidget;
-class QListWidgetItem;
-class QSlider;
 class QSpinBox;
 class QTimer;
 
@@ -29,8 +30,9 @@ namespace spritenator::gui {
 class ActionCatalog;
 class Document;
 class EditorSession;
+class TimelineGrid;
 
-/// Painel inferior com as barras de cenas e de camadas.
+/// Painel inferior com a grade de camadas x cenas.
 class TimelinePanel final : public QWidget {
     Q_OBJECT
 
@@ -45,10 +47,9 @@ public:
     [[nodiscard]] bool isPlaying() const;
 
     // --- Expostos para testes ---
-    [[nodiscard]] QListWidget* frameList() const { return m_frames; }
-    [[nodiscard]] QListWidget* layerList() const { return m_layers; }
-    [[nodiscard]] QSpinBox* durationBox() const { return m_duration; }
-    [[nodiscard]] QSlider* opacitySlider() const { return m_opacity; }
+    [[nodiscard]] TimelineGrid* grid() const { return m_grid; }
+    [[nodiscard]] QSpinBox* fpsBox() const { return m_fps; }
+    [[nodiscard]] QSpinBox* opacityBox() const { return m_opacity; }
 
 protected:
     void changeEvent(QEvent* event) override;
@@ -57,40 +58,26 @@ private:
     void retranslate();
     /// Passa a acompanhar o documento ativo.
     void attach(Document* document);
-    /// Reconstrói as duas listas a partir do documento.
-    void rebuild();
-    /// Seleções, duração e opacidade refletem a cena/camada atual.
+    /// FPS, opacidade e ações refletem a cena/camada atual.
     void syncCurrent();
-    /// Atualiza a miniatura de uma cena.
-    void refreshThumbnail(int frame);
-    /// Miniaturas pendentes (o desenho na cena atual é agrupado).
-    void refreshPendingThumbnails();
-
     /// Antes de mudar de cena/camada ou de estrutura: aplica a transformação
     /// da seleção e interrompe a ferramenta.
     void finishPendingWork();
     void playNextFrame();
     void setPlaying(bool playing);
-
-    /// Linha da lista de camadas <-> índice da camada (a de cima vem antes).
-    [[nodiscard]] int rowForLayer(int layer) const;
-    [[nodiscard]] int layerForRow(int row) const;
+    /// Ícone do botão de repetição (repetir do começo ou vai e volta).
+    void updateLoopIcon();
 
     EditorSession* m_session;
     ActionCatalog* m_actions;
     QPointer<Document> m_document;
-    bool m_updating = false; ///< evita realimentação lista <-> documento
+    bool m_updating = false; ///< evita realimentação controles <-> documento
+    int m_direction = 1; ///< sentido da reprodução no vai e volta
 
-    QLabel* m_framesLabel = nullptr;
-    QLabel* m_layersLabel = nullptr;
-    QLabel* m_durationLabel = nullptr;
-    QLabel* m_opacityLabel = nullptr;
-    QListWidget* m_frames = nullptr;
-    QListWidget* m_layers = nullptr;
-    QSpinBox* m_duration = nullptr;
-    QSlider* m_opacity = nullptr;
+    TimelineGrid* m_grid = nullptr;
+    QSpinBox* m_fps = nullptr;
+    QSpinBox* m_opacity = nullptr;
     QTimer* m_playTimer = nullptr;
-    QTimer* m_thumbnailTimer = nullptr;
 };
 
 } // namespace spritenator::gui

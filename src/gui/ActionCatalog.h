@@ -85,6 +85,10 @@ enum class ActionId : std::size_t {
     LayerMergeDown,
     LayerAbove,
     LayerBelow,
+    FrameFirst,
+    FrameLast,
+    PlaybackPingPong,
+    LayerLock,
     // --- Exibir ---
     ViewGrids,
     ViewMainGrid,

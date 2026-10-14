@@ -74,7 +74,7 @@ void ProjectFile::save(const QString& path, const ProjectData& data)
         }
         stream << quint32(data.layers.size());
         for (const LayerData& layer : data.layers) {
-            stream << layer.name << layer.visible << quint8(layer.opacity);
+            stream << layer.name << layer.visible << quint8(layer.opacity) << layer.locked;
         }
         stream << quint32(data.durations.size());
         for (const int duration : data.durations) {
@@ -148,6 +148,9 @@ ProjectData ProjectFile::load(const QString& path)
         quint8 opacity = 255;
         stream >> layer.name >> layer.visible >> opacity;
         layer.opacity = opacity;
+        if (version >= 2) {
+            stream >> layer.locked;
+        }
         data.layers.push_back(layer);
     }
     quint32 frameCount = 0;

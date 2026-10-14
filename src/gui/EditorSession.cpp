@@ -273,9 +273,10 @@ bool EditorSession::plot(core::AnyImage& image, core::Point point, ColorRole rol
     if (!core::toneCovers(m_tone, point, m_toneShift)) {
         return false;
     }
-    // Havendo seleção, só se pinta dentro dela.
-    if (const Document* document = activeDocument();
-        document != nullptr && document->hasSelection() && !document->selection().contains(point)) {
+    // Havendo seleção, só se pinta dentro dela; camada bloqueada não muda.
+    if (const Document* document = activeDocument(); document != nullptr
+        && (!document->canEditActiveCel()
+            || (document->hasSelection() && !document->selection().contains(point)))) {
         return false;
     }
     if (auto* indexed = std::get_if<core::IndexedImage>(&image)) {
@@ -291,8 +292,9 @@ bool EditorSession::canPlot(const core::AnyImage& image, core::Point point) cons
     if (!core::boundsOf(image).contains(point) || !core::toneCovers(m_tone, point, m_toneShift)) {
         return false;
     }
-    if (const Document* document = activeDocument();
-        document != nullptr && document->hasSelection() && !document->selection().contains(point)) {
+    if (const Document* document = activeDocument(); document != nullptr
+        && (!document->canEditActiveCel()
+            || (document->hasSelection() && !document->selection().contains(point)))) {
         return false;
     }
     // Máscara: pixels de cores protegidas não podem ser alterados.

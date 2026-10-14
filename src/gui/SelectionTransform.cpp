@@ -35,7 +35,8 @@ bool SelectionTransform::begin()
         }
         commit(); // outra imagem: aplica a anterior antes
     }
-    if (document == nullptr || !document->hasSelection()) {
+    // Camada bloqueada: os pixels não podem ser movidos.
+    if (document == nullptr || !document->hasSelection() || !document->canEditActiveCel()) {
         return false;
     }
     m_session->cancelTool();

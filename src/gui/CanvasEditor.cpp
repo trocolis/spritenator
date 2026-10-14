@@ -624,7 +624,12 @@ void CanvasEditor::updateTransformCursor(const QPointF& position)
         viewport()->setCursor(kShapes[index]);
         return;
     }
-    case TransformHit::None: viewport()->setCursor(Qt::CrossCursor); return;
+    case TransformHit::None:
+        // Ferramenta de pintura numa camada bloqueada: cursor de "proibido".
+        viewport()->setCursor(m_session->tool().paints() && !m_document->canEditActiveCel()
+                ? Qt::ForbiddenCursor
+                : Qt::CrossCursor);
+        return;
     }
 }
 

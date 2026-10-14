@@ -34,6 +34,7 @@ struct Layer {
     QString name;
     bool visible = true;
     int opacity = 255; ///< 0..255 (só tem efeito em documentos RGBA)
+    bool locked = false; ///< bloqueada: as ferramentas não alteram a camada
 
     friend bool operator==(const Layer&, const Layer&) = default;
 };

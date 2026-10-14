@@ -6,15 +6,15 @@
 #include "gui/ActionCatalog.h"
 #include "gui/Document.h"
 #include "gui/EditorSession.h"
+#include "gui/TimelineGrid.h"
 #include "gui/TimelinePanel.h"
 #include "io/ImageFile.h"
 
 #include <QAction>
 #include <QFileInfo>
 #include <QImageReader>
-#include <QListWidget>
 #include <QSignalSpy>
-#include <QSlider>
+#include <QSpinBox>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QUndoStack>
@@ -193,6 +193,7 @@ private slots:
         paint(*document, { 2, 1 }, 7);
         document->duplicateFrame();
         document->setFrameDuration(1, 250);
+        document->setLayerLocked(0, true);
 
         const QString project = directory.filePath(QStringLiteral("anim.sprn"));
         document->saveAs(project, { gui::SaveFormat::Project, 0 });
@@ -201,6 +202,8 @@ private slots:
         QCOMPARE(reopened->frameCount(), 2);
         QCOMPARE(reopened->layerCount(), 2);
         QCOMPARE(reopened->frames()[1].durationMs, 250);
+        QVERIFY(reopened->layers()[0].locked);
+        QVERIFY(!reopened->layers()[1].locked);
         QCOMPARE(indexAt(*reopened, 1, 1, 2, 1), 7);
         QCOMPARE(reopened->saveOptions().format, gui::SaveFormat::Project);
 
@@ -224,57 +227,115 @@ private slots:
         QCOMPARE(std::get<core::IndexedImage>(second.image).pixel(2, 1), core::ColorIndex { 7 });
     }
 
-    /// Painel: listas acompanham o documento; clicar escolhe cena e camada;
-    /// a caixa da camada controla a visibilidade; reproduzir avança as cenas.
+    /// Cadeado: a camada bloqueada não aceita pintura (as outras sim) e
+    /// bloquear se desfaz; "todas as durações" vale para todas as cenas.
+    void lockedLayerAndDurations()
+    {
+        EditorSession session;
+        auto document = makeIndexed();
+        session.setActiveDocument(document.get());
+        document->addLayer(); // a de cima fica ativa
+        QVERIFY(session.canPlot(document->canvas(), { 0, 0 }));
+        document->setLayerLocked(1, true);
+        QVERIFY(!document->canEditActiveCel());
+        QVERIFY(!session.canPlot(document->canvas(), { 0, 0 }));
+        document->setCurrentLayer(0);
+        QVERIFY(session.canPlot(document->canvas(), { 0, 0 }));
+        document->undoStack()->undo();
+        QVERIFY(!document->layers()[1].locked);
+
+        document->addFrame();
+        document->setAllFrameDurations(40);
+        document->setAllFrameDurations(50); // ajustes seguidos: um passo só
+        QCOMPARE(document->frames()[0].durationMs, 50);
+        QCOMPARE(document->frames()[1].durationMs, 50);
+        document->undoStack()->undo();
+        QCOMPARE(document->frames()[0].durationMs, 100);
+    }
+
+    /// Painel: a grade acompanha o documento; clicar escolhe cena e camada;
+    /// o olho e o cadeado mudam a camada; o FPS vale para todas as cenas;
+    /// reproduzir avança as cenas em laço ou em vai e volta.
     void timelinePanel()
     {
         QObject owner;
         gui::ActionCatalog actions(&owner);
         EditorSession session;
         gui::TimelinePanel panel(&session, &actions);
+        panel.resize(600, 200);
+        panel.show();
         auto document = makeIndexed();
         session.setActiveDocument(document.get());
-        QCOMPARE(panel.frameList()->count(), 1);
-        QCOMPARE(panel.layerList()->count(), 1);
+        gui::TimelineGrid* grid = panel.grid();
+        QWidget* viewport = grid->viewport();
         QVERIFY(!actions.action(ActionId::FrameDelete)->isEnabled());
+        QVERIFY(!actions.action(ActionId::FrameFirst)->isEnabled());
 
         actions.action(ActionId::FrameNew)->trigger();
         actions.action(ActionId::LayerNew)->trigger();
-        QCOMPARE(panel.frameList()->count(), 2);
-        QCOMPARE(panel.layerList()->count(), 2);
-        QCOMPARE(
-            panel.layerList()->item(0)->text(), document->layers()[1].name); // a de cima primeiro
+        QCOMPARE(document->frameCount(), 2);
+        QCOMPARE(document->layerCount(), 2);
+        // A camada de cima fica na primeira linha.
+        QVERIFY(grid->cellRect(0, 1).y() < grid->cellRect(0, 0).y());
+        QVERIFY(grid->cellFilled(0, 0)); // fundo na cor 1
+        QVERIFY(!grid->cellFilled(1, 1)); // camada nova: vazia
 
-        panel.frameList()->setCurrentRow(0);
+        QTest::mouseClick(viewport, Qt::LeftButton, { }, grid->cellRect(0, 0).center());
         QCOMPARE(document->currentFrame(), 0);
-        panel.layerList()->setCurrentRow(1); // a de baixo
         QCOMPARE(document->currentLayer(), 0);
-        panel.layerList()->item(0)->setCheckState(Qt::Unchecked);
+        QTest::mouseClick(viewport, Qt::LeftButton, { }, grid->frameHeaderRect(1).center());
+        QCOMPARE(document->currentFrame(), 1);
+        QTest::mouseClick(viewport, Qt::LeftButton, { }, grid->nameRect(1).center());
+        QCOMPARE(document->currentLayer(), 1);
+        QTest::mouseClick(viewport, Qt::LeftButton, { }, grid->eyeRect(1).center());
         QVERIFY(!document->layers()[1].visible);
-        QVERIFY(!panel.opacitySlider()->isEnabled()); // indexada: sem opacidade
+        QTest::mouseClick(viewport, Qt::LeftButton, { }, grid->lockRect(1).center());
+        QVERIFY(document->layers()[1].locked);
+        QVERIFY(actions.action(ActionId::LayerLock)->isChecked());
+        actions.action(ActionId::LayerLock)->trigger();
+        QVERIFY(!document->layers()[1].locked);
+        QVERIFY(!panel.opacityBox()->isEnabled()); // indexada: sem opacidade
+
+        actions.action(ActionId::FrameFirst)->trigger();
+        QCOMPARE(document->currentFrame(), 0);
+        actions.action(ActionId::FrameLast)->trigger();
+        QCOMPARE(document->currentFrame(), 1);
 
         actions.action(ActionId::OnionSkin)->trigger();
         QVERIFY(session.onionSkin());
 
-        document->setFrameDuration(0, 20);
-        document->setFrameDuration(1, 20);
+        panel.fpsBox()->setValue(50); // 20 ms por cena
+        QCOMPARE(document->frames()[0].durationMs, 20);
+        QCOMPARE(document->frames()[1].durationMs, 20);
+
         // Registra cada troca de cena (conferir currentFrame() de tempos em
-        // tempos poderia sempre cair na mesma cena).
-        QSignalSpy changes(document.get(), &Document::currentCelChanged);
-        actions.action(ActionId::PlayPause)->trigger();
-        QVERIFY(panel.isPlaying());
-        // Espera com QSignalSpy::wait (os macros QTRY_* geram avisos de
-        // conversão no Qt 6.9 com -Werror).
-        for (int attempt = 0; attempt < 20 && changes.count() < 2; ++attempt) {
-            changes.wait(100);
-        }
-        QVERIFY(changes.count() >= 2);
-        QCOMPARE(changes.at(0).at(0).toInt(), 1);
-        QCOMPARE(changes.at(1).at(0).toInt(), 0); // em laço
-        actions.action(ActionId::PlayPause)->trigger();
+        // tempos poderia sempre cair na mesma cena). Espera com
+        // QSignalSpy::wait (os macros QTRY_* geram avisos de conversão no
+        // Qt 6.9 com -Werror).
+        const auto play = [&](int changes) {
+            QSignalSpy spy(document.get(), &Document::currentCelChanged);
+            actions.action(ActionId::PlayPause)->trigger();
+            for (int attempt = 0; attempt < 40 && spy.count() < changes; ++attempt) {
+                spy.wait(100);
+            }
+            actions.action(ActionId::PlayPause)->trigger();
+            QList<int> frames;
+            for (const QList<QVariant>& arguments : spy) {
+                frames.append(arguments.at(0).toInt());
+            }
+            return frames.mid(0, changes);
+        };
+        actions.action(ActionId::FrameNew)->trigger(); // três cenas
+        actions.action(ActionId::FrameFirst)->trigger();
+        QCOMPARE(play(3), (QList<int> { 1, 2, 0 })); // em laço
         QVERIFY(!panel.isPlaying());
+        actions.action(ActionId::FrameFirst)->trigger();
+        actions.action(ActionId::PlaybackPingPong)->trigger();
+        QCOMPARE(play(4), (QList<int> { 1, 2, 1, 0 })); // vai e volta
+
         session.setActiveDocument(nullptr);
-        QCOMPARE(panel.frameList()->count(), 0);
+        QVERIFY(!actions.action(ActionId::FrameNew)->isEnabled());
+        QVERIFY(!panel.fpsBox()->isEnabled());
     }
 };
 

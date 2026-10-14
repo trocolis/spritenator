@@ -143,7 +143,8 @@ void EditOperations::applyToWorkArea(const UndoLabel& undoLabel,
     m_session->cancelTool();
     m_session->commitTransform();
     Document* document = m_session->activeDocument();
-    if (document == nullptr) {
+    // Camada bloqueada: nada muda.
+    if (document == nullptr || !document->canEditActiveCel()) {
         return;
     }
     const core::Rect area = document->workArea();
@@ -222,7 +223,8 @@ void EditOperations::paste()
         return;
     }
     Document* document = m_session->activeDocument();
-    if (document == nullptr) {
+    // Camada bloqueada: nada muda.
+    if (document == nullptr || !document->canEditActiveCel()) {
         return;
     }
     const core::ColorMode mode = document->colorMode();
@@ -463,7 +465,8 @@ void EditOperations::stretch(core::Size newSize)
     m_session->cancelTool();
     m_session->commitTransform();
     Document* document = m_session->activeDocument();
-    if (document == nullptr) {
+    // Camada bloqueada: nada muda.
+    if (document == nullptr || !document->canEditActiveCel()) {
         return;
     }
     const core::Rect oldArea = document->workArea();
@@ -551,7 +554,8 @@ void EditOperations::drawText(const QString& text, const QFont& font)
     m_session->cancelTool();
     m_session->commitTransform();
     Document* document = m_session->activeDocument();
-    if (document == nullptr) {
+    // Camada bloqueada: nada muda.
+    if (document == nullptr || !document->canEditActiveCel()) {
         return;
     }
     const core::Point origin = document->workArea().topLeft();

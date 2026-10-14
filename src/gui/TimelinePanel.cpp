@@ -6,29 +6,27 @@
 #include "ActionCatalog.h"
 #include "Document.h"
 #include "EditorSession.h"
-#include "ImageRendering.h"
+#include "IconProvider.h"
+#include "TimelineGrid.h"
 
 #include <QAction>
 #include <QEvent>
+#include <QFrame>
 #include <QHBoxLayout>
-#include <QLabel>
-#include <QListWidget>
-#include <QPainter>
-#include <QSet>
-#include <QSlider>
 #include <QSpinBox>
 #include <QTimer>
 #include <QToolButton>
 #include <QVBoxLayout>
 
+#include <algorithm>
+#include <cmath>
+
 namespace spritenator::gui {
 
 namespace {
 
-/// Lado das miniaturas das cenas, em pixels.
-constexpr int kThumbnailSize = 48;
-/// Atraso para atualizar a miniatura enquanto se desenha (agrupa os traços).
-constexpr int kThumbnailDelayMs = 150;
+constexpr int kMinFps = 1;
+constexpr int kMaxFps = 60;
 
 QToolButton* makeButton(QAction* action, QWidget* parent)
 {
@@ -39,22 +37,24 @@ QToolButton* makeButton(QAction* action, QWidget* parent)
     return button;
 }
 
-/// Miniatura: a cena reduzida (sem suavização se ampliar), sobre o xadrez.
-QPixmap thumbnailOf(const QImage& composite)
+/// Separador vertical entre grupos de botões.
+QFrame* makeSeparator(QWidget* parent)
 {
-    QPixmap pixmap(kThumbnailSize, kThumbnailSize);
-    pixmap.fill(Qt::transparent);
-    QPainter painter(&pixmap);
-    const QSize scaled
-        = composite.size().scaled(kThumbnailSize, kThumbnailSize, Qt::KeepAspectRatio);
-    const QRect target(
-        QPoint((kThumbnailSize - scaled.width()) / 2, (kThumbnailSize - scaled.height()) / 2),
-        scaled);
-    paintTransparencyGrid(painter, target, 4);
-    const bool enlarge = scaled.width() >= composite.width();
-    painter.setRenderHint(QPainter::SmoothPixmapTransform, !enlarge);
-    painter.drawImage(target, composite);
-    return pixmap;
+    auto* line = new QFrame(parent);
+    line->setFrameShape(QFrame::VLine);
+    line->setFrameShadow(QFrame::Sunken);
+    return line;
+}
+
+/// Opacidade da camada (0..255) <-> porcentagem exibida (0..100).
+int percentOf(int opacity)
+{
+    return static_cast<int>(std::lround(opacity * 100.0 / 255.0));
+}
+
+int opacityOf(int percent)
+{
+    return static_cast<int>(std::lround(percent * 255.0 / 100.0));
 }
 
 } // namespace
@@ -63,109 +63,86 @@ TimelinePanel::TimelinePanel(EditorSession* session, ActionCatalog* actions, QWi
     : QWidget(parent)
     , m_session(session)
     , m_actions(actions)
-    , m_framesLabel(new QLabel(this))
-    , m_layersLabel(new QLabel(this))
-    , m_durationLabel(new QLabel(this))
-    , m_opacityLabel(new QLabel(this))
-    , m_frames(new QListWidget(this))
-    , m_layers(new QListWidget(this))
-    , m_duration(new QSpinBox(this))
-    , m_opacity(new QSlider(Qt::Horizontal, this))
+    , m_grid(new TimelineGrid(this))
+    , m_fps(new QSpinBox(this))
+    , m_opacity(new QSpinBox(this))
     , m_playTimer(new QTimer(this))
-    , m_thumbnailTimer(new QTimer(this))
 {
-    // --- Barra de cenas: botões + miniaturas em linha ---
-    m_frames->setViewMode(QListView::IconMode);
-    m_frames->setFlow(QListView::LeftToRight);
-    m_frames->setWrapping(false);
-    m_frames->setMovement(QListView::Static);
-    m_frames->setIconSize(QSize(kThumbnailSize, kThumbnailSize));
-    m_frames->setSpacing(2);
-    m_frames->setFixedHeight(kThumbnailSize + 46);
-    m_frames->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    m_duration->setRange(kMinFrameDuration, kMaxFrameDuration);
-    m_duration->setSingleStep(10);
-
-    auto* frameButtons = new QHBoxLayout;
-    frameButtons->setSpacing(1);
-    frameButtons->addWidget(m_framesLabel);
-    for (const ActionId id : { ActionId::FrameNew, ActionId::FrameDuplicate, ActionId::FrameDelete,
-             ActionId::FrameMoveLeft, ActionId::FrameMoveRight, ActionId::PlayPause,
-             ActionId::OnionSkin }) {
-        frameButtons->addWidget(makeButton(actions->action(id), this));
+    // --- Barra das camadas (esquerda) e das cenas (direita) ---
+    auto* bar = new QHBoxLayout;
+    bar->setSpacing(1);
+    for (const ActionId id : { ActionId::LayerNew, ActionId::LayerDelete, ActionId::LayerMoveUp,
+             ActionId::LayerMoveDown, ActionId::LayerDuplicate, ActionId::LayerMergeDown }) {
+        bar->addWidget(makeButton(actions->action(id), this));
     }
-    frameButtons->addSpacing(8);
-    frameButtons->addWidget(m_durationLabel);
-    frameButtons->addWidget(m_duration);
-    frameButtons->addStretch(1);
-
-    // --- Barra de camadas: botões + camadas em linha (a de cima primeiro) ---
-    m_layers->setFlow(QListView::LeftToRight);
-    m_layers->setWrapping(false);
-    m_layers->setSpacing(2);
-    m_layers->setFixedHeight(42);
-    m_layers->setEditTriggers(QAbstractItemView::DoubleClicked | QAbstractItemView::EditKeyPressed);
-    m_opacity->setRange(0, 255);
-    m_opacity->setMaximumWidth(140);
-
-    auto* layerButtons = new QHBoxLayout;
-    layerButtons->setSpacing(1);
-    layerButtons->addWidget(m_layersLabel);
-    for (const ActionId id : { ActionId::LayerNew, ActionId::LayerDuplicate, ActionId::LayerDelete,
-             ActionId::LayerMoveUp, ActionId::LayerMoveDown, ActionId::LayerMergeDown }) {
-        layerButtons->addWidget(makeButton(actions->action(id), this));
+    bar->addStretch(1);
+    for (const ActionId id : { ActionId::FrameNew, ActionId::FrameDelete, ActionId::FrameDuplicate,
+             ActionId::FrameMoveLeft, ActionId::FrameMoveRight }) {
+        bar->addWidget(makeButton(actions->action(id), this));
     }
-    layerButtons->addSpacing(8);
-    layerButtons->addWidget(m_opacityLabel);
-    layerButtons->addWidget(m_opacity);
-    layerButtons->addStretch(1);
+    bar->addWidget(makeSeparator(this));
+    for (const ActionId id : { ActionId::FrameFirst, ActionId::FramePrevious, ActionId::PlayPause,
+             ActionId::FrameNext, ActionId::FrameLast }) {
+        bar->addWidget(makeButton(actions->action(id), this));
+    }
+    bar->addWidget(makeSeparator(this));
+    bar->addWidget(makeButton(actions->action(ActionId::OnionSkin), this));
+    bar->addWidget(makeButton(actions->action(ActionId::PlaybackPingPong), this));
+    m_fps->setRange(kMinFps, kMaxFps);
+    bar->addWidget(m_fps);
+
+    // Opacidade da camada atual, no canto da grade (como no exemplo).
+    m_opacity->setRange(0, 100);
+    m_grid->setCornerWidget(m_opacity);
 
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(4, 2, 4, 2);
     layout->setSpacing(2);
-    layout->addLayout(frameButtons);
-    layout->addWidget(m_frames);
-    layout->addLayout(layerButtons);
-    layout->addWidget(m_layers);
+    layout->addLayout(bar);
+    layout->addWidget(m_grid, 1);
 
-    // --- Lista -> documento ---
-    connect(m_frames, &QListWidget::currentRowChanged, this, [this](int row) {
-        Document* document = m_document.data();
-        if (!m_updating && document != nullptr && row >= 0) {
+    // --- Grade -> documento ---
+    const auto withDocument = [this](auto&& function) {
+        return [this, function](auto... arguments) {
             finishPendingWork();
-            document->setCurrentFrame(row);
-        }
-    });
-    connect(m_layers, &QListWidget::currentRowChanged, this, [this](int row) {
-        Document* document = m_document.data();
-        if (!m_updating && document != nullptr && row >= 0) {
-            finishPendingWork();
-            document->setCurrentLayer(layerForRow(row));
-        }
-    });
-    connect(m_layers, &QListWidget::itemChanged, this, [this](QListWidgetItem* item) {
-        Document* document = m_document.data();
-        if (m_updating || document == nullptr) {
-            return;
-        }
-        // Lê tudo antes: a mudança no documento reconstrói a lista (e apaga
-        // este item).
-        const int layer = layerForRow(m_layers->row(item));
-        const bool visible = item->checkState() == Qt::Checked;
-        const QString name = item->text();
-        document->setLayerVisible(layer, visible);
-        document->renameLayer(layer, name);
-    });
-    connect(m_duration, &QSpinBox::valueChanged, this, [this](int value) {
+            if (Document* document = m_document.data()) {
+                function(*document, arguments...);
+            }
+        };
+    };
+    connect(m_grid, &TimelineGrid::frameClicked, this,
+        withDocument([](Document& document, int frame) { document.setCurrentFrame(frame); }));
+    connect(m_grid, &TimelineGrid::layerClicked, this,
+        withDocument([](Document& document, int layer) { document.setCurrentLayer(layer); }));
+    connect(m_grid, &TimelineGrid::cellClicked, this,
+        withDocument([](Document& document, int frame, int layer) {
+            document.setCurrentFrame(frame);
+            document.setCurrentLayer(layer);
+        }));
+    connect(m_grid, &TimelineGrid::visibilityToggled, this,
+        withDocument([](Document& document, int layer) {
+            document.setLayerVisible(
+                layer, !document.layers()[static_cast<std::size_t>(layer)].visible);
+        }));
+    connect(
+        m_grid, &TimelineGrid::lockToggled, this, withDocument([](Document& document, int layer) {
+            document.setLayerLocked(
+                layer, !document.layers()[static_cast<std::size_t>(layer)].locked);
+        }));
+    connect(m_grid, &TimelineGrid::renameRequested, this,
+        withDocument([](Document& document, int layer, const QString& name) {
+            document.renameLayer(layer, name);
+        }));
+    connect(m_fps, &QSpinBox::valueChanged, this, [this](int fps) {
         Document* document = m_document.data();
         if (!m_updating && document != nullptr) {
-            document->setFrameDuration(document->currentFrame(), value);
+            document->setAllFrameDurations(static_cast<int>(std::lround(1000.0 / fps)));
         }
     });
-    connect(m_opacity, &QSlider::valueChanged, this, [this](int value) {
+    connect(m_opacity, &QSpinBox::valueChanged, this, [this](int percent) {
         Document* document = m_document.data();
         if (!m_updating && document != nullptr) {
-            document->setLayerOpacity(document->currentLayer(), value);
+            document->setLayerOpacity(document->currentLayer(), opacityOf(percent));
         }
     });
 
@@ -185,6 +162,9 @@ TimelinePanel::TimelinePanel(EditorSession* session, ActionCatalog* actions, QWi
     onDocument(ActionId::FrameDelete, [](Document& document) { document.removeFrame(); });
     onDocument(ActionId::FrameMoveLeft, [](Document& document) { document.moveFrame(-1); });
     onDocument(ActionId::FrameMoveRight, [](Document& document) { document.moveFrame(1); });
+    onDocument(ActionId::FrameFirst, [](Document& document) { document.setCurrentFrame(0); });
+    onDocument(ActionId::FrameLast,
+        [](Document& document) { document.setCurrentFrame(document.frameCount() - 1); });
     onDocument(ActionId::FramePrevious, [](Document& document) {
         const int count = document.frameCount(); // circular: da primeira vai à última
         document.setCurrentFrame((document.currentFrame() + count - 1) % count);
@@ -202,17 +182,21 @@ TimelinePanel::TimelinePanel(EditorSession* session, ActionCatalog* actions, QWi
         [](Document& document) { document.setCurrentLayer(document.currentLayer() + 1); });
     onDocument(ActionId::LayerBelow,
         [](Document& document) { document.setCurrentLayer(document.currentLayer() - 1); });
+    connect(m_actions->action(ActionId::LayerLock), &QAction::triggered, this, [this](bool locked) {
+        if (Document* document = m_document.data()) {
+            document->setLayerLocked(document->currentLayer(), locked);
+        }
+    });
     connect(m_actions->action(ActionId::PlayPause), &QAction::toggled, this,
         &TimelinePanel::setPlaying);
     connect(m_actions->action(ActionId::OnionSkin), &QAction::toggled, m_session,
         &EditorSession::setOnionSkin);
+    connect(m_actions->action(ActionId::PlaybackPingPong), &QAction::toggled, this,
+        &TimelinePanel::updateLoopIcon);
 
-    // --- Reprodução e miniaturas ---
+    // --- Reprodução ---
     m_playTimer->setSingleShot(true);
     connect(m_playTimer, &QTimer::timeout, this, &TimelinePanel::playNextFrame);
-    m_thumbnailTimer->setSingleShot(true);
-    m_thumbnailTimer->setInterval(kThumbnailDelayMs);
-    connect(m_thumbnailTimer, &QTimer::timeout, this, &TimelinePanel::refreshPendingThumbnails);
 
     connect(m_session, &EditorSession::activeDocumentChanged, this, &TimelinePanel::attach);
     retranslate();
@@ -229,16 +213,21 @@ void TimelinePanel::changeEvent(QEvent* event)
 
 void TimelinePanel::retranslate()
 {
-    m_framesLabel->setText(tr("Scenes"));
-    m_layersLabel->setText(tr("Layers"));
-    m_durationLabel->setText(tr("Duration:"));
-    m_duration->setSuffix(tr(" ms"));
-    m_duration->setToolTip(tr("How long the current scene is shown when playing"));
-    m_opacityLabel->setText(tr("Opacity:"));
+    m_fps->setSuffix(tr(" FPS"));
+    m_fps->setToolTip(tr("Playback speed: scenes per second (the same for all scenes)"));
+    m_opacity->setPrefix(tr("Opacity: "));
+    m_opacity->setSuffix(QStringLiteral("%"));
     m_opacity->setToolTip(tr("Opacity of the current layer (RGBA images only)"));
-    m_layers->setToolTip(tr(
-        "Click to choose the layer to draw on; the box shows or hides it; double click renames"));
-    rebuild(); // textos das miniaturas ("Cena 1"...)
+    m_grid->setToolTip(tr("Click a cell to choose the scene and the layer; the eye shows or hides "
+                          "the layer, the padlock protects it; double click the name to rename"));
+    updateLoopIcon();
+}
+
+void TimelinePanel::updateLoopIcon()
+{
+    QAction* pingPong = m_actions->action(ActionId::PlaybackPingPong);
+    pingPong->setIcon(IconProvider::icon(
+        pingPong->isChecked() ? QStringLiteral("ping_pong") : QStringLiteral("loop")));
 }
 
 // -----------------------------------------------------------------------------
@@ -251,53 +240,12 @@ void TimelinePanel::attach(Document* document)
         disconnect(previous, nullptr, this, nullptr);
     }
     m_document = document;
+    m_grid->setDocument(document);
     if (document != nullptr) {
-        connect(document, &Document::structureChanged, this, &TimelinePanel::rebuild);
+        connect(document, &Document::structureChanged, this, &TimelinePanel::syncCurrent);
         connect(document, &Document::currentCelChanged, this, &TimelinePanel::syncCurrent);
         connect(document, &Document::colorModeChanged, this, &TimelinePanel::syncCurrent);
-        connect(document, &Document::paletteChanged, this, [this] {
-            for (int frame = 0; frame < m_frames->count(); ++frame) {
-                m_frames->item(frame)->setData(Qt::UserRole, true); // todas pendentes
-            }
-            m_thumbnailTimer->start();
-        });
-        connect(document, &Document::canvasChanged, this, [this] {
-            const Document* current = m_document.data();
-            if (current == nullptr) {
-                return;
-            }
-            // Só a cena exibida muda ao desenhar: a miniatura dela fica pendente.
-            if (QListWidgetItem* item = m_frames->item(current->currentFrame())) {
-                item->setData(Qt::UserRole, true);
-                m_thumbnailTimer->start();
-            }
-        });
     }
-    rebuild();
-}
-
-void TimelinePanel::rebuild()
-{
-    m_updating = true;
-    m_frames->clear();
-    m_layers->clear();
-    if (const Document* document = m_document.data()) {
-        for (int frame = 0; frame < document->frameCount(); ++frame) {
-            auto* item = new QListWidgetItem(QString::number(frame + 1), m_frames);
-            item->setTextAlignment(Qt::AlignHCenter);
-            item->setToolTip(tr("Scene %1 (%2 ms)")
-                    .arg(frame + 1)
-                    .arg(document->frames()[static_cast<std::size_t>(frame)].durationMs));
-            refreshThumbnail(frame);
-        }
-        for (int layer = document->layerCount() - 1; layer >= 0; --layer) {
-            const Layer& info = document->layers()[static_cast<std::size_t>(layer)];
-            auto* item = new QListWidgetItem(info.name, m_layers);
-            item->setFlags(item->flags() | Qt::ItemIsUserCheckable | Qt::ItemIsEditable);
-            item->setCheckState(info.visible ? Qt::Checked : Qt::Unchecked);
-        }
-    }
-    m_updating = false;
     syncCurrent();
 }
 
@@ -307,51 +255,17 @@ void TimelinePanel::syncCurrent()
     const Document* document = m_document.data();
     if (document != nullptr) {
         const int frame = document->currentFrame();
-        const int layer = document->currentLayer();
-        m_frames->setCurrentRow(frame);
-        m_layers->setCurrentRow(rowForLayer(layer));
-        m_duration->setValue(document->frames()[static_cast<std::size_t>(frame)].durationMs);
-        m_opacity->setValue(document->layers()[static_cast<std::size_t>(layer)].opacity);
+        const Layer& layer = document->layers()[static_cast<std::size_t>(document->currentLayer())];
+        const int duration = document->frames()[static_cast<std::size_t>(frame)].durationMs;
+        m_fps->setValue(static_cast<int>(std::lround(1000.0 / duration)));
+        m_opacity->setValue(percentOf(layer.opacity));
+        m_actions->action(ActionId::LayerLock)->setChecked(layer.locked);
     }
-    m_duration->setEnabled(document != nullptr);
+    m_fps->setEnabled(document != nullptr);
     // A opacidade só existe em RGBA (nas indexadas o índice 0 é transparente).
-    const bool rgba = document != nullptr && document->colorMode() == core::ColorMode::Rgba;
-    m_opacity->setEnabled(rgba);
-    m_opacityLabel->setEnabled(rgba);
+    m_opacity->setEnabled(document != nullptr && document->colorMode() == core::ColorMode::Rgba);
     m_updating = false;
     updateActions();
-}
-
-void TimelinePanel::refreshThumbnail(int frame)
-{
-    QListWidgetItem* item = m_frames->item(frame);
-    const Document* document = m_document.data();
-    if (item == nullptr || document == nullptr) {
-        return;
-    }
-    item->setIcon(QIcon(thumbnailOf(document->composite(frame))));
-    item->setData(Qt::UserRole, false);
-}
-
-void TimelinePanel::refreshPendingThumbnails()
-{
-    for (int frame = 0; frame < m_frames->count(); ++frame) {
-        if (m_frames->item(frame)->data(Qt::UserRole).toBool()) {
-            refreshThumbnail(frame);
-        }
-    }
-}
-
-int TimelinePanel::rowForLayer(int layer) const
-{
-    const Document* document = m_document.data();
-    return document != nullptr ? document->layerCount() - 1 - layer : -1;
-}
-
-int TimelinePanel::layerForRow(int row) const
-{
-    const Document* document = m_document.data();
-    return document != nullptr ? document->layerCount() - 1 - row : -1;
 }
 
 void TimelinePanel::finishPendingWork()
@@ -377,10 +291,13 @@ void TimelinePanel::updateActions()
     enable(ActionId::FrameDelete, frames > 1);
     enable(ActionId::FrameMoveLeft, document && frame > 0);
     enable(ActionId::FrameMoveRight, document && frame < frames - 1);
+    enable(ActionId::FrameFirst, document && frame > 0);
+    enable(ActionId::FrameLast, document && frame < frames - 1);
     enable(ActionId::FramePrevious, frames > 1);
     enable(ActionId::FrameNext, frames > 1);
     enable(ActionId::PlayPause, frames > 1);
     enable(ActionId::OnionSkin, document != nullptr);
+    enable(ActionId::PlaybackPingPong, document != nullptr);
     enable(ActionId::LayerNew, document != nullptr);
     enable(ActionId::LayerDuplicate, document != nullptr);
     enable(ActionId::LayerDelete, layers > 1);
@@ -389,6 +306,7 @@ void TimelinePanel::updateActions()
     enable(ActionId::LayerMergeDown, document && layer > 0);
     enable(ActionId::LayerAbove, document && layer < layers - 1);
     enable(ActionId::LayerBelow, document && layer > 0);
+    enable(ActionId::LayerLock, document != nullptr);
     if (frames <= 1) {
         setPlaying(false);
     }
@@ -406,6 +324,7 @@ void TimelinePanel::setPlaying(bool playing)
         play->setChecked(playing); // volta aqui pelo sinal toggled
         return;
     }
+    m_direction = 1;
     if (const Document* document = m_document.data(); playing && document != nullptr) {
         m_playTimer->start(
             document->frames()[static_cast<std::size_t>(document->currentFrame())].durationMs);
@@ -422,7 +341,18 @@ void TimelinePanel::playNextFrame()
     }
     // Não troca de cena no meio de um traço: tenta de novo logo depois.
     if (!document->isEditing()) {
-        document->setCurrentFrame((document->currentFrame() + 1) % document->frameCount());
+        const int count = document->frameCount();
+        int next = document->currentFrame() + m_direction;
+        if (m_actions->action(ActionId::PlaybackPingPong)->isChecked()) {
+            // Vai e volta: inverte o sentido ao chegar a uma das pontas.
+            if (next < 0 || next >= count) {
+                m_direction = -m_direction;
+                next = document->currentFrame() + m_direction;
+            }
+        } else if (next >= count) {
+            next = 0; // repete do começo
+        }
+        document->setCurrentFrame(std::clamp(next, 0, count - 1));
     }
     m_playTimer->start(
         document->frames()[static_cast<std::size_t>(document->currentFrame())].durationMs);

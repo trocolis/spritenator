@@ -117,6 +117,14 @@ public:
     void mergeLayerDown();
     void setLayerVisible(int layer, bool visible);
     void setLayerOpacity(int layer, int opacity);
+    /// Bloqueia/desbloqueia a camada (bloqueada, as ferramentas não a alteram).
+    void setLayerLocked(int layer, bool locked);
+    /// A mesma duração para todas as cenas (o FPS da linha do tempo).
+    void setAllFrameDurations(int durationMs);
+    /// Verdadeiro se a camada ativa pode ser alterada (não está bloqueada).
+    [[nodiscard]] bool canEditActiveCel() const;
+    /// Verdadeiro se a célula tem algum pixel não transparente.
+    [[nodiscard]] bool celHasContent(int frame, int layer) const;
     void renameLayer(int layer, const QString& name);
 
     /// Função aplicada a cada célula por transformCels (recebe também o

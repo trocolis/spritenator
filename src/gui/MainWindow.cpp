@@ -280,13 +280,15 @@ void MainWindow::createMenus()
         animationMenu->addAction(action(id));
     }
     animationMenu->addSeparator();
-    for (const ActionId id : { ActionId::FramePrevious, ActionId::FrameNext, ActionId::PlayPause,
-             ActionId::OnionSkin }) {
+    for (const ActionId id :
+        { ActionId::FrameFirst, ActionId::FramePrevious, ActionId::FrameNext, ActionId::FrameLast,
+            ActionId::PlayPause, ActionId::PlaybackPingPong, ActionId::OnionSkin }) {
         animationMenu->addAction(action(id));
     }
     animationMenu->addSeparator();
     for (const ActionId id : { ActionId::LayerNew, ActionId::LayerDuplicate, ActionId::LayerDelete,
-             ActionId::LayerMoveUp, ActionId::LayerMoveDown, ActionId::LayerMergeDown }) {
+             ActionId::LayerMoveUp, ActionId::LayerMoveDown, ActionId::LayerMergeDown,
+             ActionId::LayerLock }) {
         animationMenu->addAction(action(id));
     }
     // Trocar de camada pelo teclado (fora do menu: Alt+setas).
@@ -1193,6 +1195,9 @@ void MainWindow::clearCanvas()
     Document* document = activeDocument();
     if (document == nullptr) {
         return;
+    }
+    if (!document->canEditActiveCel()) {
+        return; // camada bloqueada
     }
     // Só a célula ativa. Camada de baixo: cor de fundo (indexada) ou
     // transparente (RGBA); camadas de cima: transparente (índice 0).

@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cassert>
 #include <stdexcept>
+#include <type_traits>
 #include <variant>
 
 namespace spritenator::gui {
@@ -59,7 +60,8 @@ SpriteState stateFrom(io::ProjectData data)
     SpriteState state;
     state.palette = std::move(data.palette);
     for (const io::LayerData& layer : data.layers) {
-        state.layers.push_back({ state.nextId++, layer.name, layer.visible, layer.opacity });
+        state.layers.push_back(
+            { state.nextId++, layer.name, layer.visible, layer.opacity, layer.locked });
     }
     for (const int duration : data.durations) {
         state.frames.push_back({ state.nextId++, duration });
@@ -345,7 +347,7 @@ void Document::saveAs(const QString& path, const SaveOptions& options)
         io::ProjectData data;
         data.palette = palette();
         for (const Layer& layer : m_state.layers) {
-            data.layers.push_back({ layer.name, layer.visible, layer.opacity });
+            data.layers.push_back({ layer.name, layer.visible, layer.opacity, layer.locked });
         }
         for (const Frame& frame : m_state.frames) {
             data.durations.push_back(frame.durationMs);
@@ -709,6 +711,54 @@ void Document::setLayerVisible(int layer, bool visible)
     SpriteState next = m_state;
     next.layers[static_cast<std::size_t>(layer)].visible = visible;
     changeState(std::move(next), UndoOperation::LayerProperties);
+}
+
+void Document::setLayerLocked(int layer, bool locked)
+{
+    if (layer < 0 || layer >= layerCount()
+        || m_state.layers[static_cast<std::size_t>(layer)].locked == locked) {
+        return;
+    }
+    SpriteState next = m_state;
+    next.layers[static_cast<std::size_t>(layer)].locked = locked;
+    changeState(std::move(next), UndoOperation::LayerProperties);
+}
+
+bool Document::canEditActiveCel() const
+{
+    return !m_state.layers.at(static_cast<std::size_t>(m_layer)).locked;
+}
+
+bool Document::celHasContent(int frame, int layer) const
+{
+    // "Vazia" = só o pixel transparente (índice 0 ou alfa 0).
+    return std::visit(
+        [](const auto& image) {
+            using Pixel = typename std::decay_t<decltype(image)>::PixelType;
+            const auto pixels = image.data();
+            if constexpr (std::is_same_v<Pixel, core::ColorIndex>) {
+                return std::any_of(
+                    pixels.begin(), pixels.end(), [](auto value) { return value != 0; });
+            } else {
+                return std::any_of(pixels.begin(), pixels.end(),
+                    [](const auto& value) { return value.alpha != 0; });
+            }
+        },
+        cel(frame, layer));
+}
+
+void Document::setAllFrameDurations(int durationMs)
+{
+    durationMs = std::clamp(durationMs, kMinFrameDuration, kMaxFrameDuration);
+    SpriteState next = m_state;
+    bool changed = false;
+    for (Frame& frame : next.frames) {
+        changed = changed || frame.durationMs != durationMs;
+        frame.durationMs = durationMs;
+    }
+    if (changed) {
+        changeState(std::move(next), UndoOperation::FrameDuration, true);
+    }
 }
 
 void Document::setLayerOpacity(int layer, int opacity)

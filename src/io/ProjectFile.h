@@ -7,7 +7,8 @@
 //
 // Estrutura (QDataStream, big-endian):
 //   "SPRN" | versão | modo | largura | altura | paleta (bits + cores RGB)
-//   | camadas (nome, visível, opacidade) | durações das cenas
+//   | camadas (nome, visível, opacidade, bloqueada*) | durações das cenas
+//   (* desde a versão 2)
 //   | células [cena][camada]: bytes dos pixels compactados (qCompress)
 // =============================================================================
 #pragma once
@@ -26,6 +27,7 @@ struct LayerData {
     QString name;
     bool visible = true;
     int opacity = 255;
+    bool locked = false; ///< bloqueada para edição (versão 2 do formato)
 };
 
 /// Conteúdo de um projeto (ou de um GIF importado): todas as células têm o
@@ -42,8 +44,8 @@ class ProjectFile final {
 public:
     ProjectFile() = delete;
 
-    /// Versão atual do formato.
-    static constexpr int kVersion = 1;
+    /// Versão atual do formato (2: camadas com cadeado).
+    static constexpr int kVersion = 2;
 
     /// Lê um projeto. Lança IoError se o arquivo for inválido.
     [[nodiscard]] static ProjectData load(const QString& path);

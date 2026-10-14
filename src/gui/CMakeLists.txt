@@ -33,6 +33,8 @@ add_library(spritenator_gui STATIC
     SelectionTransform.h
     Theme.cpp
     Theme.h
+    TimelineGrid.cpp
+    TimelineGrid.h
     TimelinePanel.cpp
     TimelinePanel.h
     Translations.cpp
