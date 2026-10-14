@@ -12,7 +12,9 @@
 #include "dialogs/StretchDialog.h"
 #include "widgets/ColorEditor.h"
 #include "widgets/ColorWheel.h"
+#include "widgets/FlowLayout.h"
 #include "widgets/PaletteView.h"
+#include "widgets/PenOptions.h"
 #include "widgets/ToolPanel.h"
 #include "widgets/WandOptions.h"
 
@@ -56,25 +58,31 @@ void IntegratorPanel::buildColumn(ActionCatalog* actions)
     auto* layout = new QVBoxLayout(column);
     layout->setContentsMargins(4, 4, 4, 4);
 
-    // Ordem de cima para baixo: ferramentas, transformações, ajuste das
-    // cores e paleta. Um pequeno espaço separa visualmente as seções.
+    // Ordem de cima para baixo: ferramentas (e as opções da ferramenta
+    // atual), preenchimento (tons), transformações e cores. As três
+    // primeiras seções quebram linha conforme a largura do painel.
     constexpr int kSectionSpacing = 8;
 
-    // --- 1. Ferramentas e tons ---
+    // --- 1. Ferramentas ---
     layout->addWidget(new ToolPanel(m_session, column));
-    // Opções da varinha mágica: só aparecem com ela ativa.
+    // Opções da ferramenta atual: só aparecem com ela ativa.
+    layout->addWidget(new PenOptions(m_session, column));
     layout->addWidget(new WandOptions(m_session, column));
     layout->addSpacing(kSectionSpacing);
 
-    // --- 2. Transformações (seleção ou imagem inteira) ---
+    // --- 2. Preenchimento: tons de retícula ---
+    layout->addWidget(new TonePanel(m_session, column));
+    layout->addSpacing(kSectionSpacing);
+
+    // --- 3. Transformações (seleção ou imagem inteira) ---
     layout->addWidget(createTransformBar(column));
     layout->addSpacing(kSectionSpacing);
 
-    // --- 3. Ajuste das cores (mostradores e barras R, G, B, A) ---
+    // --- 4. Ajuste das cores (mostradores e barras R, G, B, A) ---
     layout->addWidget(new ColorEditor(m_session, column));
     layout->addSpacing(kSectionSpacing);
 
-    // --- 4. Paleta: grade de cores e seus botões (os mesmos do original,
+    // --- 5. Paleta: grade de cores e seus botões (os mesmos do original,
     //        ligados às ações do catálogo). Só existe no modo indexado. ---
     auto* paletteSection = new QWidget(column);
     auto* paletteLayout = new QVBoxLayout(paletteSection);
@@ -104,7 +112,7 @@ void IntegratorPanel::buildColumn(ActionCatalog* actions)
     paletteLayout->addLayout(paletteButtons);
     layout->addWidget(paletteSection);
 
-    // --- 4'. Seletor circular (modo RGBA), no lugar da paleta ---
+    // --- 5'. Seletor circular (modo RGBA), no lugar da paleta ---
     m_colorWheel = new ColorWheel(column);
     layout->addWidget(m_colorWheel);
 
@@ -176,24 +184,18 @@ QWidget* IntegratorPanel::createTransformBar(QWidget* parent)
         { "stretch", QT_TR_NOOP("Stretch or shrink..."), [this] { stretchWorkArea(); } },
     };
 
-    // Duas linhas de seis botões: cabem na largura do painel.
-    constexpr int kColumns = 6;
+    // Em fluxo: uma linha só se couber; senão, quebra conforme a largura.
     auto* bar = new QWidget(parent);
-    auto* layout = new QGridLayout(bar);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(1);
-    int position = 0;
+    auto* layout = new FlowLayout(bar);
     for (const TransformButton& spec : buttons) {
         auto* button = new QToolButton(bar);
         button->setIcon(IconProvider::icon(QString::fromLatin1(spec.icon)));
         button->setIconSize(QSize(20, 20));
         button->setAutoRaise(true);
         connect(button, &QToolButton::clicked, this, spec.action);
-        layout->addWidget(button, position / kColumns, position % kColumns);
-        ++position;
+        layout->addWidget(button);
         m_transformButtons.append({ button, spec.tip });
     }
-    layout->setColumnStretch(kColumns, 1);
     return bar;
 }
 

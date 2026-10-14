@@ -322,7 +322,7 @@ private slots:
             { core::IndexedImage({ 8, 8 }), core::Palette::makeDefault(core::ColorDepth::Bits8) });
         QVERIFY(window.openFile(path));
         gui::EditorSession* session = window.session();
-        session->setToolKind(gui::ToolKind::PenThin);
+        session->setToolKind(gui::ToolKind::Pen);
         session->tool().press(*session, { 1, 1 }, Qt::LeftButton);
         session->tool().release(*session, { 1, 1 });
         QCOMPARE(window.actions()->action(ActionId::EditUndo)->text(), QStringLiteral("&Undo Pen"));

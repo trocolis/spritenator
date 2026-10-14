@@ -73,8 +73,12 @@ add_library(spritenator_gui STATIC
     widgets/ColorSwatch.h
     widgets/ColorWheel.cpp
     widgets/ColorWheel.h
+    widgets/FlowLayout.cpp
+    widgets/FlowLayout.h
     widgets/PaletteGrid.cpp
     widgets/PaletteGrid.h
+    widgets/PenOptions.cpp
+    widgets/PenOptions.h
     widgets/PaletteView.cpp
     widgets/PaletteView.h
     widgets/ToolPanel.cpp

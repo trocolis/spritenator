@@ -117,6 +117,7 @@ CanvasEditor::CanvasEditor(Document* document, EditorSession* session, QWidget* 
     connect(m_session->selectionTransform(), &SelectionTransform::changed, viewport(),
         qOverload<>(&QWidget::update));
     connect(m_session, &EditorSession::toneChanged, this, &CanvasEditor::refreshHighlight);
+    connect(m_session, &EditorSession::brushChanged, this, &CanvasEditor::refreshHighlight);
     connect(m_session, &EditorSession::maskChanged, this, &CanvasEditor::refreshHighlight);
     connect(
         m_session, &EditorSession::activeDocumentChanged, this, &CanvasEditor::refreshHighlight);
@@ -858,7 +859,7 @@ void CanvasEditor::updateHighlight(std::optional<core::Point> pixel, bool force)
 }
 
 // -----------------------------------------------------------------------------
-// Mouse: repassado à ferramenta atual (a lupa e a vista são tratadas aqui)
+// Mouse: repassado à ferramenta atual (a vista e as alças são tratadas aqui)
 // -----------------------------------------------------------------------------
 void CanvasEditor::mousePressEvent(QMouseEvent* event)
 {
@@ -876,16 +877,6 @@ void CanvasEditor::mousePressEvent(QMouseEvent* event)
         return; // ignora um segundo botão durante um traço
     }
     if (event->button() != Qt::LeftButton && event->button() != Qt::RightButton) {
-        return;
-    }
-
-    // Lupa: o zoom é deste editor, ancorado no ponto clicado.
-    if (m_session->toolKind() == ToolKind::Zoom) {
-        if (event->button() == Qt::LeftButton) {
-            zoomIn(position);
-        } else {
-            zoomOut(position);
-        }
         return;
     }
 

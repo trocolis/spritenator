@@ -80,7 +80,7 @@ private slots:
         auto document = makeRgbaDocument();
         session.setActiveDocument(document.get());
         session.setPrimaryRgba(kTranslucentBlue);
-        session.setToolKind(ToolKind::PenThin);
+        session.setToolKind(ToolKind::Pen);
 
         session.tool().press(session, { 2, 2 }, Qt::LeftButton);
         session.tool().release(session, { 2, 2 });

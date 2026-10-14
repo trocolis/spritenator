@@ -1,6 +1,6 @@
 // =============================================================================
 // CanvasEditorTest.cpp — o editor de imagem: zoom (níveis, âncora, roda do
-// mouse, lupa), rolagem com Ctrl, edição direta com o mouse, destaque dos
+// mouse), rolagem com Ctrl, edição direta com o mouse, destaque dos
 // pixels sob o mouse e exibição das grades.
 // =============================================================================
 #include "gui/CanvasEditor.h"
@@ -163,7 +163,7 @@ private slots:
         Fixture fixture;
         QVERIFY(QTest::qWaitForWindowExposed(&fixture.editor));
         fixture.editor.setZoom(2);
-        fixture.session.setToolKind(ToolKind::PenThin);
+        fixture.session.setToolKind(ToolKind::Pen);
         fixture.session.setDrawColor(9);
         QTest::mouseClick(
             fixture.editor.viewport(), Qt::LeftButton, Qt::NoModifier, fixture.centerOf(30, 40));
@@ -182,22 +182,6 @@ private slots:
         QCOMPARE(fixture.document->undoStack()->count(), 1);
     }
 
-    /// Lupa: esquerdo amplia, direito reduz, sem alterar a imagem.
-    void zoomToolChangesOnlyTheView()
-    {
-        Fixture fixture;
-        QVERIFY(QTest::qWaitForWindowExposed(&fixture.editor));
-        fixture.editor.setZoom(2);
-        fixture.session.setToolKind(ToolKind::Zoom);
-        QTest::mouseClick(
-            fixture.editor.viewport(), Qt::LeftButton, Qt::NoModifier, fixture.centerOf(10, 10));
-        QCOMPARE(fixture.editor.zoom(), 3.0);
-        QTest::mouseClick(
-            fixture.editor.viewport(), Qt::RightButton, Qt::NoModifier, fixture.centerOf(10, 10));
-        QCOMPARE(fixture.editor.zoom(), 2.0);
-        QCOMPARE(fixture.document->undoStack()->count(), 0);
-    }
-
     /// Destaque: os pixels que a ferramenta afetaria, filtrados por imagem,
     /// tom e máscara; some quando o mouse sai.
     void highlightShowsAffectedPixels()
@@ -213,12 +197,13 @@ private slots:
             return points;
         };
 
-        fixture.session.setToolKind(ToolKind::PenThin);
+        fixture.session.setToolKind(ToolKind::Pen);
         QTest::mouseMove(editor.viewport(), fixture.centerOf(3, 4));
         QCOMPARE(highlighted(), (std::vector<core::Point> { { 3, 4 } }));
 
-        // Lápis grosso no canto: só os pixels dentro da imagem.
-        fixture.session.setToolKind(ToolKind::PenThick);
+        // Ponta redonda de 3 px no canto: só os pixels dentro da imagem.
+        fixture.session.setBrushShape(core::BrushShape::Round);
+        fixture.session.setBrushSize(3);
         QTest::mouseMove(editor.viewport(), fixture.centerOf(0, 0));
         QCOMPARE(highlighted(), (std::vector<core::Point> { { 0, 0 }, { 1, 0 }, { 0, 1 } }));
 
@@ -236,12 +221,8 @@ private slots:
         QCOMPARE(editor.highlightedPixels().size(), std::size_t { 32 * 64 / 2 });
         fixture.session.setTone(core::Tone::A);
 
-        // Lupa: nenhum destaque.
-        fixture.session.setToolKind(ToolKind::Zoom);
-        QVERIFY(editor.highlightedPixels().empty());
-
         // Mouse fora do editor: destaque apagado.
-        fixture.session.setToolKind(ToolKind::PenThin);
+        fixture.session.setToolKind(ToolKind::Pen);
         QVERIFY(!editor.highlightedPixels().empty());
         QEvent leave(QEvent::Leave);
         QApplication::sendEvent(editor.viewport(), &leave);

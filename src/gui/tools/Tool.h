@@ -25,10 +25,8 @@ enum class ToolKind {
     SelectPolygon, ///< seleção ponto a ponto (polígono)
     SelectLasso, ///< seleção livre (laço)
     MagicWand, ///< varinha mágica: região de cor parecida
-    Zoom, ///< lupa: esquerdo amplia, direito reduz
     Fill, ///< balde de tinta (preenchimento por inundação)
-    PenThin, ///< lápis de 1 pixel
-    PenThick, ///< lápis de 3 pixels
+    Pen, ///< lápis (ponta e tamanho configuráveis)
     Line, ///< reta
     Rectangle, ///< retângulo (contorno)
     RoundRectangle, ///< retângulo de cantos arredondados (contorno)

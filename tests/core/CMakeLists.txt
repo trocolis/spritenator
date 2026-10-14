@@ -37,3 +37,7 @@ spritenator_add_test(test_rgba_image
 spritenator_add_test(test_selection
     SOURCES SelectionTest.cpp
     LIBRARIES Spritenator::Core)
+
+spritenator_add_test(test_brush
+    SOURCES BrushTest.cpp
+    LIBRARIES Spritenator::Core)

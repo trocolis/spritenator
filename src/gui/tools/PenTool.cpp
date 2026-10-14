@@ -3,24 +3,12 @@
 // =============================================================================
 #include "PenTool.h"
 
+#include "core/Brush.h"
 #include "core/Raster.h"
 #include "gui/Document.h"
 #include "gui/EditorSession.h"
 
 namespace spritenator::gui {
-
-namespace {
-
-/// Formato do pincel grosso: um "+" de 3x3 (aproxima um círculo de 3 px,
-/// como a caneta de largura 3 do Windows usada pelo original).
-constexpr core::Point kThickBrush[] = { { 0, 0 }, { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
-
-} // namespace
-
-PenTool::PenTool(bool thick)
-    : m_thick(thick)
-{
-}
 
 void PenTool::press(EditorSession& session, core::Point point, Qt::MouseButton button)
 {
@@ -68,36 +56,31 @@ void PenTool::cancel(EditorSession& session)
 
 void PenTool::stroke(EditorSession& session, core::Point from, core::Point to) const
 {
-    const int margin = m_thick ? 1 : 0;
     Document* document = session.activeDocument();
     if (document == nullptr) {
         return;
     }
+    // Ponta atual (formato e tamanho escolhidos na barra de opções).
+    const std::vector<core::Point> brush
+        = core::brushOffsets(session.brushShape(), session.brushSize());
+    const core::Rect extent = core::brushExtent(session.brushSize());
     document->editLive([&](core::AnyImage& image) {
         core::plotLine(from, to, [&](core::Point center) {
-            if (m_thick) {
-                for (const core::Point offset : kThickBrush) {
-                    session.plot(image, center + offset, m_role);
-                }
-            } else {
-                session.plot(image, center, m_role);
+            for (const core::Point offset : brush) {
+                session.plot(image, center + offset, m_role);
             }
         });
-        // Área suja: retângulo da reta, expandido pela espessura do pincel.
+        // Área suja: retângulo da reta, expandido pelo tamanho da ponta.
         const core::Rect bounds = core::lineBounds(from, to);
-        return core::Rect { bounds.x - margin, bounds.y - margin, bounds.width + 2 * margin,
-            bounds.height + 2 * margin };
+        return core::Rect { bounds.x + extent.x, bounds.y + extent.y,
+            bounds.width + extent.width - 1, bounds.height + extent.height - 1 };
     });
 }
 
-std::vector<core::Point> PenTool::footprint(
-    const EditorSession& /*session*/, core::Point point) const
+std::vector<core::Point> PenTool::footprint(const EditorSession& session, core::Point point) const
 {
-    if (!m_thick) {
-        return { point };
-    }
     std::vector<core::Point> points;
-    for (const core::Point offset : kThickBrush) {
+    for (const core::Point offset : core::brushOffsets(session.brushShape(), session.brushSize())) {
         points.push_back(point + offset);
     }
     return points;

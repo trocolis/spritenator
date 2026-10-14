@@ -403,6 +403,14 @@ void MainWindow::connectActions()
     connectTransform(ActionId::SelectFlipVertical, TransformKind::FlipVertical);
     connect(action(ActionId::SelectApplyTransform), &QAction::triggered, m_session,
         &EditorSession::commitTransform);
+
+    // --- Ponta do lápis: [ e ] (fora dos menus; ativas pela janela) ---
+    addAction(action(ActionId::PenSizeDecrease));
+    addAction(action(ActionId::PenSizeIncrease));
+    connect(action(ActionId::PenSizeDecrease), &QAction::triggered, this,
+        [this] { m_session->setBrushSize(m_session->brushSize() - 1); });
+    connect(action(ActionId::PenSizeIncrease), &QAction::triggered, this,
+        [this] { m_session->setBrushSize(m_session->brushSize() + 1); });
     struct Move {
         ActionId id;
         int dx;
@@ -522,6 +530,8 @@ void MainWindow::updateActionStates()
         ActionId::EditDrawText,
         ActionId::EditShadow,
         ActionId::EditShortcuts,
+        ActionId::PenSizeDecrease,
+        ActionId::PenSizeIncrease,
         ActionId::ViewGrids,
         ActionId::ViewMainGrid,
         ActionId::ViewSubGrid,
@@ -1355,6 +1365,8 @@ void MainWindow::restoreViewSettings()
     action(ActionId::PaletteTransparent)->setChecked(view.transparentEffect);
     action(ActionId::WindowReverseCanvas)->setChecked(view.canvasReversed);
     m_session->setWandTolerance(view.wandTolerance);
+    m_session->setBrushShape(view.brushRound ? core::BrushShape::Round : core::BrushShape::Square);
+    m_session->setBrushSize(view.brushSize);
     m_session->setWandContiguous(view.wandContiguous);
     if (!view.splitterState.isEmpty()) {
         m_mainSplitter->restoreState(view.splitterState);
@@ -1369,6 +1381,8 @@ void MainWindow::saveViewSettings()
     view.transparentEffect = m_session->transparentEffect();
     view.canvasReversed = action(ActionId::WindowReverseCanvas)->isChecked();
     view.wandTolerance = m_session->wandTolerance();
+    view.brushRound = m_session->brushShape() == core::BrushShape::Round;
+    view.brushSize = m_session->brushSize();
     view.wandContiguous = m_session->wandContiguous();
     view.splitterState = m_mainSplitter->saveState();
     m_settings.setViewSettings(view);

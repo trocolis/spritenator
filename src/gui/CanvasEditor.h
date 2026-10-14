@@ -9,7 +9,6 @@
 //   - roda do mouse: zoom (ancorado no ponteiro);
 //   - Ctrl + roda: rola a imagem (com Shift, na horizontal);
 //   - botão do meio arrastado: move a vista;
-//   - lupa: esquerdo amplia, direito reduz (no ponto clicado).
 //
 // Sobre a imagem são desenhados: fundo xadrez (RGBA), grade principal (some
 // quando ficaria densa demais), sub-grade, seleção e o DESTAQUE dos pixels

@@ -31,10 +31,8 @@ EditorSession::EditorSession(QObject* parent)
     m_tools.emplace(ToolKind::SelectPolygon, std::make_unique<PolygonSelectTool>());
     m_tools.emplace(ToolKind::SelectLasso, std::make_unique<LassoSelectTool>());
     m_tools.emplace(ToolKind::MagicWand, std::make_unique<MagicWandTool>());
-    m_tools.emplace(ToolKind::Zoom, std::make_unique<ZoomTool>());
     m_tools.emplace(ToolKind::Fill, std::make_unique<FillTool>());
-    m_tools.emplace(ToolKind::PenThin, std::make_unique<PenTool>(false));
-    m_tools.emplace(ToolKind::PenThick, std::make_unique<PenTool>(true));
+    m_tools.emplace(ToolKind::Pen, std::make_unique<PenTool>());
     m_tools.emplace(ToolKind::Line, std::make_unique<ShapeTool>(Shape::Line, false));
     m_tools.emplace(ToolKind::Rectangle, std::make_unique<ShapeTool>(Shape::Rectangle, false));
     m_tools.emplace(
@@ -396,6 +394,26 @@ void EditorSession::cancelTool()
 void EditorSession::commitTransform()
 {
     m_transform->commit();
+}
+
+// -----------------------------------------------------------------------------
+// Ponta do lápis
+// -----------------------------------------------------------------------------
+void EditorSession::setBrushShape(core::BrushShape shape)
+{
+    if (shape != m_brushShape) {
+        m_brushShape = shape;
+        emit brushChanged();
+    }
+}
+
+void EditorSession::setBrushSize(int size)
+{
+    size = std::clamp(size, core::kMinBrushSize, core::kMaxBrushSize);
+    if (size != m_brushSize) {
+        m_brushSize = size;
+        emit brushChanged();
+    }
 }
 
 // -----------------------------------------------------------------------------

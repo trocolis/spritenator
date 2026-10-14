@@ -17,6 +17,7 @@
 #pragma once
 
 #include "core/AnyImage.h"
+#include "core/Brush.h"
 #include "core/GridLayout.h"
 #include "core/Image.h"
 #include "core/Palette.h"
@@ -175,6 +176,13 @@ public:
     [[nodiscard]] Qt::KeyboardModifiers inputModifiers() const { return m_inputModifiers; }
     void setInputModifiers(Qt::KeyboardModifiers modifiers) { m_inputModifiers = modifiers; }
 
+    // --- Ponta do lápis ---
+    [[nodiscard]] core::BrushShape brushShape() const { return m_brushShape; }
+    void setBrushShape(core::BrushShape shape);
+    /// Tamanho da ponta, em pixels (1 a 64).
+    [[nodiscard]] int brushSize() const { return m_brushSize; }
+    void setBrushSize(int size);
+
     // --- Varinha mágica ---
     /// Tolerância de cor: 0 (só a mesma cor) a 100 (qualquer cor).
     [[nodiscard]] int wandTolerance() const { return m_wandTolerance; }
@@ -205,6 +213,8 @@ signals:
     void lastCellChanged(const core::Rect& cell);
     /// Tolerância ou modo "contígua" da varinha mudaram.
     void wandOptionsChanged();
+    /// Formato ou tamanho da ponta do lápis mudaram.
+    void brushChanged();
     /// O modo de cor em uso mudou (troca de documento ou "Reverter").
     void colorModeChanged(core::ColorMode mode);
     /// O mostrador ativo mudou.
@@ -235,6 +245,8 @@ private:
 
     std::optional<core::Rect> m_lastCell;
     Qt::KeyboardModifiers m_inputModifiers;
+    core::BrushShape m_brushShape = core::BrushShape::Square;
+    int m_brushSize = 1;
     int m_wandTolerance = 15;
     bool m_wandContiguous = true;
 
@@ -246,7 +258,7 @@ private:
     core::Tone m_tone = core::Tone::A;
     int m_toneShift = 0;
 
-    ToolKind m_toolKind = ToolKind::PenThin;
+    ToolKind m_toolKind = ToolKind::Pen;
     std::map<ToolKind, std::unique_ptr<Tool>> m_tools;
 };
 

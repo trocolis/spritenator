@@ -1,10 +1,9 @@
 // =============================================================================
 // SimpleTools.h
 //
-// Ferramentas de interação curta, que não justificam arquivos próprios:
-//   - FillTool:   balde de tinta (preenche a região contígua da mesma cor);
-//   - ZoomTool:   lupa (esquerdo amplia, direito reduz; tratada pelo editor
-//                 de imagem, pois o zoom é de cada editor).
+// Ferramentas de interação curta, que não justificam arquivos próprios.
+// Hoje só o balde de tinta (FillTool), que preenche a região contígua da
+// mesma cor.
 // =============================================================================
 #pragma once
 
@@ -21,17 +20,6 @@ public:
     /// A região contígua que seria preenchida.
     [[nodiscard]] std::vector<core::Point> footprint(
         const EditorSession& session, core::Point point) const override;
-};
-
-/// Lupa.
-class ZoomTool final : public Tool {
-public:
-    void press(EditorSession& session, core::Point point, Qt::MouseButton button) override;
-    void move(EditorSession& session, core::Point point) override;
-    void release(EditorSession& session, core::Point point) override;
-    [[nodiscard]] std::vector<core::Point> footprint(
-        const EditorSession& session, core::Point point) const override;
-    [[nodiscard]] bool paints() const override { return false; }
 };
 
 } // namespace spritenator::gui

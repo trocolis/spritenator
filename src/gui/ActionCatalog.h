@@ -64,6 +64,9 @@ enum class ActionId : std::size_t {
     SelectOutlineRight,
     SelectOutlineUp,
     SelectOutlineDown,
+    // --- Ferramentas ---
+    PenSizeDecrease,
+    PenSizeIncrease,
     // --- Exibir ---
     ViewGrids,
     ViewMainGrid,

@@ -257,6 +257,8 @@ ViewSettings AppSettings::viewSettings() const
     view.canvasReversed = settings.value("canvasReversed", defaults.canvasReversed).toBool();
     view.wandTolerance = settings.value("wandTolerance", defaults.wandTolerance).toInt();
     view.wandContiguous = settings.value("wandContiguous", defaults.wandContiguous).toBool();
+    view.brushRound = settings.value("brushRound", defaults.brushRound).toBool();
+    view.brushSize = settings.value("brushSize", defaults.brushSize).toInt();
     // Chave nova na 2.0: o painel mudou de largura e a proporção antiga não
     // serve mais.
     view.splitterState = settings.value("panelSplitter").toByteArray();
@@ -274,6 +276,8 @@ void AppSettings::setViewSettings(const ViewSettings& view)
     settings.setValue("canvasReversed", view.canvasReversed);
     settings.setValue("wandTolerance", view.wandTolerance);
     settings.setValue("wandContiguous", view.wandContiguous);
+    settings.setValue("brushRound", view.brushRound);
+    settings.setValue("brushSize", view.brushSize);
     settings.setValue("panelSplitter", view.splitterState);
     settings.endGroup();
 }

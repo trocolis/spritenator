@@ -74,8 +74,8 @@ private slots:
     void toolsWithoutDocumentAreHarmless()
     {
         EditorSession session;
-        for (const ToolKind kind : { ToolKind::PenThin, ToolKind::Fill, ToolKind::Rectangle,
-                 ToolKind::Select, ToolKind::Zoom }) {
+        for (const ToolKind kind : { ToolKind::Pen, ToolKind::Fill, ToolKind::Rectangle,
+                 ToolKind::Select, ToolKind::MagicWand }) {
             session.setToolKind(kind);
             session.tool().press(session, { 1, 1 }, Qt::LeftButton);
             session.tool().move(session, { 2, 2 });
@@ -90,7 +90,7 @@ private slots:
         EditorSession session;
         auto document = makeBlankDocument();
         session.setActiveDocument(document.get());
-        session.setToolKind(ToolKind::PenThin);
+        session.setToolKind(ToolKind::Pen);
         session.setDrawColor(7);
         gui::Tool& pen = session.tool();
         pen.press(session, { 0, 0 }, Qt::LeftButton);
@@ -199,13 +199,19 @@ private slots:
         auto document = makeTwoCellDocument();
         session.setActiveDocument(document.get());
 
-        session.setToolKind(ToolKind::PenThin);
+        session.setToolKind(ToolKind::Pen);
         QCOMPARE(sortedFootprint(session, { 5, 5 }), (std::vector<core::Point> { { 5, 5 } }));
 
-        // Lápis grosso: o "+" de 5 pixels.
-        session.setToolKind(ToolKind::PenThick);
+        // Ponta redonda de 3 px (o antigo lápis grosso): o "+" de 5 pixels.
+        session.setBrushShape(core::BrushShape::Round);
+        session.setBrushSize(3);
         QCOMPARE(sortedFootprint(session, { 5, 5 }),
             (std::vector<core::Point> { { 5, 4 }, { 4, 5 }, { 5, 5 }, { 6, 5 }, { 5, 6 } }));
+        // Ponta quadrada de 2 px: o ponteiro é o pixel de cima e da esquerda.
+        session.setBrushShape(core::BrushShape::Square);
+        session.setBrushSize(2);
+        QCOMPARE(sortedFootprint(session, { 5, 5 }),
+            (std::vector<core::Point> { { 5, 5 }, { 6, 5 }, { 5, 6 }, { 6, 6 } }));
 
         // Figuras e seleção: o pixel inicial.
         session.setToolKind(ToolKind::FilledEllipse);
@@ -219,10 +225,6 @@ private slots:
         QCOMPARE(region.size(), std::size_t { 24 * 32 });
         QVERIFY(std::all_of(
             region.begin(), region.end(), [](core::Point point) { return point.x >= 24; }));
-
-        // Lupa: nenhum pixel.
-        session.setToolKind(ToolKind::Zoom);
-        QVERIFY(session.tool().footprint(session, { 2, 3 }).empty());
     }
 
     /// canPlot reflete os limites da imagem, o tom e a máscara.

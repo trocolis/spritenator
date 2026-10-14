@@ -2,9 +2,12 @@
 // IntegratorPanel.h
 //
 // Painel lateral de edição (inspirado no TIntegrator do original). Uma
-// coluna com, de cima para baixo: ferramentas e tons, transformações,
-// ajuste das cores (mostradores e barras R, G, B, A) e, conforme o modo de
-// cor, a paleta com seus botões (indexado) ou o seletor circular (RGBA).
+// coluna com, de cima para baixo: ferramentas (e as opções da ferramenta
+// atual: ponta do lápis, tolerância da varinha), preenchimento (tons),
+// transformações, ajuste das cores (mostradores e barras R, G, B, A) e,
+// conforme o modo de cor, a paleta com seus botões (indexado) ou o seletor
+// circular (RGBA). Ferramentas, tons e transformações quebram linha conforme
+// a largura do painel (FlowLayout).
 //
 // A edição acontece diretamente nos editores de imagem (CanvasEditor).
 //

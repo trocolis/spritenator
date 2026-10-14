@@ -205,6 +205,17 @@ const std::vector<ActionSpec>& actionSpecs()
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
                 "Move only the selection outline one pixel down"),
             nullptr, Seq(Qt::CTRL | Qt::Key_Down) },
+        // --- Ferramentas ---
+        { ActionId::PenSizeDecrease,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Smaller Pen Tip"),
+            QT_TRANSLATE_NOOP(
+                "spritenator::gui::ActionCatalog", "Decrease the size of the pen tip by one pixel"),
+            nullptr, Seq(Qt::Key_BracketLeft) },
+        { ActionId::PenSizeIncrease,
+            QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "Larger Pen Tip"),
+            QT_TRANSLATE_NOOP(
+                "spritenator::gui::ActionCatalog", "Increase the size of the pen tip by one pixel"),
+            nullptr, Seq(Qt::Key_BracketRight) },
         // --- Exibir ---
         { ActionId::ViewGrids, QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog", "&Grids..."),
             QT_TRANSLATE_NOOP("spritenator::gui::ActionCatalog",
@@ -363,11 +374,11 @@ QString ActionCatalog::settingsKey(ActionId id)
         "SelectApplyTransform", "SelectMoveLeft", "SelectMoveRight", "SelectMoveUp",
         "SelectMoveDown", "SelectMoveLeftFast", "SelectMoveRightFast", "SelectMoveUpFast",
         "SelectMoveDownFast", "SelectOutlineLeft", "SelectOutlineRight", "SelectOutlineUp",
-        "SelectOutlineDown", "ViewGrids", "ViewMainGrid", "ViewSubGrid", "ViewZoomIn",
-        "ViewZoomOut", "ViewZoomActual", "ViewZoomFit", "ViewAnimation", "CanvasResize",
-        "CanvasClearAll", "PaletteTransparent", "PaletteLoad", "PaletteSave", "PaletteEdit",
-        "PaletteClearMask", "PaletteInvertMask", "PaletteAutoMask", "PaletteMaskMode",
-        "PaletteGradation", "WindowReverseCanvas", "HelpContents", "HelpAbout" };
+        "SelectOutlineDown", "PenSizeDecrease", "PenSizeIncrease", "ViewGrids", "ViewMainGrid",
+        "ViewSubGrid", "ViewZoomIn", "ViewZoomOut", "ViewZoomActual", "ViewZoomFit",
+        "ViewAnimation", "CanvasResize", "CanvasClearAll", "PaletteTransparent", "PaletteLoad",
+        "PaletteSave", "PaletteEdit", "PaletteClearMask", "PaletteInvertMask", "PaletteAutoMask",
+        "PaletteMaskMode", "PaletteGradation", "WindowReverseCanvas", "HelpContents", "HelpAbout" };
     static_assert(std::size(kKeys) == kActionCount, "ActionCatalog: falta a chave de uma ação");
     return QString::fromLatin1(kKeys[static_cast<std::size_t>(id)]);
 }

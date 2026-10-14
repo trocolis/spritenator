@@ -719,29 +719,6 @@ def tool_magic_wand():
 """, 20, 20)
 
 
-def tool_zoom():
-    image = new(20, 20)
-    shape(image, ellipse_inside(1, 1, 12, 12), "K", "b")
-    shape(image, ellipse_inside(3, 3, 10, 10), "K", "b")
-    for x, y in ((5, 5), (6, 5), (5, 6)):  # reflexo
-        image.putpixel((x, y), color("w"))
-    # Ponto interno do anel duplo: preenche o espaço entre as elipses.
-    outer, inner = ellipse_inside(1, 1, 12, 12), ellipse_inside(3, 3, 10, 10)
-    for y in range(20):
-        for x in range(20):
-            if outer(x, y) and not inner(x, y):
-                edge = any(not outer(x + dx, y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
-                if not edge and image.getpixel((x, y)) != color("K"):
-                    image.putpixel((x, y), color("g"))
-    for k in range(11, 18):  # cabo
-        for dx, key in ((-1, "K"), (0, "d"), (1, "d"), (2, "K")):
-            if 0 <= k + dx < 20:
-                image.putpixel((k + dx, k), color(key))
-    image.putpixel((17, 18), color("K"))
-    image.putpixel((18, 17), color("K"))
-    return image
-
-
 def tool_fill():
     return art("""
 ....................
@@ -785,7 +762,7 @@ PENCIL = """
 """
 
 
-def tool_pen_thin():
+def tool_pen():
     image = new(20, 20)
     paste(image, art(PENCIL), 2, 0)
     line(image, 2, 17, 4, 15, "B")
@@ -794,13 +771,17 @@ def tool_pen_thin():
     return image
 
 
-def tool_pen_thick():
-    image = new(20, 20)
-    paste(image, art(PENCIL), 2, 0)
-    for dy in (0, 1, 2):
-        line(image, 2, 16 + dy, 5, 14 + dy, "B")
-        line(image, 5, 14 + dy, 10, 16 + dy, "B")
-        line(image, 10, 16 + dy, 17, 14 + dy, "B")
+def brush_square():
+    """Ponta quadrada (opções do lápis)."""
+    image = new(16, 16)
+    shape(image, rect_inside(3, 3, 12, 12), "K", "d")
+    return image
+
+
+def brush_round():
+    """Ponta redonda (opções do lápis)."""
+    image = new(16, 16)
+    shape(image, ellipse_inside(2, 2, 13, 13), "K", "d")
     return image
 
 
@@ -1181,10 +1162,10 @@ ICONS = {
     "tool_select_polygon": tool_select_polygon,
     "tool_select_lasso": tool_select_lasso,
     "tool_magic_wand": tool_magic_wand,
-    "tool_zoom": tool_zoom,
     "tool_fill": tool_fill,
-    "tool_pen_thin": tool_pen_thin,
-    "tool_pen_thick": tool_pen_thick,
+    "tool_pen": tool_pen,
+    "brush_square": brush_square,
+    "brush_round": brush_round,
     "tool_line": tool_line,
     "tool_rect": tool_rect,
     "tool_round_rect": tool_round_rect,

@@ -52,3 +52,7 @@ spritenator_add_test(test_new_image_dialog
 spritenator_add_test(test_selection_tools
     SOURCES SelectionToolsTest.cpp
     LIBRARIES Spritenator::Gui)
+
+spritenator_add_test(test_tool_options
+    SOURCES ToolOptionsTest.cpp
+    LIBRARIES Spritenator::Gui)

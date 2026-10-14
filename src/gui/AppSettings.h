@@ -27,6 +27,8 @@ struct ViewSettings {
     bool canvasReversed = false;
     int wandTolerance = 15; ///< tolerância da varinha mágica (0..100)
     bool wandContiguous = true; ///< varinha: só a região conectada
+    bool brushRound = false; ///< ponta do lápis redonda (senão, quadrada)
+    int brushSize = 1; ///< tamanho da ponta do lápis (1..64)
     QByteArray splitterState; ///< proporção Integrator | área MDI
 };
 

@@ -54,29 +54,6 @@ void FillTool::release(EditorSession& /*session*/, core::Point /*point*/)
 }
 
 // -----------------------------------------------------------------------------
-// ZoomTool
-// -----------------------------------------------------------------------------
-// O zoom pertence a cada editor de imagem (CanvasEditor), que trata os cliques
-// desta ferramenta ancorando o zoom no ponto clicado. Aqui nada é feito.
-void ZoomTool::press(EditorSession& /*session*/, core::Point /*point*/, Qt::MouseButton /*button*/)
-{
-}
-
-void ZoomTool::move(EditorSession& /*session*/, core::Point /*point*/)
-{
-}
-
-void ZoomTool::release(EditorSession& /*session*/, core::Point /*point*/)
-{
-}
-
-std::vector<core::Point> ZoomTool::footprint(
-    const EditorSession& /*session*/, core::Point /*point*/) const
-{
-    return { }; // a lupa não altera pixels
-}
-
-// -----------------------------------------------------------------------------
 // Pegada do balde: a região que seria preenchida
 // -----------------------------------------------------------------------------
 std::vector<core::Point> FillTool::footprint(const EditorSession& session, core::Point point) const

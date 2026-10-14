@@ -272,6 +272,22 @@
         <translation>Move só o contorno da seleção um pixel para baixo</translation>
     </message>
     <message>
+        <source>Smaller Pen Tip</source>
+        <translation>Ponta do lápis menor</translation>
+    </message>
+    <message>
+        <source>Decrease the size of the pen tip by one pixel</source>
+        <translation>Diminui a ponta do lápis em um pixel</translation>
+    </message>
+    <message>
+        <source>Larger Pen Tip</source>
+        <translation>Ponta do lápis maior</translation>
+    </message>
+    <message>
+        <source>Increase the size of the pen tip by one pixel</source>
+        <translation>Aumenta a ponta do lápis em um pixel</translation>
+    </message>
+    <message>
         <source>&amp;Grids...</source>
         <translation>&amp;Grades...</translation>
     </message>
@@ -1159,6 +1175,33 @@ R: %2  G: %3  B: %4</translation>
     </message>
 </context>
 <context>
+    <name>spritenator::gui::PenOptions</name>
+    <message>
+        <source>Tip:</source>
+        <translation>Ponta:</translation>
+    </message>
+    <message>
+        <source>Square tip</source>
+        <translation>Ponta quadrada</translation>
+    </message>
+    <message>
+        <source>Round tip</source>
+        <translation>Ponta redonda</translation>
+    </message>
+    <message>
+        <source>Size:</source>
+        <translation>Tamanho:</translation>
+    </message>
+    <message>
+        <source> px</source>
+        <translation> px</translation>
+    </message>
+    <message>
+        <source>Size of the pen tip, in pixels ([ and ] change it)</source>
+        <translation>Tamanho da ponta do lápis, em pixels ([ e ] mudam)</translation>
+    </message>
+</context>
+<context>
     <name>spritenator::gui::ShortcutsDialog</name>
     <message>
         <source>&amp;Remove</source>
@@ -1268,6 +1311,17 @@ R: %2  G: %3  B: %4</translation>
     </message>
 </context>
 <context>
+    <name>spritenator::gui::TonePanel</name>
+    <message>
+        <source>Draw with tone %1</source>
+        <translation>Desenhar com o tom %1</translation>
+    </message>
+    <message>
+        <source>Shift the origin of the tone pattern (current: %1)</source>
+        <translation>Desloca a origem do padrão de tom (atual: %1)</translation>
+    </message>
+</context>
+<context>
     <name>spritenator::gui::ToolPanel</name>
     <message>
         <source>Rectangular selection (Shift: square; when starting, Shift adds and Ctrl subtracts)</source>
@@ -1290,20 +1344,12 @@ R: %2  G: %3  B: %4</translation>
         <translation>Varinha mágica: seleciona a área de cor parecida (tolerância abaixo das ferramentas)</translation>
     </message>
     <message>
-        <source>Zoom: left button magnifies, right button reduces</source>
-        <translation>Lupa: o botão esquerdo amplia e o direito reduz</translation>
-    </message>
-    <message>
         <source>Fill the adjacent area of the same color</source>
         <translation>Preenche a área vizinha da mesma cor</translation>
     </message>
     <message>
-        <source>Thin pen (1 pixel)</source>
-        <translation>Lápis fino (1 pixel)</translation>
-    </message>
-    <message>
-        <source>Thick pen (3 pixels)</source>
-        <translation>Lápis grosso (3 pixels)</translation>
+        <source>Pen (choose the tip and the size below the tools)</source>
+        <translation>Lápis (escolha a ponta e o tamanho abaixo das ferramentas)</translation>
     </message>
     <message>
         <source>Straight line</source>
@@ -1332,14 +1378,6 @@ R: %2  G: %3  B: %4</translation>
     <message>
         <source>Filled ellipse</source>
         <translation>Elipse preenchida</translation>
-    </message>
-    <message>
-        <source>Draw with tone %1</source>
-        <translation>Desenhar com o tom %1</translation>
-    </message>
-    <message>
-        <source>Shift the origin of the tone pattern (current: %1)</source>
-        <translation>Desloca a origem do padrão de tom (atual: %1)</translation>
     </message>
 </context>
 <context>
