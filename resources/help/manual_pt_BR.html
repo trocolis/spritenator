@@ -187,25 +187,38 @@ selecionados:</p>
 cada cena tem um desenho por camada. As ferramentas sempre desenham na <b>cena e
 na camada atuais</b>; a imagem mostra a cena atual com todas as camadas
 visíveis.</p>
-<p>A <b>linha do tempo</b>, no pé da janela (F2 mostra ou oculta), tem duas barras:</p>
+<p>A <b>linha do tempo</b>, no pé da janela (F2 mostra ou oculta), é uma
+grade: cada <b>linha</b> é uma camada (a de cima vem primeiro) e cada
+<b>coluna</b> é uma cena, numerada no alto. Uma célula cheia tem desenho; a
+cena e a camada atuais ficam destacadas.</p>
 <ul>
-  <li><b>Cenas</b>: uma miniatura de cada cena, em ordem. Clique numa para
-      vê-la. Os botões criam uma cena vazia, duplicam, apagam e movem a atual;
-      a <b>Duração</b> é quanto tempo ela fica na tela ao reproduzir.
-      <img src=":/icons/play.png"> <b>Reproduzir</b> mostra a animação no editor
-      de imagem, em laço (P); <img src=":/icons/onion_skin.png"> <b>Papel de
-      seda</b> mostra a cena anterior e a próxima, translúcidas, sobre a atual,
-      para guiar o desenho.</li>
-  <li><b>Camadas</b>: a de cima vem primeiro. Clique numa camada para desenhar
-      nela; a caixa mostra ou oculta; o clique duplo renomeia. Os botões criam,
-      duplicam, apagam, sobem/descem e mesclam a camada atual com a de baixo.
-      A <b>Opacidade</b> só existe em imagens RGBA.</li>
+  <li>Clique numa <b>célula</b> para desenhar naquela cena e camada; clique no
+      <b>número</b> de uma cena para vê-la, ou no <b>nome</b> de uma camada para
+      desenhar nela (o clique duplo a renomeia).</li>
+  <li><img src=":/icons/eye_open.png"> O <b>olho</b> mostra ou oculta a camada;
+      <img src=":/icons/lock_closed.png"> o <b>cadeado</b> a protege: as
+      ferramentas não alteram uma camada bloqueada (o cursor mostra que é
+      proibido).</li>
+  <li>A <b>Opacidade</b>, no canto da grade, é a da camada atual (só em
+      imagens RGBA).</li>
+  <li>Os botões da esquerda criam, apagam, sobem/descem, duplicam e mesclam a
+      camada atual com a de baixo. Os da direita criam, apagam, duplicam e
+      movem a cena atual; vão para a primeira cena, a anterior, a próxima e a
+      última (Home, <b>,</b>, <b>.</b>, End);
+      <img src=":/icons/play.png"> <b>reproduzem</b> a animação no editor de
+      imagem (P); ligam o <img src=":/icons/onion_skin.png"> <b>papel de
+      seda</b> (a cena anterior e a próxima, translúcidas, sobre a atual, para
+      guiar o desenho); e escolhem como a reprodução se repete:
+      <img src=":/icons/loop.png"> recomeçando da primeira cena, ou
+      <img src=":/icons/ping_pong.png"> em <b>vai e volta</b> (para a frente e
+      depois para trás).</li>
+  <li><b>FPS</b> é a velocidade da reprodução, em cenas por segundo, a mesma
+      para todas as cenas.</li>
 </ul>
 <p>Em imagens <b>indexadas</b>, a cor de índice 0 é transparente nas camadas de
 cima (a camada de baixo a mostra normalmente). Tudo isso também está no menu
-<i>Animação</i>; <b>,</b> e <b>.</b> vão para a cena anterior e a próxima,
-Alt+&uarr;/&darr; para a camada de cima/de baixo, e todos esses atalhos podem ser
-trocados. Toda operação pode ser desfeita.</p>
+<i>Animação</i>; Alt+&uarr;/&darr; vão para a camada de cima/de baixo, e todos
+esses atalhos podem ser trocados. Toda operação pode ser desfeita.</p>
 
 <h2 id="files">7. Arquivos e backups</h2>
 <p><b>Imagens novas.</b> Em <i>Arquivo &gt; Novo</i>, escolha o tamanho e as

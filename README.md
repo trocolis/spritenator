@@ -29,7 +29,7 @@ original, mas edita a imagem inteira diretamente, com zoom livre.
   - efeito de cor transparente;
   - editor de paleta (troca de cores, remoção de cores não usadas, 15 bits);
   - carga de paletas (`.pal` RIFF/JASC, `.act`, imagens), com remapeamento por cor mais próxima ou pontilhamento Floyd–Steinberg.
-- **Linha do tempo com cenas e camadas** (como no Aseprite): miniaturas das cenas, duração de cada uma, reprodução no próprio editor, papel de seda (*onion skin*) e camadas comuns a todas as cenas, com visibilidade, opacidade e mesclagem.
+- **Linha do tempo com cenas e camadas** (como no Aseprite e no Pixelorama): uma grade camadas x cenas, reprodução no próprio editor em laço ou vai e volta, velocidade em FPS, papel de seda (*onion skin*) e camadas comuns a todas as cenas, com visibilidade, cadeado, opacidade e mesclagem.
 - **Salvar** como projeto (`.sprn`, sem perdas), **GIF animado**, **sprite sheet** ou **imagens separadas**; abrir GIFs animados importa as cenas.
 - Desfazer/refazer ilimitado por documento, área de transferência (com o efeito de cor transparente ao colar) e entrada de texto sem suavização.
 - Várias imagens abertas em abas, arquivos recentes, arrastar e soltar, backup automático ao salvar e ajuda embutida (F1).

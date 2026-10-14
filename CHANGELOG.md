@@ -5,6 +5,22 @@ Todas as mudanças relevantes do projeto são documentadas aqui.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [3.1.0] - 2026-10-14
+
+A linha do tempo passa a ser uma **grade única de camadas x cenas**, como no Pixelorama.
+
+### Adicionado
+- **Cadeado** em cada camada (Animação > Bloquear camada): as ferramentas, colar, esticar, texto, limpar e as transformações não alteram uma camada bloqueada, e o cursor mostra que é proibido. O projeto (.sprn, agora na versão 2 do formato) guarda o cadeado e ainda lê a versão 1.
+- **Primeira e última cena** (Home e End).
+- **Vai e volta** (*ping-pong*): a reprodução vai para a frente e depois para trás; desligado, recomeça da primeira cena. O ícone do botão mostra o modo.
+- Ícones novos: olho aberto/fechado, cadeado aberto/fechado, primeira/última cena, laço e vai e volta; os botões de cena anterior/próxima ganharam ícones próprios.
+- Testes da grade (cliques em células, números, nomes, olho e cadeado), do FPS, do vai e volta, do cadeado e da ida e volta do cadeado no .sprn.
+
+### Alterado
+- A linha do tempo (`gui::TimelineGrid`) mostra uma linha por camada (a de cima primeiro) e uma coluna por cena, com o olho, o cadeado e o nome fixos à esquerda e os números das cenas fixos no alto; células com desenho aparecem cheias e a cena e a camada atuais ficam destacadas. Substitui a lista de miniaturas e a lista de camadas.
+- Uma barra só: os botões das camadas à esquerda; os das cenas, a navegação, a reprodução, o papel de seda, o modo de repetição e o FPS à direita. A opacidade da camada fica no canto da grade, em porcentagem.
+- A velocidade é dada em **FPS** e vale para todas as cenas (a duração por cena continua no modelo e nos arquivos).
+
 ## [3.0.0] - 2026-10-13
 
 O documento deixa de ser uma imagem só: passa a ter **cenas e camadas**.
